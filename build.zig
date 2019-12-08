@@ -19,8 +19,10 @@ pub fn build(b: *Builder) void {
     exe.setLinkerScriptPath("gba.ld");
     exe.setBuildMode(builtin.Mode.ReleaseFast);
 
+    const objCopyCommand = if (builtin.os == builtin.Os.windows) "C:\\Programmation\\Zig\\llvm+clang-9.0.0-win64-msvc-mt\\bin\\llvm-objcopy.exe" else "llvm-objcopy";
+
     const buildGBARomCommand = b.addSystemCommand(&[_][]const u8 {
-        "C:\\Programmation\\Zig\\llvm+clang-9.0.0-win64-msvc-mt\\bin\\llvm-objcopy.exe", exe.getOutputPath(),
+        objCopyCommand, exe.getOutputPath(),
         "-O", "binary",
         "zig-cache/bin/GBAHelloWorld.gba",
     });
