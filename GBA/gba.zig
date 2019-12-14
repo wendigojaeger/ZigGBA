@@ -131,8 +131,8 @@ pub const GBA = struct {
         pub const Object = 0x1000;
     };
 
-    pub inline fn toNativeColor(comptime red: u32, comptime green: u32, comptime blue: u32) u16 {
-        return @as(u16, (red | (green << 5) | (blue << 10)));
+    pub inline fn toNativeColor(comptime red: u8, comptime green: u8, comptime blue: u8) u16 {
+        return @as(u16, red & 0x1f) | (@as(u16, green & 0x1f) << 5) | (@as(u16, blue & 0x1f) << 10);
     }
 
     pub inline fn setupDisplay(mode: DisplayMode, layers: u32) void {
@@ -158,7 +158,7 @@ pub const GBA = struct {
 
     // TODO: Figure out how to pass the reset flags and don't get eaten up by the optimizer
     pub fn BIOSRegisterRamReset() void {
-        asm volatile(
+        asm volatile (
             \\movs r0, #0xFF
             \\swi 1
         );
@@ -187,5 +187,9 @@ export nakedcc fn GBAMain() noreturn {
     GBA.BIOSRegisterRamReset();
 
     // call user's main
-    root.main();
+    if (@hasDecl(root, "main")) {
+        root.main();
+    } else {
+        while (true) {}
+    }
 }

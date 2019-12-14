@@ -17,6 +17,7 @@
             "label": "Format current file",
             "type": "shell",
             "command": "zig fmt ${file}",
+            "problemMatcher": []
         }
     ]
 }

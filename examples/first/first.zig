@@ -1,6 +1,6 @@
-const GBA = @import("gba.zig").GBA;
+const GBA = @import("gba").GBA;
 
-export var gameHeader linksection(".gbaheader") = GBA.Header.setup("HELLOWORLD", "AWJE", "00", 0);
+export var gameHeader linksection(".gbaheader") = GBA.Header.setup("FIRST", "AFSE", "00", 0);
 
 pub fn main() noreturn {
     GBA.setupDisplay(GBA.DisplayMode.Mode3, GBA.DisplayLayers.Background2 | GBA.DisplayLayers.Background0);
