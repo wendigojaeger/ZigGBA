@@ -108,9 +108,8 @@ pub const GBA = struct {
                 var index: usize = 0xA0;
 
                 var computeCheckData = @bitCast([192]u8, header);
-                while (index < 0xA0 + (0xBD - 0xA0)) {
+                while (index < 0xA0 + (0xBD - 0xA0)) : (index += 1) {
                     complementCheck +%= computeCheckData[index];
-                    index += 1;
                 }
 
                 var tempCheck = -(0x19 + @intCast(i32, complementCheck));

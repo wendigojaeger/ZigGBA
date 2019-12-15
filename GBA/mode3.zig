@@ -23,7 +23,7 @@ pub const Mode3 = struct {
 
         var destination = @ptrCast([*]volatile u32, GBA.VRAM);
         const writeValue: u32 = (@intCast(u32,color) << 16) | color;
-        const end = GBA.MODE3_SCREEN_SIZE / 4;
+        comptime const end = GBA.MODE3_SCREEN_SIZE / 4;
 
         while (index < end) : (index += 1) {
             destination[index] = writeValue;
