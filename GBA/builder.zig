@@ -8,6 +8,8 @@ const fs = @import("std").fs;
 
 const GBALinkerScript = "GBA/gba.ld";
 
+var IsDebugOption: ?bool = null;
+
 fn gbaThumbTarget() std.Target {
     return std.Target{
         .Cross = std.Target.Cross{
@@ -18,31 +20,39 @@ fn gbaThumbTarget() std.Target {
     };
 }
 
-pub fn addGBAStaticLibrary(b: *Builder, libraryName: []const u8, sourceFile: []const u8) *LibExeObjStep {
+pub fn addGBAStaticLibrary(b: *Builder, libraryName: []const u8, sourceFile: []const u8, isDebug: bool) *LibExeObjStep {
     const lib = b.addStaticLibrary(libraryName, sourceFile);
 
     lib.setTheTarget(gbaThumbTarget());
 
     lib.setLinkerScriptPath(GBALinkerScript);
-    lib.setBuildMode(builtin.Mode.ReleaseFast);
+    lib.setBuildMode(if (isDebug) builtin.Mode.Debug else builtin.Mode.ReleaseFast);
 
     return lib;
 }
 
-pub fn createGBALib(b: *Builder) *LibExeObjStep {
-    return addGBAStaticLibrary(b, "ZigGBA", "GBA/gba.zig");
+pub fn createGBALib(b: *Builder, isDebug: bool) *LibExeObjStep {
+    return addGBAStaticLibrary(b, "ZigGBA", "GBA/gba.zig", isDebug);
 }
 
 pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8) *LibExeObjStep {
     const exe = b.addExecutable(romName, sourceFile);
 
+    var isDebug = false;
+    if (IsDebugOption) |value| {
+        isDebug = value;
+    } else {
+        isDebug = b.option(bool, "debug", "Generate a debug build for easier debugging with mGBA") orelse false;
+        IsDebugOption = isDebug;
+    }
+
     exe.setTheTarget(gbaThumbTarget());
 
     exe.setOutputDir("zig-cache/raw");
     exe.setLinkerScriptPath(GBALinkerScript);
-    exe.setBuildMode(builtin.Mode.ReleaseFast);
+    exe.setBuildMode(if (isDebug) builtin.Mode.Debug else builtin.Mode.ReleaseFast);
 
-    const gbaLib = createGBALib(b);
+    const gbaLib = createGBALib(b, isDebug);
     exe.addPackagePath("gba", "GBA/gba.zig");
     exe.linkLibrary(gbaLib);
 

@@ -14,10 +14,51 @@
             }
         },
         {
+            "label": "Build (Debug)",
+            "type": "shell",
+            "command": "zig build -Ddebug",
+            "problemMatcher": "$gcc"
+        },
+        {
             "label": "Format current file",
             "type": "shell",
             "command": "zig fmt ${file}",
             "problemMatcher": []
-        }
+        },
+        {
+            "label": "debugRun",
+            "type": "shell",
+            "dependsOn": ["Build (Debug)"],
+            "windows": {
+                "command": "C:\\mGBA\\mGBA.exe -g zig-cache/raw/${fileBasenameNoExtension};sleep 0;echo debuggerReady"
+            },
+            "presentation": {
+                "clear": true,
+                "reveal": "always",
+                "panel": "new"
+            },
+            "command": "debuggerReady",
+            "problemMatcher": []
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "dependsOn": ["Build"],
+            "windows": {
+                "command": "C:\\mGBA\\mGBA.exe zig-cache/bin/${fileBasenameNoExtension}.gba"
+            },
+            "presentation": {
+                "clear": true,
+                "reveal": "always",
+                "panel": "new"
+            },
+            "command": "debuggerReady",
+            "problemMatcher": []
+        },
+        {
+            "label": "kill-emulator",
+            "type": "shell",
+            "command": "taskkill /im mGBA.exe /F",
+         }
     ]
 }

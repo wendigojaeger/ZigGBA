@@ -47,7 +47,7 @@ pub const Bitmap16 = struct {
             ii = 0;
             var destinationIndex: i32 = 0;
             while (ii <= dx) : (ii += 1) {
-                destination[@intCast(usize, destinationIndex)] = color;
+                destination[@bitCast(usize, destinationIndex)] = color;
                 if (dd >= 0) {
                     dd -= 2 * dx;
                     destinationIndex += ystep;
@@ -61,7 +61,7 @@ pub const Bitmap16 = struct {
             ii = 0;
             var destinationIndex: i32 = 0;
             while (ii <= dy) : (ii += 1) {
-                destination[@intCast(usize, destinationIndex)] = color;
+                destination[@bitCast(usize, destinationIndex)] = color;
                 if (dd >= 0) {
                     dd -= 2 * dy;
                     destinationIndex += xstep;
