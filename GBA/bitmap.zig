@@ -33,13 +33,13 @@ pub const Bitmap16 = struct {
             // Horizontal line case
             ii = 0;
             while (ii <= dx) : (ii += 1) {
-                destination[@intCast(usize, ii * xstep)] = color;
+                destination[@bitCast(usize, ii * xstep)] = color;
             }
         } else if (dx == 0) {
             // Vertical line case
             ii = 0;
             while (ii <= dy) : (ii += 1) {
-                destination[@intCast(usize, ii * ystep)] = color;
+                destination[@bitCast(usize, ii * ystep)] = color;
             }
         } else if (dx >= dy) {
             // Diagonal, slope <= 1
@@ -88,7 +88,7 @@ pub const Bitmap16 = struct {
 
             ix = 0;
             while (ix < width) : (ix += 1) {
-                destination[@intCast(usize, rectPitch + ix)] = color;
+                destination[@bitCast(usize, rectPitch + ix)] = color;
             }
         }
     }
