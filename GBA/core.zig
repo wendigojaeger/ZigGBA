@@ -1,6 +1,4 @@
 const root = @import("root");
-const isUpper = @import("std").ascii.isUpper;
-const isDigit = @import("std").ascii.isDigit;
 
 pub const GBA = struct {
     pub const MEM_IO = @intToPtr(*volatile u32, 0x04000000);
@@ -8,6 +6,14 @@ pub const GBA = struct {
     pub const REG_DISPCNT = @intToPtr(*volatile u32, @ptrToInt(MEM_IO) + 0x0000);
     pub const REG_DISPSTAT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0004);
     pub const REG_VCOUNT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0006);
+    pub const BG_PALETTE_RAM = @intToPtr([*]volatile u16, 0x05000000);
+    pub const OBJ_PALETTE_RAM = @intToPtr([*]volatile u16, 0x05000200);
+    pub const KEYINPUT = @intToPtr(*volatile u16, 0x4000130);
+    pub const EWRAM = @intToPtr([*]volatile u8, 0x02000000);
+    pub const IWRAM = @intToPtr([*]volatile u8, 0x03000000);
+
+    pub const MODE4_FRONT_VRAM = VRAM;
+    pub const MODE4_BACK_VRAM = @intToPtr([*]volatile u16, 0x0600A000);
 
     pub const SCREEN_WIDTH = 240;
     pub const SCREEN_HEIGHT = 160;
@@ -59,6 +65,9 @@ pub const GBA = struct {
             };
 
             comptime {
+                const isUpper = @import("std").ascii.isUpper;
+                const isDigit = @import("std").ascii.isDigit;
+
                 for (gameName) |value, index| {
                     var validChar = isUpper(value) or isDigit(value);
 
@@ -120,29 +129,8 @@ pub const GBA = struct {
         }
     };
 
-    pub const DisplayMode = enum {
-        Mode0,
-        Mode1,
-        Mode2,
-        Mode3,
-        Mode4,
-        Mode5,
-    };
-
-    pub const DisplayLayers = struct {
-        pub const Background0 = 0x0100;
-        pub const Background1 = 0x0200;
-        pub const Background2 = 0x0400;
-        pub const Background3 = 0x0800;
-        pub const Object = 0x1000;
-    };
-
     pub inline fn toNativeColor(red: u8, green: u8, blue: u8) u16 {
         return @as(u16, red & 0x1f) | (@as(u16, green & 0x1f) << 5) | (@as(u16, blue & 0x1f) << 10);
-    }
-
-    pub inline fn setupDisplay(mode: DisplayMode, layers: u32) void {
-        REG_DISPCNT.* = @enumToInt(mode) | layers;
     }
 
     pub const RamResetFlags = struct {
@@ -185,8 +173,25 @@ export nakedcc fn GBAMain() linksection(".gbamain") noreturn {
         \\bx r0
     );
 
+    GBAZigStartup();
+}
+
+extern var __bss_lma: u8;
+extern var __bss_start__: u8;
+extern var __bss_end__: u8;
+extern var __data_lma: u8;
+extern var __data_start__: u8;
+extern var __data_end__: u8;
+
+fn GBAZigStartup() noreturn {
     // Use BIOS function to clear all data
     GBA.BIOSRegisterRamReset();
+
+    // Clear .bss
+    @memset(@as(*volatile [1]u8, &__bss_start__), 0, @ptrToInt(&__bss_end__) - @ptrToInt(&__bss_start__));
+
+    // Copy .data section to EWRAM
+    @memcpy(@ptrCast([*]u8, &__data_start__), @ptrCast([*]const u8, &__data_lma), @ptrToInt(&__data_end__) - @ptrToInt(&__data_start__));
 
     // call user's main
     if (@hasDecl(root, "main")) {

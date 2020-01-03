@@ -5,4 +5,17 @@ pub fn build(b: *Builder) void {
     const first = addGBAExecutable(b, "first", "examples/first/first.zig");
     const mode3Draw = addGBAExecutable(b, "mode3draw", "examples/mode3draw/mode3draw.zig");
     const debugPrint = addGBAExecutable(b, "debugPrint", "examples/debugPrint/debugPrint.zig");
+
+    // Mode 4 Flip
+    const mode4flip = addGBAExecutable(b, "mode4flip", "examples/mode4flip/mode4flip.zig");
+    convertMode4Images(mode4flip, &[_]ImageSourceTarget {
+        .{
+            .source = "examples/mode4flip/front.bmp",
+            .target = "examples/mode4flip/front.agi",
+        },
+        .{
+            .source = "examples/mode4flip/back.bmp",
+            .target = "examples/mode4flip/back.agi",
+        },
+    }, "examples/mode4flip/mode4flip.agp");
 }

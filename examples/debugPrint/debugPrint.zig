@@ -1,10 +1,11 @@
 const GBA = @import("gba").GBA;
 const Debug = @import("gba").Debug;
+const LCD = @import("gba").LCD;
 
 export var gameHeader linksection(".gbaheader") = GBA.Header.setup("DEBUGPRINT", "ADPE", "00", 0);
 
 pub fn main() noreturn {
-    GBA.setupDisplay(GBA.DisplayMode.Mode3, GBA.DisplayLayers.Background2);
+    LCD.setupDisplay(LCD.DisplayMode.Mode3, LCD.DisplayLayers.Background2);
 
     Debug.init();
 

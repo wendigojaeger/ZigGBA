@@ -27,6 +27,30 @@
                         "text": "file ${workspaceFolder}/zig-cache/raw/${fileBasenameNoExtension} -enable-pretty-printing"
                     }]
             },
+        },
+        {
+            "name": "Release",
+            "type": "cppdbg",
+            "request": "launch",
+            "stopAtEntry": true,
+            "MIMode": "gdb",
+            "externalConsole": true,
+            "program": "${workspaceFolder}/zig-cache/raw/${fileBasenameNoExtension}",
+            "serverLaunchTimeout": 10000,
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "run",
+            "postDebugTask": "kill-emulator",
+            "targetArchitecture": "arm",
+            "miDebuggerServerAddress": "localhost:2345",
+            "windows": {
+                "miDebuggerPath": "C:/devkitPro/devkitARM/bin/arm-none-eabi-gdb.exe",
+                "setupCommands": [
+                    {
+                    "description": "Enable pretty-printing for gdb",
+                    "ignoreFailures": true,
+                        "text": "file ${workspaceFolder}/zig-cache/raw/${fileBasenameNoExtension} -enable-pretty-printing"
+                    }]
+            },
         }
     ]
 }

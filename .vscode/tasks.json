@@ -45,7 +45,7 @@
             "type": "shell",
             "dependsOn": ["Build"],
             "windows": {
-                "command": "C:\\mGBA\\mGBA.exe zig-cache/bin/${fileBasenameNoExtension}.gba"
+                "command": "C:\\mGBA\\mGBA.exe zig-cache/bin/${fileBasenameNoExtension}.gba;sleep 0;echo debuggerReady"
             },
             "presentation": {
                 "clear": true,

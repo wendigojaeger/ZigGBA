@@ -46,14 +46,20 @@ SECTIONS
     .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) } >rom
     __exidx_end = .;
 
-    .data : {
+    __data_lma = .;
+    .data : AT(__data_lma) {
+        __data_start__ = ABSOLUTE(.);
         *(.data)
         . = ALIGN(4);
+        __data_end__ = ABSOLUTE(.);
     } >ewram = 0xff
 
-    .bss : {
+    __bss_lma = .;
+    .bss : AT(__bss_lma) {
+        __bss_start__ = ABSOLUTE(.);
         *(COMMON)
         *(.bss)
         . = ALIGN(4);
+        __bss_end__ = ABSOLUTE(.);
     } >ewram
 }

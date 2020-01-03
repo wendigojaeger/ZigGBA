@@ -1,10 +1,15 @@
 const Builder = @import("std").build.Builder;
 const LibExeObjStep = @import("std").build.LibExeObjStep;
+const Step = @import("std").build.Step;
 const builtin = @import("std").builtin;
 const fmt = @import("std").fmt;
 const FixedBufferAllocator = @import("std").heap.FixedBufferAllocator;
 const std = @import("std");
 const fs = @import("std").fs;
+const ArrayList = @import("std").ArrayList;
+const ImageConverter = @import("assetconverter/image_converter.zig").ImageConverter;
+
+pub const ImageSourceTarget = @import("assetconverter/image_converter.zig").ImageSourceTarget;
 
 const GBALinkerScript = "GBA/gba.ld";
 
@@ -79,4 +84,44 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
     b.default_step.dependOn(&buildGBARomCommand.step);
 
     return exe;
+}
+
+const Mode4ConvertStep = struct {
+    step: Step,
+    builder: *Builder,
+    images: [] ImageSourceTarget,
+    targetPalettePath: [] const u8,
+
+    pub fn init(b: *Builder, images: [] ImageSourceTarget, targetPalettePath: [] const u8) Mode4ConvertStep {
+        return Mode4ConvertStep {
+            .builder = b,
+            .step = Step.init(b.fmt("ConvertMode4Image {}", .{targetPalettePath}), b.allocator, make),
+            .images = images,
+            .targetPalettePath = targetPalettePath,
+        };
+    }
+
+    fn make(step: *Step) !void {
+        const self = @fieldParentPtr(Mode4ConvertStep, "step", step);
+        const ImageSourceTargetList = ArrayList(ImageSourceTarget);
+
+        var fullImages = ImageSourceTargetList.init(self.builder.allocator);
+        defer fullImages.deinit();
+
+        for (self.images) |imageSourceTarget| {
+            try fullImages.append(ImageSourceTarget {
+                .source = self.builder.pathFromRoot(imageSourceTarget.source),
+                .target = self.builder.pathFromRoot(imageSourceTarget.target),
+            });
+        }
+        const fullTargetPalettePath = self.builder.pathFromRoot(self.targetPalettePath);
+
+        try ImageConverter.convertMode4Image(self.builder.allocator, fullImages.toSlice(), fullTargetPalettePath);
+    }
+};
+
+pub fn convertMode4Images(libExe: *LibExeObjStep, images: [] ImageSourceTarget, targetPalettePath: [] const u8) void {
+    const convertImageStep = libExe.builder.allocator.create(Mode4ConvertStep) catch unreachable;
+    convertImageStep.* = Mode4ConvertStep.init(libExe.builder, images, targetPalettePath);
+    libExe.step.dependOn(&convertImageStep.step);
 }

@@ -1,0 +1,4 @@
+[submodule "GBA/assetconverter/zigimg"]
+	path = GBA/assetconverter/zigimg
+	url = git@github.com:mlarouche/zigimg.git
+	branch = master

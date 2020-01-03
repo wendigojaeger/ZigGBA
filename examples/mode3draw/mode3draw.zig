@@ -1,11 +1,12 @@
 const GBA = @import("gba").GBA;
 const Color = @import("gba").Color;
 const Mode3 = @import("gba").Mode3;
+const LCD = @import("gba").LCD;
 
 export var gameHeader linksection(".gbaheader") = GBA.Header.setup("MODE3DRAW", "AWJE", "00", 0);
 
 pub fn main() noreturn {
-    GBA.setupDisplay(GBA.DisplayMode.Mode3, GBA.DisplayLayers.Background2);
+    LCD.setupDisplay(LCD.DisplayMode.Mode3, LCD.DisplayLayers.Background2);
 
     var i:i32 = 0;
     var j:i32 = 0;
