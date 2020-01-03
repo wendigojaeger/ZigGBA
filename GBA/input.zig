@@ -17,6 +17,20 @@ pub const Input = struct {
         pub const L = 1 << 9;
     };
 
+    pub const KeyIndex = enum {
+        A,
+        B,
+        Select,
+        Start,
+        Right,
+        Left,
+        Up,
+        Down,
+        R,
+        L,
+        Count,
+    };
+
     pub fn readInput() void {
         previousInput = currentInput;
         currentInput = ~GBA.KEYINPUT.*;
@@ -26,15 +40,35 @@ pub const Input = struct {
         return (currentInput & keys) == keys;
     }
 
+    pub inline fn isKeyHeld(keys: u16) bool {
+        return ((previousInput & currentInput) & keys) == keys;
+    }
+
     pub inline fn isKeyJustPressed(keys: u16) bool {
-        return (previousInput & keys) == 0 and (currentInput & keys) == keys;
+        return ((~previousInput & currentInput) & keys) == keys;
     }
 
     pub inline fn isKeyJustReleased(keys: u16) bool {
-        return (previousInput & keys) == keys and (currentInput & keys) == 0;
+        return ((previousInput & ~currentInput) & keys) == keys;
     }
 
     pub inline fn isKeyUp(keys: u16) bool {
         return (currentInput & keys) == 0;
+    }
+
+    pub inline fn getHorizontal() i32 {
+        return triState(currentInput, KeyIndex.Left, KeyIndex.Right);
+    }
+
+    pub inline fn getVertical() i32 {
+        return triState(currentInput, KeyIndex.Up, KeyIndex.Down);
+    }
+
+    pub inline fn getShoulder() i32 {
+        return triState(currentInput, KeyIndex.L, KeyIndex.R);
+    }
+
+    pub inline fn triState(input: u16, minus: KeyIndex, plus: KeyIndex) i32 {
+        return ((input >> @enumToInt(plus)) & 1) - ((input >> @enumToInt(minus)) & 1);
     }
 };

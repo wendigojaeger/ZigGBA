@@ -8,7 +8,7 @@ pub fn build(b: *Builder) void {
 
     // Mode 4 Flip
     const mode4flip = addGBAExecutable(b, "mode4flip", "examples/mode4flip/mode4flip.zig");
-    convertMode4Images(mode4flip, &[_]ImageSourceTarget {
+    convertMode4Images(mode4flip, &[_]ImageSourceTarget{
         .{
             .source = "examples/mode4flip/front.bmp",
             .target = "examples/mode4flip/front.agi",
@@ -18,4 +18,9 @@ pub fn build(b: *Builder) void {
             .target = "examples/mode4flip/back.agi",
         },
     }, "examples/mode4flip/mode4flip.agp");
+
+    // Key demo
+    const keydemo = addGBAExecutable(b, "keydemo", "examples/keydemo/keydemo.zig");
+    // TODO: Use image created by the build system once we support indexed image
+    keydemo.addCSourceFile("examples/keydemo/gba_pic.c", &[_][]const u8{"-std=c99"});
 }
