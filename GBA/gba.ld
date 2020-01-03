@@ -55,10 +55,12 @@ SECTIONS
     } >ewram = 0xff
 
     __bss_lma = .;
-    .bss : AT(__bss_lma) {
+    .bss ALIGN(4) (NOLOAD): AT(__bss_lma) {
         __bss_start__ = ABSOLUTE(.);
-        *(COMMON)
+        *(.dynbss)
+		*(.gnu.linkonce.b*)
         *(.bss)
+        *(COMMON)
         . = ALIGN(4);
         __bss_end__ = ABSOLUTE(.);
     } >ewram
