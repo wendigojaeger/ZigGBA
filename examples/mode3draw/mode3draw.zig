@@ -6,10 +6,13 @@ const LCD = @import("gba").LCD;
 export var gameHeader linksection(".gbaheader") = GBA.Header.setup("MODE3DRAW", "AWJE", "00", 0);
 
 pub fn main() noreturn {
-    LCD.setupDisplay(LCD.DisplayMode.Mode3, LCD.DisplayLayers.Background2);
+    LCD.setupDisplayControl(.{
+        .mode = .Mode3,
+        .backgroundLayer2 = .Show,
+    });
 
-    var i:i32 = 0;
-    var j:i32 = 0;
+    var i: i32 = 0;
+    var j: i32 = 0;
 
     // Fill screen with grey color
     Mode3.fill(GBA.toNativeColor(12, 12, 12));
@@ -26,16 +29,16 @@ pub fn main() noreturn {
 
     // Lines in top right frame
     while (i <= 8) : (i += 1) {
-        j = 3*i + 7;
-        Mode3.line(132+11*i, 9, 226, 12+7*i, GBA.toNativeColor(@intCast(u8, j), 0, @intCast(u8, j)));
-        Mode3.line(226-11*i, 70, 133, 69-7*i, GBA.toNativeColor(@intCast(u8, j), 0, @intCast(u8, j)));
+        j = 3 * i + 7;
+        Mode3.line(132 + 11 * i, 9, 226, 12 + 7 * i, GBA.toNativeColor(@intCast(u8, j), 0, @intCast(u8, j)));
+        Mode3.line(226 - 11 * i, 70, 133, 69 - 7 * i, GBA.toNativeColor(@intCast(u8, j), 0, @intCast(u8, j)));
     }
 
     // Lines in bottom left frame
     i = 0;
     while (i <= 8) : (i += 1) {
-        j = 3*i + 7;
-        Mode3.line(15+11*i, 88, 104-11*i, 150, GBA.toNativeColor(0, @intCast(u8, j), @intCast(u8, j)));
+        j = 3 * i + 7;
+        Mode3.line(15 + 11 * i, 88, 104 - 11 * i, 150, GBA.toNativeColor(0, @intCast(u8, j), @intCast(u8, j)));
     }
 
     while (true) {}

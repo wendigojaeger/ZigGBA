@@ -5,7 +5,10 @@ const LCD = @import("gba").LCD;
 export var gameHeader linksection(".gbaheader") = GBA.Header.setup("FIRST", "AFSE", "00", 0);
 
 pub fn main() noreturn {
-    LCD.setupDisplay(LCD.DisplayMode.Mode3, LCD.DisplayLayers.Background2);
+    LCD.setupDisplayControl(.{
+        .mode = .Mode3,
+        .backgroundLayer2 = .Show,
+    });
 
     Mode3.setPixel(120, 80, GBA.toNativeColor(31, 0, 0));
     Mode3.setPixel(136, 80, GBA.toNativeColor(0, 31, 0));

@@ -38,7 +38,10 @@ fn loadImageData() void {
 }
 
 pub fn main() noreturn {
-    LCD.setupDisplay(LCD.DisplayMode.Mode4, LCD.DisplayLayers.Background2);
+    LCD.setupDisplayControl(.{
+        .mode = .Mode4,
+        .backgroundLayer2 = .Show,
+    });
 
     loadImageData();
 

@@ -19,8 +19,11 @@ pub fn build(b: *Builder) void {
         },
     }, "examples/mode4flip/mode4flip.agp");
 
-    // Key demo
+    // Key demo, TODO: Use image created by the build system once we support indexed image
     const keydemo = addGBAExecutable(b, "keydemo", "examples/keydemo/keydemo.zig");
-    // TODO: Use image created by the build system once we support indexed image
     keydemo.addCSourceFile("examples/keydemo/gba_pic.c", &[_][]const u8{"-std=c99"});
+
+    // Simple OBJ demo, TODO: Use tile and palette data created by the build system
+    const objDemo = addGBAExecutable(b, "objDemo", "examples/objDemo/objDemo.zig");
+    objDemo.addCSourceFile("examples/objDemo/metroid_sprite_data.c", &[_][]const u8{"-std=c99"});
 }

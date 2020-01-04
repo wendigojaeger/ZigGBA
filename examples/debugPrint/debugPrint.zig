@@ -5,7 +5,10 @@ const LCD = @import("gba").LCD;
 export var gameHeader linksection(".gbaheader") = GBA.Header.setup("DEBUGPRINT", "ADPE", "00", 0);
 
 pub fn main() noreturn {
-    LCD.setupDisplay(LCD.DisplayMode.Mode3, LCD.DisplayLayers.Background2);
+    LCD.setupDisplayControl(.{
+        .mode = .Mode3,
+        .backgroundLayer2 = .Show,
+    });
 
     Debug.init();
 

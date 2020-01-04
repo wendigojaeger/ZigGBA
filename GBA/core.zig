@@ -1,16 +1,19 @@
 const root = @import("root");
 
 pub const GBA = struct {
-    pub const MEM_IO = @intToPtr(*volatile u32, 0x04000000);
     pub const VRAM = @intToPtr([*]volatile u16, 0x06000000);
-    pub const REG_DISPCNT = @intToPtr(*volatile u32, @ptrToInt(MEM_IO) + 0x0000);
-    pub const REG_DISPSTAT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0004);
-    pub const REG_VCOUNT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0006);
+    pub const SPRITE_VRAM = @intToPtr([*]volatile u16, 0x06010000);
     pub const BG_PALETTE_RAM = @intToPtr([*]volatile u16, 0x05000000);
     pub const OBJ_PALETTE_RAM = @intToPtr([*]volatile u16, 0x05000200);
-    pub const KEYINPUT = @intToPtr(*volatile u16, 0x4000130);
     pub const EWRAM = @intToPtr([*]volatile u8, 0x02000000);
     pub const IWRAM = @intToPtr([*]volatile u8, 0x03000000);
+    pub const OAM = @intToPtr([*]volatile u16, 0x07000000);
+
+    pub const MEM_IO = @intToPtr(*volatile u32, 0x04000000);
+    pub const REG_DISPCNT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0000);
+    pub const REG_DISPSTAT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0004);
+    pub const REG_VCOUNT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0006);
+    pub const REG_KEYINPUT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0130);
 
     pub const MODE4_FRONT_VRAM = VRAM;
     pub const MODE4_BACK_VRAM = @intToPtr([*]volatile u16, 0x0600A000);

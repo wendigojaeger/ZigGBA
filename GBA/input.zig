@@ -33,7 +33,7 @@ pub const Input = struct {
 
     pub fn readInput() void {
         previousInput = currentInput;
-        currentInput = ~GBA.KEYINPUT.*;
+        currentInput = ~GBA.REG_KEYINPUT.*;
     }
 
     pub inline fn isKeyDown(keys: u16) bool {
@@ -68,7 +68,11 @@ pub const Input = struct {
         return triState(currentInput, KeyIndex.L, KeyIndex.R);
     }
 
+    pub inline fn getShoulderJustPressed() i32 {
+        return triState((~previousInput & currentInput), KeyIndex.L, KeyIndex.R);
+    }
+
     pub inline fn triState(input: u16, minus: KeyIndex, plus: KeyIndex) i32 {
-        return ((input >> @enumToInt(plus)) & 1) - ((input >> @enumToInt(minus)) & 1);
+        return ((@intCast(i32, input) >> @intCast(u5, @enumToInt(plus))) & 1) - ((@intCast(i32, input) >> @intCast(u5, @enumToInt(minus))) & 1);
     }
 };

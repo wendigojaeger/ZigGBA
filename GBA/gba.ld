@@ -58,7 +58,7 @@ SECTIONS
     .bss ALIGN(4) (NOLOAD): AT(__bss_lma) {
         __bss_start__ = ABSOLUTE(.);
         *(.dynbss)
-		*(.gnu.linkonce.b*)
+        *(.gnu.linkonce.b*)
         *(.bss)
         *(COMMON)
         . = ALIGN(4);
