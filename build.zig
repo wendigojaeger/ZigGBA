@@ -26,4 +26,8 @@ pub fn build(b: *Builder) void {
     // Simple OBJ demo, TODO: Use tile and palette data created by the build system
     const objDemo = addGBAExecutable(b, "objDemo", "examples/objDemo/objDemo.zig");
     objDemo.addCSourceFile("examples/objDemo/metroid_sprite_data.c", &[_][]const u8{"-std=c99"});
+
+    // tileDemo, TODO: Use tileset, tile and palette created by the build system
+    const tileDemo = addGBAExecutable(b, "tileDemo", "examples/tileDemo/tileDemo.zig");
+    tileDemo.addCSourceFile("examples/tileDemo/brin.c", &[_][]const u8{"-std=c99"});
 }

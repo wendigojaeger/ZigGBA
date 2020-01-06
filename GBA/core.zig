@@ -25,6 +25,11 @@ pub const GBA = struct {
     pub const MODE4_SCREEN_SIZE = 0x9600;
     pub const MODE5_SCREEN_SIZE = 40 * 1024;
 
+    pub const PaletteMode = enum(u1) {
+        Color16,
+        Color256,
+    };
+
     pub const Header = packed struct {
         romEntryPoint: u32,
         nintendoLogo: [156]u8,

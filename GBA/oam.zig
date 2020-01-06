@@ -7,11 +7,6 @@ pub const OAM = struct {
         ObjWindow,
     };
 
-    pub const PaletteMode = enum(u1) {
-        Color16,
-        Color256,
-    };
-
     pub const FlipSettings = packed struct {
         dummy: u3 = 0,
         horizontalFlip: u1 = 0,
@@ -45,7 +40,7 @@ pub const OAM = struct {
         doubleSizeOrVisible: u1 = 0,
         mode: ObjMode = .Normal,
         mosaic: u1 = 0,
-        paletteMode: PaletteMode = .Color16,
+        paletteMode: GBA.PaletteMode = .Color16,
         shape: ObjectShape = .Square,
         x: u9 = 0,
         flip: FlipSettings = FlipSettings{},

@@ -49,8 +49,8 @@ pub fn main() noreturn {
 
         Input.readInput();
 
-        x += @intCast(i16, Input.getHorizontal() * 2);
-        y += @intCast(i16, Input.getVertical() * 2);
+        x += Input.getHorizontal() * 2;
+        y += Input.getVertical() * 2;
 
         tileIndex += Input.getShoulderJustPressed();
 
