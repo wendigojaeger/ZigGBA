@@ -9,18 +9,8 @@ extern const metrPal: [16]c_uint;
 extern const metrTiles: [512]c_uint;
 
 fn loadSpriteData() void {
-    const spriteVram = @ptrCast([*]volatile u32, GBA.SPRITE_VRAM);
-    const objPaletteRam = @ptrCast([*]volatile u32, GBA.OBJ_PALETTE_RAM);
-
-    var tileIndex: usize = 0;
-    while (tileIndex < metrTiles.len) : (tileIndex += 1) {
-        spriteVram[tileIndex] = metrTiles[tileIndex];
-    }
-
-    var paletteIndex: usize = 0;
-    while (paletteIndex < metrPal.len) : (paletteIndex += 1) {
-        objPaletteRam[paletteIndex] = metrPal[paletteIndex];
-    }
+    GBA.memcpy32(GBA.SPRITE_VRAM, &metrTiles, metrTiles.len * 4);
+    GBA.memcpy32(GBA.OBJ_PALETTE_RAM, &metrPal, metrPal.len * 4);
 }
 
 pub fn main() noreturn {

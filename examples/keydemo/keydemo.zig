@@ -9,18 +9,8 @@ extern const gba_picPal: [8]c_uint;
 extern const gba_picBitmap: [9600]c_uint;
 
 fn loadImageData() void {
-    const vramFront = @ptrCast([*]volatile u32, GBA.MODE4_FRONT_VRAM);
-    const bgPaletteRam = @ptrCast([*]volatile u32, GBA.BG_PALETTE_RAM);
-
-    var bitmapIndex: usize = 0;
-    while (bitmapIndex < gba_picBitmap.len) : (bitmapIndex += 1) {
-        vramFront[bitmapIndex] = gba_picBitmap[bitmapIndex];
-    }
-
-    var paletteIndex: usize = 0;
-    while (paletteIndex < gba_picPal.len) : (paletteIndex += 1) {
-        bgPaletteRam[paletteIndex] = gba_picPal[paletteIndex];
-    }
+    GBA.memcpy32(GBA.MODE4_FRONT_VRAM, &gba_picBitmap, gba_picBitmap.len * 4);
+    GBA.memcpy32(GBA.BG_PALETTE_RAM, &gba_picPal, gba_picPal.len * 4);
 }
 
 pub fn main() noreturn {

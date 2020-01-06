@@ -10,24 +10,11 @@ extern const brinMap: [2048]c_ushort;
 export var gameHeader linksection(".gbaheader") = GBA.Header.setup("TILEDEMO", "ATDE", "00", 0);
 
 fn loadData() void {
-    const tileRam = GBA.VRAM;
     const mapRam = @intToPtr([*]volatile u16, @ptrToInt(GBA.VRAM) + (30 * 2048));
-    const bgPaletteRam = GBA.BG_PALETTE_RAM;
 
-    var paletteIndex: usize = 0;
-    while (paletteIndex < brinPal.len) : (paletteIndex += 1) {
-        bgPaletteRam[paletteIndex] = brinPal[paletteIndex];
-    }
-
-    var tileIndex: usize = 0;
-    while (tileIndex < brinTiles.len) : (tileIndex += 1) {
-        tileRam[tileIndex] = brinTiles[tileIndex];
-    }
-
-    var mapIndex: usize = 0;
-    while (mapIndex < brinMap.len) : (mapIndex += 1) {
-        mapRam[mapIndex] = brinMap[mapIndex];
-    }
+    GBA.memcpy32(GBA.BG_PALETTE_RAM, &brinPal, brinPal.len * 2);
+    GBA.memcpy32(GBA.VRAM, &brinTiles, brinTiles.len * 2);
+    GBA.memcpy32(mapRam, &brinMap, brinMap.len * 2);
 }
 
 pub fn main() noreturn {
