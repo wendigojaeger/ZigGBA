@@ -255,7 +255,7 @@ pub const GBA = struct {
     }
 };
 
-export nakedcc fn GBAMain() linksection(".gbamain") noreturn {
+export fn GBAMain() linksection(".gbamain") callconv(.Naked) noreturn {
     // Assembly init code
     asm volatile (
         \\.arm

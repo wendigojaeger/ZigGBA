@@ -72,9 +72,8 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
     }
 
     // TODO: Use builtin raw output when available in Zig compiler
-    const objCopyCommand = if (builtin.os == builtin.Os.windows) "C:\\Programmation\\Zig\\llvm+clang-9.0.0-win64-msvc-mt\\bin\\llvm-objcopy.exe" else "llvm-objcopy";
     const buildGBARomCommand = b.addSystemCommand(&[_][]const u8{
-        objCopyCommand, exe.getOutputPath(),
+         "llvm-objcopy", exe.getOutputPath(),
         "-O",           "binary",
         outputPath,
     });
