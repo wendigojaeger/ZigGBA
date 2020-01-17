@@ -14,13 +14,12 @@ pub fn main() noreturn {
 
     Debug.write("HELLO DEBUGGER!") catch unreachable;
 
-    // TODO: requires __clzsi2 in compiler-rt
-    // const gameName = "DebugPrint";
+    const gameName = "DebugPrint";
 
-    // var i:u32 = 0;
-    // while (i < 10) : (i += 1) {
-    //     Debug.print("From {}: {}", .{gameName, i}) catch unreachable;
-    // }
+    var i:u32 = 0;
+    while (i < 10) : (i += 1) {
+        Debug.print("From {}: {}", .{gameName, i}) catch unreachable;
+    }
 
     while (true) {}
 }
