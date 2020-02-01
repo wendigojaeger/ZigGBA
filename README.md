@@ -2,6 +2,10 @@
 
 This is a work in progress SDK for creating Game Boy Advance games using [Zig](https://ziglang.org/) programming language. Once Zig has a proper package manager, I hope that it would as easy as import the ZigGBA package. Inspired by [TONC GBA tutorial](https://www.coranac.com/tonc/text/)
 
+## Community
+
+Join the community on Matrix https://matrix.to/#/+ziggba:matrix.org
+
 ## Build
 This project assume current Zig master (0.5.0+b5ac079f8). For now, you need llvm-objcopy in your PATH.
 

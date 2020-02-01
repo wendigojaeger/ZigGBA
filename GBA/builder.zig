@@ -21,6 +21,7 @@ fn gbaThumbTarget() std.Target {
             .arch = std.Target.Arch{ .thumb = std.Target.Arch.Arm32.v4t },
             .os = .freestanding,
             .abi = .none,
+            .cpu_features = std.Target.CpuFeatures.initFromCpu(std.Target.Arch{ .thumb = std.Target.Arch.Arm32.v4t }, &std.Target.arm.cpu.arm7tdmi)
         },
     };
 }
