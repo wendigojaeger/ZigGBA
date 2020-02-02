@@ -1,4 +1,5 @@
 const root = @import("root");
+const BIOS = @import("bios.zig").BIOS;
 
 pub const GBA = struct {
     pub const VRAM = @intToPtr([*]volatile u16, 0x06000000);
@@ -28,6 +29,23 @@ pub const GBA = struct {
     pub const PaletteMode = enum(u1) {
         Color16,
         Color256,
+    };
+
+    pub const InterruptFlags = packed struct {
+        vblank: bool = false,
+        hblank: bool = false,
+        vcounter: bool = false,
+        timer0: bool = false,
+        timer1: bool = false,
+        timer2: bool = false,
+        timer3: bool = false,
+        serial: bool = false,
+        dma0: bool = false,
+        dma1: bool = false,
+        dma2: bool = false,
+        dma3: bool = false,
+        keypad: bool = false,
+        gamepak: bool = false,
     };
 
     pub const Header = packed struct {
@@ -139,27 +157,6 @@ pub const GBA = struct {
 
     pub inline fn toNativeColor(red: u8, green: u8, blue: u8) u16 {
         return @as(u16, red & 0x1f) | (@as(u16, green & 0x1f) << 5) | (@as(u16, blue & 0x1f) << 10);
-    }
-
-    pub const RamResetFlags = struct {
-        pub const clearEwRam = 1 << 0;
-        pub const clearIwram = 1 << 1;
-        pub const clearPalette = 1 << 2;
-        pub const clearVRAM = 1 << 3;
-        pub const clearOAM = 1 << 4;
-        pub const resetSIORegisters = 1 << 5;
-        pub const resetSoundRegisters = 1 << 6;
-        pub const resetOtherRegisters = 1 << 7;
-
-        const All = clearEwRam | clearIwram | clearPalette | clearVRAM | clearOAM | resetSIORegisters | resetSoundRegisters | resetOtherRegisters;
-    };
-
-    // TODO: Figure out how to pass the reset flags and don't get eaten up by the optimizer
-    pub fn BIOSRegisterRamReset() void {
-        asm volatile (
-            \\movs r0, #0xFF
-            \\swi 1
-        );
     }
 
     // TODO: maybe put this in IWRAM ?
@@ -285,7 +282,7 @@ extern var __data_end__: u8;
 
 fn GBAZigStartup() noreturn {
     // Use BIOS function to clear all data
-    GBA.BIOSRegisterRamReset();
+    BIOS.registerRamReset(BIOS.RamResetFlags.All);
 
     // Clear .bss
     GBA.memset32(@ptrCast([*]volatile u8, &__bss_start__), 0, @ptrToInt(&__bss_end__) - @ptrToInt(&__bss_start__));

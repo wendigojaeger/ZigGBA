@@ -15,13 +15,20 @@ const GBALinkerScript = "GBA/gba.ld";
 
 var IsDebugOption: ?bool = null;
 
+const gba_arm_arch = std.Target.Arch{ .arm = std.Target.Arch.Arm32.v4t };
+const gba_thumb_arch = std.Target.Arch{ .thumb = std.Target.Arch.Arm32.v4t };
+
 fn gbaThumbTarget() std.Target {
     return std.Target{
         .Cross = std.Target.Cross{
-            .arch = std.Target.Arch{ .thumb = std.Target.Arch.Arm32.v4t },
+            .arch = gba_thumb_arch,
             .os = .freestanding,
             .abi = .none,
-            .cpu_features = std.Target.CpuFeatures.initFromCpu(std.Target.Arch{ .thumb = std.Target.Arch.Arm32.v4t }, &std.Target.arm.cpu.arm7tdmi)
+            .cpu_features = blk: {
+                var cpuFeatures = std.Target.CpuFeatures.initFromCpu(gba_thumb_arch, &std.Target.arm.cpu.arm7tdmi);
+                cpuFeatures.features.addFeature(@enumToInt(std.Target.arm.Feature.thumb_mode));
+                break :blk cpuFeatures;
+            },
         },
     };
 }
@@ -74,7 +81,7 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
 
     // TODO: Use builtin raw output when available in Zig compiler
     const buildGBARomCommand = b.addSystemCommand(&[_][]const u8{
-         "llvm-objcopy", exe.getOutputPath(),
+        "llvm-objcopy", exe.getOutputPath(),
         "-O",           "binary",
         outputPath,
     });
@@ -89,11 +96,11 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
 const Mode4ConvertStep = struct {
     step: Step,
     builder: *Builder,
-    images: [] ImageSourceTarget,
-    targetPalettePath: [] const u8,
+    images: []ImageSourceTarget,
+    targetPalettePath: []const u8,
 
-    pub fn init(b: *Builder, images: [] ImageSourceTarget, targetPalettePath: [] const u8) Mode4ConvertStep {
-        return Mode4ConvertStep {
+    pub fn init(b: *Builder, images: []ImageSourceTarget, targetPalettePath: []const u8) Mode4ConvertStep {
+        return Mode4ConvertStep{
             .builder = b,
             .step = Step.init(b.fmt("ConvertMode4Image {}", .{targetPalettePath}), b.allocator, make),
             .images = images,
@@ -109,7 +116,7 @@ const Mode4ConvertStep = struct {
         defer fullImages.deinit();
 
         for (self.images) |imageSourceTarget| {
-            try fullImages.append(ImageSourceTarget {
+            try fullImages.append(ImageSourceTarget{
                 .source = self.builder.pathFromRoot(imageSourceTarget.source),
                 .target = self.builder.pathFromRoot(imageSourceTarget.target),
             });
@@ -120,7 +127,7 @@ const Mode4ConvertStep = struct {
     }
 };
 
-pub fn convertMode4Images(libExe: *LibExeObjStep, images: [] ImageSourceTarget, targetPalettePath: [] const u8) void {
+pub fn convertMode4Images(libExe: *LibExeObjStep, images: []ImageSourceTarget, targetPalettePath: []const u8) void {
     const convertImageStep = libExe.builder.allocator.create(Mode4ConvertStep) catch unreachable;
     convertImageStep.* = Mode4ConvertStep.init(libExe.builder, images, targetPalettePath);
     libExe.step.dependOn(&convertImageStep.step);
