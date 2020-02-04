@@ -130,18 +130,21 @@ pub const BIOS = struct {
     //     return @bitCast(DivResult, systemCall2Return3(6, @bitCast(u32, numerator), @bitCast(u32, denominator)));
     // }
 
-    // TODO: divARm (swi 7)
+    // TODO: divArm (swi 7)
 
     pub inline fn sqrt(value: u32) u16 {
         return @truncate(u16, systemCall1Return(0x08, value));
     }
 
     pub inline fn arcTan(value: i16) i16 {
-        return @intCast(i16, systemCall1Return(0x09, @intCast(u32, value)));
+        const paramValue =  @intCast(u32, @bitCast(u16, value));
+        return @truncate(i16, @bitCast(i32, systemCall1Return(0x09, paramValue)));
     }
 
     pub inline fn arcTan2(x: i16, y: i16) i16 {
-        return @intCast(i16, systemCall2Return(0x0A, @intCast(u32, x), @intCast(u32, y)));
+        const paramX = @intCast(u32, @bitCast(u16, x));
+        const paramY = @intCast(u32, @bitCast(u16, y));
+        return @truncate(i16, @bitCast(i32, systemCall2Return(0x0A, paramX, paramY)));
     }
 
     pub inline fn cpuSet(source: *const u32, destination: *u32, args: CpuSetArgs) void {
