@@ -14,6 +14,7 @@ pub const ImageSourceTarget = @import("assetconverter/image_converter.zig").Imag
 const GBALinkerScript = "GBA/gba.ld";
 
 var IsDebugOption: ?bool = null;
+var UseGDBOption: ?bool = null;
 
 const gba_arm_arch = std.Target.Arch{ .arm = std.Target.Arch.Arm32.v4t };
 const gba_thumb_arch = std.Target.Arch{ .thumb = std.Target.Arch.Arm32.v4t };
@@ -49,46 +50,42 @@ pub fn createGBALib(b: *Builder, isDebug: bool) *LibExeObjStep {
 }
 
 pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8) *LibExeObjStep {
+    const isDebug = blk: {
+        if (IsDebugOption) |value| {
+            break :blk value;
+        } else {
+            const newIsDebug = b.option(bool, "debug", "Generate a debug build") orelse false;
+            IsDebugOption = newIsDebug;
+            break :blk newIsDebug;
+        }
+    };
+
+    const useGDB = blk: {
+        if (UseGDBOption) |value| {
+            break :blk value;
+        } else {
+            const gdb = b.option(bool, "gdb", "Generate a ELF file for easier debugging with mGBA remote GDB support") orelse false;
+            UseGDBOption = gdb;
+            break :blk gdb;
+        }
+    };
+
     const exe = b.addExecutable(romName, sourceFile);
 
-    var isDebug = false;
-    if (IsDebugOption) |value| {
-        isDebug = value;
-    } else {
-        isDebug = b.option(bool, "debug", "Generate a debug build for easier debugging with mGBA") orelse false;
-        IsDebugOption = isDebug;
-    }
-
     exe.setTheTarget(gbaThumbTarget());
-
-    exe.setOutputDir("zig-cache/raw");
     exe.setLinkerScriptPath(GBALinkerScript);
     exe.setBuildMode(if (isDebug) builtin.Mode.Debug else builtin.Mode.ReleaseFast);
+    if (useGDB) {
+        exe.install();
+    } else {
+        exe.installRaw(b.fmt("{}.gba", .{romName}));
+    }
 
     const gbaLib = createGBALib(b, isDebug);
     exe.addPackagePath("gba", "GBA/gba.zig");
     exe.linkLibrary(gbaLib);
 
-    var allocBuffer: [4 * 1024]u8 = undefined;
-    var fixed = FixedBufferAllocator.init(allocBuffer[0..]);
-    const fixedAllocator = &fixed.allocator;
-
-    const outputPath = fmt.allocPrint(fixedAllocator, "zig-cache/bin/{}.gba", .{romName}) catch unreachable;
-
-    if (fs.path.dirname(outputPath)) |dirPath| {
-        _ = fs.makePath(fixedAllocator, dirPath) catch unreachable;
-    }
-
-    // TODO: Use builtin raw output when available in Zig compiler
-    const buildGBARomCommand = b.addSystemCommand(&[_][]const u8{
-        "llvm-objcopy", exe.getOutputPath(),
-        "-O",           "binary",
-        outputPath,
-    });
-
-    buildGBARomCommand.step.dependOn(&exe.step);
-
-    b.default_step.dependOn(&buildGBARomCommand.step);
+    b.default_step.dependOn(&exe.step);
 
     return exe;
 }

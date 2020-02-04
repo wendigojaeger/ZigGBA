@@ -11,10 +11,10 @@
             "stopAtEntry": true,
             "MIMode": "gdb",
             "externalConsole": true,
-            "program": "${workspaceFolder}/zig-cache/raw/${fileBasenameNoExtension}",
+            "program": "${workspaceFolder}/zig-cache/bin/${fileBasenameNoExtension}",
             "serverLaunchTimeout": 10000,
             "cwd": "${workspaceRoot}",
-            "preLaunchTask": "debugRun",
+            "preLaunchTask": "gdbDebugRun",
             "postDebugTask": "kill-emulator",
             "targetArchitecture": "arm",
             "miDebuggerServerAddress": "localhost:2345",
@@ -24,7 +24,7 @@
                     {
                     "description": "Enable pretty-printing for gdb",
                     "ignoreFailures": true,
-                        "text": "file ${workspaceFolder}/zig-cache/raw/${fileBasenameNoExtension} -enable-pretty-printing"
+                        "text": "file ${workspaceFolder}/zig-cache/bin/${fileBasenameNoExtension} -enable-pretty-printing"
                     }]
             },
         },
@@ -35,10 +35,10 @@
             "stopAtEntry": true,
             "MIMode": "gdb",
             "externalConsole": true,
-            "program": "${workspaceFolder}/zig-cache/raw/${fileBasenameNoExtension}",
+            "program": "${workspaceFolder}/zig-cache/bin/${fileBasenameNoExtension}",
             "serverLaunchTimeout": 10000,
             "cwd": "${workspaceRoot}",
-            "preLaunchTask": "run",
+            "preLaunchTask": "gdbReleaseRun",
             "postDebugTask": "kill-emulator",
             "targetArchitecture": "arm",
             "miDebuggerServerAddress": "localhost:2345",
@@ -48,7 +48,7 @@
                     {
                     "description": "Enable pretty-printing for gdb",
                     "ignoreFailures": true,
-                        "text": "file ${workspaceFolder}/zig-cache/raw/${fileBasenameNoExtension} -enable-pretty-printing"
+                        "text": "file ${workspaceFolder}/zig-cache/bin/${fileBasenameNoExtension} -enable-pretty-printing"
                     }]
             },
         }

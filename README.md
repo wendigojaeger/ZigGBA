@@ -7,7 +7,7 @@ This is a work in progress SDK for creating Game Boy Advance games using [Zig](h
 Join the community on Matrix https://matrix.to/#/+ziggba:matrix.org
 
 ## Build
-This project assume current Zig master (0.5.0+b5ac079f8). For now, you need llvm-objcopy in your PATH.
+This project assume current Zig master (0.5.0+7cc25a5fb).
 
 To build, simply use Zig's integrated build system
 ```Shell

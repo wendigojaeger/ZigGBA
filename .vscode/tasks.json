@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build",
+            "label": "Build (Release)",
             "type": "shell",
             "command": "zig build",
             "problemMatcher": "$gcc",
@@ -20,9 +20,51 @@
             "problemMatcher": "$gcc"
         },
         {
+            "label": "Build GDB (Release)",
+            "type": "shell",
+            "command": "zig build -Dgdb",
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build GDB (Debug)",
+            "type": "shell",
+            "command": "zig build -Dgdb -Ddebug",
+            "problemMatcher": "$gcc"
+        },
+        {
             "label": "Format current file",
             "type": "shell",
             "command": "zig fmt ${file}",
+            "problemMatcher": []
+        },
+        {
+            "label": "gdbDebugRun",
+            "type": "shell",
+            "dependsOn": ["Build GDB (Debug)"],
+            "windows": {
+                "command": "C:\\mGBA\\mGBA.exe -g zig-cache/bin/${fileBasenameNoExtension};sleep 0;echo debuggerReady"
+            },
+            "presentation": {
+                "clear": true,
+                "reveal": "always",
+                "panel": "shared",
+            },
+            "command": "debuggerReady",
+            "problemMatcher": []
+        },
+        {
+            "label": "gdbReleaseRun",
+            "type": "shell",
+            "dependsOn": ["Build GDB (Release)"],
+            "windows": {
+                "command": "C:\\mGBA\\mGBA.exe -g zig-cache/bin/${fileBasenameNoExtension};sleep 0;echo debuggerReady"
+            },
+            "presentation": {
+                "clear": true,
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "command": "debuggerReady",
             "problemMatcher": []
         },
         {
@@ -30,27 +72,27 @@
             "type": "shell",
             "dependsOn": ["Build (Debug)"],
             "windows": {
-                "command": "C:\\mGBA\\mGBA.exe -g zig-cache/raw/${fileBasenameNoExtension};sleep 0;echo debuggerReady"
+                "command": "C:\\mGBA\\mGBA.exe zig-cache/bin/${fileBasenameNoExtension}.gba"
             },
             "presentation": {
                 "clear": true,
                 "reveal": "always",
-                "panel": "new"
+                "panel": "shared",
             },
             "command": "debuggerReady",
             "problemMatcher": []
         },
         {
-            "label": "run",
+            "label": "releaseRun",
             "type": "shell",
-            "dependsOn": ["Build"],
+            "dependsOn": ["Build (Release)"],
             "windows": {
                 "command": "C:\\mGBA\\mGBA.exe zig-cache/bin/${fileBasenameNoExtension}.gba;sleep 0;echo debuggerReady"
             },
             "presentation": {
                 "clear": true,
                 "reveal": "always",
-                "panel": "new"
+                "panel": "shared"
             },
             "command": "debuggerReady",
             "problemMatcher": []
@@ -58,7 +100,7 @@
         {
             "label": "kill-emulator",
             "type": "shell",
-            "command": "taskkill /im mGBA.exe /F",
+            "command": "taskkill /im mGBA.exe /F"
          }
     ]
 }
