@@ -2,3 +2,4 @@ zig-cache
 /refs
 *.agi
 *.agp
+*.log

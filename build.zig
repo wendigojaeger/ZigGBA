@@ -33,4 +33,8 @@ pub fn build(b: *Builder) void {
 
     // screenBlock
     const screenBlock = addGBAExecutable(b, "screenBlock", "examples/screenBlock/screenBlock.zig");
+
+    // charBlock
+    const charBlock = addGBAExecutable(b, "charBlock", "examples/charBlock/charBlock.zig");
+    charBlock.addCSourceFile("examples/charBlock/cbb_ids.c", &[_][]const u8{"-std=c99"});
 }

@@ -4,15 +4,14 @@ const LCD = @import("gba").LCD;
 
 export var gameHeader linksection(".gbaheader") = GBA.Header.setup("MODE4FLIP", "AMFE", "00", 0);
 
-// FIXME: somehow export align the const data properly
-export const frontImageData = @embedFile("front.agi");
-export const backImageData = @embedFile("back.agi");
-export const paletteData = @embedFile("mode4flip.agp");
+const frontImageData = @embedFile("front.agi");
+const backImageData = @embedFile("back.agi");
+const paletteData = @embedFile("mode4flip.agp");
 
 fn loadImageData() void {
-    GBA.memcpy32(GBA.MODE4_FRONT_VRAM, @ptrCast([*] const u8, frontImageData), frontImageData.len);
-    GBA.memcpy32(GBA.MODE4_BACK_VRAM, @ptrCast([*] const u8, backImageData), backImageData.len);
-    GBA.memcpy32(GBA.BG_PALETTE_RAM, @ptrCast([*] const u8, paletteData), paletteData.len);
+    GBA.memcpy32(GBA.MODE4_FRONT_VRAM, @ptrCast([*] align(2) const u8, frontImageData), frontImageData.len);
+    GBA.memcpy32(GBA.MODE4_BACK_VRAM, @ptrCast([*] align(2) const u8, backImageData), backImageData.len);
+    GBA.memcpy32(GBA.BG_PALETTE_RAM, @ptrCast([*] align(2) const u8, paletteData), paletteData.len);
 }
 
 pub fn main() noreturn {
