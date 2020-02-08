@@ -26,11 +26,11 @@ pub const LCD = struct {
 
     pub const DisplayControl = packed struct {
         mode: DisplayMode = .Mode0,
-        gameBoyColorMode: u1 = 0,
+        gameBoyColorMode: bool = false,
         pageSelect: u1 = 0,
-        oamAccessDuringHBlank: u1 = 0,
+        oamAccessDuringHBlank: bool = false,
         objVramCharacterMapping: ObjCharacterMapping = .TwoDimension,
-        forcedBlank: u1 = 0,
+        forcedBlank: bool = false,
         backgroundLayer0: Visiblity = .Hide,
         backgroundLayer1: Visiblity = .Hide,
         backgroundLayer2: Visiblity = .Hide,

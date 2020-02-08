@@ -26,6 +26,8 @@ pub const GBA = struct {
     pub const MODE4_SCREEN_SIZE = 0x9600;
     pub const MODE5_SCREEN_SIZE = 40 * 1024;
 
+    pub const PaletteBank = [16]u16;
+
     pub const PaletteMode = enum(u1) {
         Color16,
         Color256,

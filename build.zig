@@ -30,4 +30,7 @@ pub fn build(b: *Builder) void {
     // tileDemo, TODO: Use tileset, tile and palette created by the build system
     const tileDemo = addGBAExecutable(b, "tileDemo", "examples/tileDemo/tileDemo.zig");
     tileDemo.addCSourceFile("examples/tileDemo/brin.c", &[_][]const u8{"-std=c99"});
+
+    // screenBlock
+    const screenBlock = addGBAExecutable(b, "screenBlock", "examples/screenBlock/screenBlock.zig");
 }

@@ -1,11 +1,13 @@
 const GBA = @import("core.zig").GBA;
 
 pub const Background = struct {
+    pub const Palette = @intToPtr([*]GBA.PaletteBank, @ptrToInt(GBA.BG_PALETTE_RAM));
+
     pub const BackgroundControl = packed struct {
         priority: u2 = 0,
         characterBaseBlock: u2 = 0,
         dummy: u2 = 0,
-        mosaic: u1 = 0,
+        mosaic: bool = false,
         paletteMode: GBA.PaletteMode = .Color16,
         screenBaseBlock: u5 = 0,
         dummy2: u1 = 0,
@@ -27,10 +29,10 @@ pub const Background = struct {
     }
 
     pub const Scroll = packed struct {
-        x: u9,
-        dummy: u7,
-        y: u9,
-        dummy2: u7,
+        x: u9 = 0,
+        dummy: u7 = 0,
+        y: u9 = 0,
+        dummy2: u7 = 0,
 
         const Self = @This();
 
@@ -48,13 +50,23 @@ pub const Background = struct {
     pub const Background3Scroll = @intToPtr(*volatile Scroll, 0x400001C);
 
     pub const TextScreenEntry = packed struct {
-        tileIndex: u10,
-        horizontalFlip: u1,
-        verticalFlip: u1,
-        paletteIndex: u4,
+        tileIndex: u10 = 0,
+        horizontalFlip: bool = false,
+        verticalFlip: bool = false,
+        paletteIndex: u4 = 0,
     };
 
     pub const AffineScreenEntry = packed struct {
-        tileIndex: u8,
+        tileIndex: u8 = 0,
     };
+
+    pub const TextScreenBlock = [1024]TextScreenEntry;
+    pub const ScreenBlockMemory = @intToPtr([*]volatile TextScreenBlock, @ptrToInt(GBA.VRAM));
+
+    pub const Tile = packed struct {
+        data: [8]u32
+    };
+
+    pub const CharacterBlock = [512]Tile;
+    pub const TileMemory = @intToPtr([*]volatile CharacterBlock, @ptrToInt(GBA.VRAM));
 };
