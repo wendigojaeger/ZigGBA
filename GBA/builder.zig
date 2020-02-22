@@ -16,28 +16,15 @@ const GBALinkerScript = "GBA/gba.ld";
 var IsDebugOption: ?bool = null;
 var UseGDBOption: ?bool = null;
 
-const gba_arm_arch = std.Target.Arch{ .arm = std.Target.Arch.Arm32.v4t };
-const gba_thumb_arch = std.Target.Arch{ .thumb = std.Target.Arch.Arm32.v4t };
-
-fn gbaThumbTarget() std.Target {
-    return std.Target{
-        .Cross = std.Target.Cross{
-            .arch = gba_thumb_arch,
-            .os = .freestanding,
-            .abi = .none,
-            .cpu_features = blk: {
-                var cpuFeatures = std.Target.CpuFeatures.initFromCpu(gba_thumb_arch, &std.Target.arm.cpu.arm7tdmi);
-                cpuFeatures.features.addFeature(@enumToInt(std.Target.arm.Feature.thumb_mode));
-                break :blk cpuFeatures;
-            },
-        },
-    };
-}
+const gba_thumb_target = std.Target.parse(.{
+    .arch_os_abi = "thumb-freestanding-none",
+    .cpu_features = "arm7tdmi+thumb_mode",
+}) catch unreachable;
 
 pub fn addGBAStaticLibrary(b: *Builder, libraryName: []const u8, sourceFile: []const u8, isDebug: bool) *LibExeObjStep {
     const lib = b.addStaticLibrary(libraryName, sourceFile);
 
-    lib.setTheTarget(gbaThumbTarget());
+    lib.setTheTarget(gba_thumb_target);
 
     lib.setLinkerScriptPath(GBALinkerScript);
     lib.setBuildMode(if (isDebug) builtin.Mode.Debug else builtin.Mode.ReleaseFast);
@@ -72,7 +59,7 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
 
     const exe = b.addExecutable(romName, sourceFile);
 
-    exe.setTheTarget(gbaThumbTarget());
+    exe.setTheTarget(gba_thumb_target);
     exe.setLinkerScriptPath(GBALinkerScript);
     exe.setBuildMode(if (isDebug) builtin.Mode.Debug else builtin.Mode.ReleaseFast);
     if (useGDB) {
