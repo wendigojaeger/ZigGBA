@@ -1,13 +1,14 @@
-const Builder = @import("std").build.Builder;
-const LibExeObjStep = @import("std").build.LibExeObjStep;
-const Step = @import("std").build.Step;
-const builtin = @import("std").builtin;
-const fmt = @import("std").fmt;
-const FixedBufferAllocator = @import("std").heap.FixedBufferAllocator;
-const std = @import("std");
-const fs = @import("std").fs;
-const ArrayList = @import("std").ArrayList;
+const ArrayList = std.ArrayList;
+const Builder = std.build.Builder;
+const CrossTarget = std.zig.CrossTarget;
+const FixedBufferAllocator = std.heap.FixedBufferAllocator;
 const ImageConverter = @import("assetconverter/image_converter.zig").ImageConverter;
+const LibExeObjStep = std.build.LibExeObjStep;
+const Step = std.build.Step;
+const builtin = std.builtin;
+const fmt = std.fmt;
+const fs = std.fs;
+const std = @import("std");
 
 pub const ImageSourceTarget = @import("assetconverter/image_converter.zig").ImageSourceTarget;
 
@@ -16,7 +17,7 @@ const GBALinkerScript = "GBA/gba.ld";
 var IsDebugOption: ?bool = null;
 var UseGDBOption: ?bool = null;
 
-const gba_thumb_target = std.Target.parse(.{
+const gba_thumb_target = CrossTarget.parse(.{
     .arch_os_abi = "thumb-freestanding-none",
     .cpu_features = "arm7tdmi+thumb_mode",
 }) catch unreachable;
@@ -24,7 +25,7 @@ const gba_thumb_target = std.Target.parse(.{
 pub fn addGBAStaticLibrary(b: *Builder, libraryName: []const u8, sourceFile: []const u8, isDebug: bool) *LibExeObjStep {
     const lib = b.addStaticLibrary(libraryName, sourceFile);
 
-    lib.setTheTarget(gba_thumb_target);
+    lib.setTarget(gba_thumb_target);
 
     lib.setLinkerScriptPath(GBALinkerScript);
     lib.setBuildMode(if (isDebug) builtin.Mode.Debug else builtin.Mode.ReleaseFast);
@@ -59,7 +60,7 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
 
     const exe = b.addExecutable(romName, sourceFile);
 
-    exe.setTheTarget(gba_thumb_target);
+    exe.setTarget(gba_thumb_target);
     exe.setLinkerScriptPath(GBALinkerScript);
     exe.setBuildMode(if (isDebug) builtin.Mode.Debug else builtin.Mode.ReleaseFast);
     if (useGDB) {
