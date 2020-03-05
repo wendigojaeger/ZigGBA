@@ -1,10 +1,11 @@
-const bmp = @import("zigimg/zigimg.zig").bmp;
-const Allocator = @import("std").mem.Allocator;
-const ArrayList = @import("std").ArrayList;
-const OctTreeQuantizer = @import("zigimg/zigimg.zig").octree_quantizer.OctTreeQuantizer;
+const Allocator = std.mem.Allocator;
+const ArrayList = std.ArrayList;
 const Color = @import("zigimg/zigimg.zig").color.Color;
-const fs = @import("std").fs;
-const mem = @import("std").mem;
+const OctTreeQuantizer = @import("zigimg/zigimg.zig").octree_quantizer.OctTreeQuantizer;
+const bmp = @import("zigimg/zigimg.zig").bmp;
+const fs = std.fs;
+const mem = std.mem;
+const std = @import("std");
 
 pub const ImageConverterError = error{InvalidPixelData};
 
@@ -25,7 +26,7 @@ pub const ImageConverter = struct {
         defer quantizer.deinit();
 
         const ImageConvertInfo = struct {
-            imageInfo: *const ImageSourceTarget,
+            imageInfo: ImageSourceTarget,
             image: bmp.Bitmap,
         };
 
@@ -34,7 +35,7 @@ pub const ImageConverter = struct {
 
         for (images) |imageInfo| {
             var convertInfo = try imageConvertList.addOne();
-            convertInfo.imageInfo = &imageInfo;
+            convertInfo.imageInfo = imageInfo;
             convertInfo.image = try bmp.Bitmap.fromFile(allocator, imageInfo.source);
 
             if (convertInfo.image.pixels) |pixelData| {
@@ -45,6 +46,7 @@ pub const ImageConverter = struct {
                 return ImageConverterError.InvalidPixelData;
             }
         }
+
         var paletteStorage: [256]Color = undefined;
         var palette = try quantizer.makePalette(255, paletteStorage[0..]);
 
