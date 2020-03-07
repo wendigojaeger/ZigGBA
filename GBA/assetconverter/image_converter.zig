@@ -1,8 +1,8 @@
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
-const Color = @import("zigimg/zigimg.zig").color.Color;
-const OctTreeQuantizer = @import("zigimg/zigimg.zig").octree_quantizer.OctTreeQuantizer;
-const bmp = @import("zigimg/zigimg.zig").bmp;
+const zigimg = @import("zigimg/zigimg.zig");
+const IntegerColor8 = zigimg.color.IntegerColor8;
+const OctTreeQuantizer = zigimg.OctTreeQuantizer;
 const fs = std.fs;
 const mem = std.mem;
 const std = @import("std");
@@ -27,7 +27,7 @@ pub const ImageConverter = struct {
 
         const ImageConvertInfo = struct {
             imageInfo: ImageSourceTarget,
-            image: bmp.Bitmap,
+            image: zigimg.Image,
         };
 
         var imageConvertList = ArrayList(ImageConvertInfo).init(allocator);
@@ -36,18 +36,16 @@ pub const ImageConverter = struct {
         for (images) |imageInfo| {
             var convertInfo = try imageConvertList.addOne();
             convertInfo.imageInfo = imageInfo;
-            convertInfo.image = try bmp.Bitmap.fromFile(allocator, imageInfo.source);
+            convertInfo.image = try zigimg.Image.fromFilePath(allocator, imageInfo.source);
 
-            if (convertInfo.image.pixels) |pixelData| {
-                for (pixelData) |pixel| {
-                    try quantizer.addColor(pixel.premultipliedAlpha());
-                }
-            } else {
-                return ImageConverterError.InvalidPixelData;
+            var colorIt = convertInfo.image.iterator();
+
+            while (colorIt.next()) |pixel| {
+                try quantizer.addColor(pixel.premultipliedAlpha().toIntegerColor8());
             }
         }
 
-        var paletteStorage: [256]Color = undefined;
+        var paletteStorage: [256]IntegerColor8 = undefined;
         var palette = try quantizer.makePalette(255, paletteStorage[0..]);
 
         var paletteFile = try openWriteFile(targetPaletteFilePath);
@@ -72,27 +70,28 @@ pub const ImageConverter = struct {
         }
 
         for (imageConvertList.toSlice()) |convertInfo| {
-            if (convertInfo.image.pixels) |pixelData| {
-                var imageFile = try openWriteFile(convertInfo.imageInfo.target);
-                defer imageFile.close();
+            var imageFile = try openWriteFile(convertInfo.imageInfo.target);
+            defer imageFile.close();
 
-                var imageOut = imageFile.outStream();
-                var imageOutStream = &imageOut.stream;
+            var imageOut = imageFile.outStream();
+            var imageOutStream = &imageOut.stream;
 
-                // Write image file
-                var pixelCount: usize = 0;
-                for (pixelData) |pixel| {
-                    var rawPaletteIndex: usize = try quantizer.getPaletteIndex(pixel.premultipliedAlpha());
-                    var paletteIndex: u8 = @intCast(u8, rawPaletteIndex);
-                    try imageOutStream.writeIntLittle(u8, paletteIndex);
-                    pixelCount += 1;
-                }
+            // Write image file
+            var pixelCount: usize = 0;
 
-                diff = mem.alignForward(pixelCount, 4) - pixelCount;
-                index = 0;
-                while (index < diff) : (index += 1) {
-                    try imageOutStream.writeIntLittle(u8, 0);
-                }
+            var colorIt = convertInfo.image.iterator();
+
+            while (colorIt.next()) |pixel| {
+                var rawPaletteIndex: usize = try quantizer.getPaletteIndex(pixel.premultipliedAlpha().toIntegerColor8());
+                var paletteIndex: u8 = @intCast(u8, rawPaletteIndex);
+                try imageOutStream.writeIntLittle(u8, paletteIndex);
+                pixelCount += 1;
+            }
+
+            diff = mem.alignForward(pixelCount, 4) - pixelCount;
+            index = 0;
+            while (index < diff) : (index += 1) {
+                try imageOutStream.writeIntLittle(u8, 0);
             }
         }
     }
@@ -101,7 +100,7 @@ pub const ImageConverter = struct {
         return try fs.cwd().createFile(path, fs.File.CreateFlags{});
     }
 
-    fn colorToGBAColor(color: Color) GBAColor {
+    fn colorToGBAColor(color: IntegerColor8) GBAColor {
         return GBAColor{
             .r = @intCast(u5, (color.R >> 3) & 0x1f),
             .g = @intCast(u5, (color.G >> 3) & 0x1f),
