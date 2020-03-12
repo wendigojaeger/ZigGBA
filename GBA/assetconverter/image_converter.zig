@@ -51,8 +51,7 @@ pub const ImageConverter = struct {
         var paletteFile = try openWriteFile(targetPaletteFilePath);
         defer paletteFile.close();
 
-        var paletteOut = paletteFile.outStream();
-        var paletteOutStream = &paletteOut.stream;
+        var paletteOutStream = paletteFile.outStream();
 
         // Write palette file
         var paletteCount: usize = 0;
@@ -73,8 +72,7 @@ pub const ImageConverter = struct {
             var imageFile = try openWriteFile(convertInfo.imageInfo.target);
             defer imageFile.close();
 
-            var imageOut = imageFile.outStream();
-            var imageOutStream = &imageOut.stream;
+            var imageOutStream = imageFile.outStream();
 
             // Write image file
             var pixelCount: usize = 0;
