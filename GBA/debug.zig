@@ -1,4 +1,5 @@
 const fmt = @import("std").fmt;
+const io = @import("std").io;
 
 const BIOS = @import("bios.zig").BIOS;
 
@@ -8,6 +9,42 @@ pub const Debug = struct {
         bank: u16,
         get: u16,
         put: u16,
+    };
+
+    const DebugStream = struct {
+        streamWritten: usize,
+
+        const Self = @This();
+
+        pub fn init() Self {
+            return Self{
+                .streamWritten = 0,
+            };
+        }
+
+        pub fn write(self: *Self, bytes: []const u8) !usize {
+            var remaining = AGB_BUFFER_SIZE - self.streamWritten;
+            if (remaining < bytes.len) {
+                var index: usize = 0;
+                while (index < remaining) : (index += 1) {
+                    printChar(bytes[index]);
+                }
+                return error.BufferTooSmall;
+            }
+
+            var written: usize = 0;
+            for (bytes) |char| {
+                printChar(char);
+                self.streamWritten += 1;
+                written += 1;
+            }
+
+            return written;
+        }
+
+        pub fn outStream(self: *Self) io.OutStream(*Self, error{BufferTooSmall}, write) {
+            return .{ .context = self };
+        }
     };
 
     const AGB_PRINT_PROTECT = @intToPtr(*volatile u16, 0x09FE2FFE);
@@ -25,12 +62,17 @@ pub const Debug = struct {
     }
 
     pub fn print(comptime formatString: []const u8, args: var) !void {
-        var context = FormatContext{ .written = 0 };
+        lockPrint();
+        defer unlockPrint();
         defer BIOS.debugFlush();
-        try fmt.format(&context, fmt.BufPrintError, printOutput, formatString, args);
+
+        var debugStream = DebugStream.init();
+        try fmt.format(debugStream.outStream(), formatString, args);
     }
 
     pub fn write(message: []const u8) !void {
+        lockPrint();
+        defer unlockPrint();
         defer BIOS.debugFlush();
 
         if (message.len >= AGB_BUFFER_SIZE) {
@@ -47,10 +89,17 @@ pub const Debug = struct {
         }
     }
 
+    inline fn lockPrint() void {
+        AGB_PRINT_PROTECT.* = 0x20;
+    }
+
+    inline fn unlockPrint() void {
+        AGB_PRINT_PROTECT.* = 0x00;
+    }
+
     fn printChar(value: u8) void {
         var data: u16 = AGB_PRINT_BUFFER[AGB_PRINT_CONTEXT.put >> 1];
 
-        AGB_PRINT_PROTECT.* = 0x20;
         if ((AGB_PRINT_CONTEXT.put & 1) == 1) {
             data = (@intCast(u16, value) << 8) | (data & 0xFF);
         } else {
@@ -58,26 +107,5 @@ pub const Debug = struct {
         }
         AGB_PRINT_BUFFER[AGB_PRINT_CONTEXT.put >> 1] = data;
         AGB_PRINT_CONTEXT.put += 1;
-        AGB_PRINT_PROTECT.* = 0x00;
-    }
-
-    const FormatContext = struct {
-        written: usize,
-    };
-
-    fn printOutput(context: *FormatContext, bytes: []const u8) !void {
-        var remaining = AGB_BUFFER_SIZE - context.written;
-        if (remaining < bytes.len) {
-            var index: usize = 0;
-            while (index < remaining) : (index += 1) {
-                printChar(bytes[index]);
-            }
-            return error.BufferTooSmall;
-        }
-
-        for (bytes) |char| {
-            printChar(char);
-            context.written += 1;
-        }
     }
 };
