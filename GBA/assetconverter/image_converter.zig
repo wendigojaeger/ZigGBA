@@ -68,7 +68,7 @@ pub const ImageConverter = struct {
             try paletteOutStream.writeIntLittle(u8, 0);
         }
 
-        for (imageConvertList.toSlice()) |convertInfo| {
+        for (imageConvertList.items) |convertInfo| {
             var imageFile = try openWriteFile(convertInfo.imageInfo.target);
             defer imageFile.close();
 

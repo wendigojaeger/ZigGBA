@@ -17,10 +17,15 @@ const GBALinkerScript = "GBA/gba.ld";
 var IsDebugOption: ?bool = null;
 var UseGDBOption: ?bool = null;
 
-const gba_thumb_target = CrossTarget.parse(.{
-    .arch_os_abi = "thumb-freestanding-none",
-    .cpu_features = "arm7tdmi+thumb_mode",
-}) catch unreachable;
+const gba_thumb_target = blk: {
+    var target = CrossTarget{
+        .cpu_arch = std.Target.Cpu.Arch.thumb,
+        .cpu_model = .{ .explicit = &std.Target.arm.cpu.arm7tdmi },
+        .os_tag = .freestanding,
+    };
+    target.cpu_features_add.addFeature(@enumToInt(std.Target.arm.Feature.thumb_mode));
+    break :blk target;
+};
 
 pub fn addGBAStaticLibrary(b: *Builder, libraryName: []const u8, sourceFile: []const u8, isDebug: bool) *LibExeObjStep {
     const lib = b.addStaticLibrary(libraryName, sourceFile);
@@ -81,13 +86,13 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
 const Mode4ConvertStep = struct {
     step: Step,
     builder: *Builder,
-    images: []ImageSourceTarget,
+    images: []const ImageSourceTarget,
     targetPalettePath: []const u8,
 
-    pub fn init(b: *Builder, images: []ImageSourceTarget, targetPalettePath: []const u8) Mode4ConvertStep {
+    pub fn init(b: *Builder, images: []const ImageSourceTarget, targetPalettePath: []const u8) Mode4ConvertStep {
         return Mode4ConvertStep{
             .builder = b,
-            .step = Step.init(b.fmt("ConvertMode4Image {}", .{targetPalettePath}), b.allocator, make),
+            .step = Step.init(.Custom, b.fmt("ConvertMode4Image {}", .{targetPalettePath}), b.allocator, make),
             .images = images,
             .targetPalettePath = targetPalettePath,
         };
@@ -108,11 +113,11 @@ const Mode4ConvertStep = struct {
         }
         const fullTargetPalettePath = self.builder.pathFromRoot(self.targetPalettePath);
 
-        try ImageConverter.convertMode4Image(self.builder.allocator, fullImages.toSlice(), fullTargetPalettePath);
+        try ImageConverter.convertMode4Image(self.builder.allocator, fullImages.items, fullTargetPalettePath);
     }
 };
 
-pub fn convertMode4Images(libExe: *LibExeObjStep, images: []ImageSourceTarget, targetPalettePath: []const u8) void {
+pub fn convertMode4Images(libExe: *LibExeObjStep, images: []const ImageSourceTarget, targetPalettePath: []const u8) void {
     const convertImageStep = libExe.builder.allocator.create(Mode4ConvertStep) catch unreachable;
     convertImageStep.* = Mode4ConvertStep.init(libExe.builder, images, targetPalettePath);
     libExe.step.dependOn(&convertImageStep.step);
