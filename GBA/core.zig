@@ -162,7 +162,7 @@ pub const GBA = struct {
     }
 
     // TODO: maybe put this in IWRAM ?
-    pub fn memcpy32(noalias destination: var, noalias source: var, count: usize) void {
+    pub fn memcpy32(noalias destination: anytype, noalias source: anytype, count: usize) void {
         if (count < 4) {
             genericMemcpy(@ptrCast([*]u8, destination), @ptrCast([*]const u8, source), count);
         } else {
@@ -176,7 +176,7 @@ pub const GBA = struct {
         }
     }
 
-    pub fn memcpy16(noalias destination: var, noalias source: var, count: usize) void {
+    pub fn memcpy16(noalias destination: anytype, noalias source: anytype, count: usize) void {
         if (count < 2) {
             genericMemcpy(@ptrCast([*]u8, destination), @ptrCast([*]const u8, source), count);
         } else {
@@ -216,7 +216,7 @@ pub const GBA = struct {
     }
 
     // TODO: maybe put it in IWRAM ?
-    pub fn memset32(destination: var, value: u32, count: usize) void {
+    pub fn memset32(destination: anytype, value: u32, count: usize) void {
         if ((@ptrToInt(@ptrCast(*u8, destination)) % 4) == 0) {
             alignedMemset(u32, @ptrCast([*]align(4) volatile u8, @alignCast(4, destination)), value, count);
         } else {
@@ -224,7 +224,7 @@ pub const GBA = struct {
         }
     }
 
-    pub fn memset16(destination: var, value: u16, count: usize) void {
+    pub fn memset16(destination: anytype, value: u16, count: usize) void {
         if ((@ptrToInt(@ptrCast(*u8, destination)) % 4) == 0) {
             alignedMemset(u16, @ptrCast([*]align(2) volatile u8, @alignCast(2, destination)), value, count);
         } else {

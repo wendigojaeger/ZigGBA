@@ -61,7 +61,7 @@ pub const Debug = struct {
         AGB_PRINT_PROTECT.* = 0x00;
     }
 
-    pub fn print(comptime formatString: []const u8, args: var) !void {
+    pub fn print(comptime formatString: []const u8, args: anytype) !void {
         lockPrint();
         defer unlockPrint();
         defer BIOS.debugFlush();
