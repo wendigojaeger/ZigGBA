@@ -7,3 +7,4 @@ pub const Input = @import("input.zig").Input;
 pub const LCD = @import("lcd.zig").LCD;
 pub const Mode3 = @import("mode3.zig").Mode3;
 pub const OAM = @import("oam.zig").OAM;
+pub const Math = @import("math.zig").Math;

@@ -37,4 +37,8 @@ pub fn build(b: *Builder) void {
     // charBlock
     const charBlock = addGBAExecutable(b, "charBlock", "examples/charBlock/charBlock.zig");
     charBlock.addCSourceFile("examples/charBlock/cbb_ids.c", &[_][]const u8{"-std=c99"});
+
+    // objAffine
+    const objAffine = addGBAExecutable(b, "objAffine", "examples/objAffine/objAffine.zig");
+    objAffine.addCSourceFile("examples/objAffine/metr.c", &[_][]const u8{"-std=c99"});
 }

@@ -36,10 +36,10 @@ pub const OAM = struct {
 
     pub const Attribute = packed struct {
         y: u8 = 0,
-        rotationScaling: u1 = 0,
-        doubleSizeOrVisible: u1 = 0,
+        rotationScaling: bool = false,
+        doubleSizeOrVisible: bool = false,
         mode: ObjMode = .Normal,
-        mosaic: u1 = 0,
+        mosaic: bool = false,
         paletteMode: GBA.PaletteMode = .Color16,
         shape: ObjectShape = .Square,
         x: u9 = 0,
@@ -119,6 +119,11 @@ pub const OAM = struct {
             self.x = @intCast(u9, x);
             self.y = @intCast(u8, y);
         }
+
+        pub fn getAffine(self: Self) *Affine {
+            const affine_index = @bitCast(u5, self.flip);
+            return &affineBuffer[affine_index];
+        }
     };
 
     pub const Affine = packed struct {
@@ -130,15 +135,24 @@ pub const OAM = struct {
         pc: i16,
         fill3: [3]u16,
         pd: i16,
+
+        const Self = @This();
+
+        pub fn setIdentity(self: *Self) void {
+            self.pa = 0x0100;
+            self.pb = 0;
+            self.pc = 0;
+            self.pd = 0x0100;
+        }
     };
 
-    const OAMAttributePtr = @ptrCast([*]volatile Attribute, GBA.OAM);
+    const OAMAttributePtr = @ptrCast([*]align(4) volatile Attribute, GBA.OAM);
     const OAMAttribute = OAMAttributePtr[0..128];
 
     var attributeBuffer: [128]Attribute = undefined;
     var currentAttribute: usize = 0;
 
-    const affineBufferPtr = @ptrCast(*Affine, attributeBuffer);
+    const affineBufferPtr = @ptrCast([*]align(4) Affine, &attributeBuffer);
     const affineBuffer = affineBufferPtr[0..32];
 
     pub fn init() void {
