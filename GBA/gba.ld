@@ -37,7 +37,7 @@ SECTIONS
     } >rom =0
 
     .rodata : {
-        *(.rodata)
+        *(.rodata*)
         . = ALIGN(4);
     } >rom = 0xff
 

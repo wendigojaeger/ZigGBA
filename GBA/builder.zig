@@ -71,7 +71,7 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
     if (useGDB) {
         exe.install();
     } else {
-        exe.installRaw(b.fmt("{}.gba", .{romName}));
+        exe.installRaw(b.fmt("{s}.gba", .{romName}));
     }
 
     const gbaLib = createGBALib(b, isDebug);
@@ -92,7 +92,7 @@ const Mode4ConvertStep = struct {
     pub fn init(b: *Builder, images: []const ImageSourceTarget, targetPalettePath: []const u8) Mode4ConvertStep {
         return Mode4ConvertStep{
             .builder = b,
-            .step = Step.init(.Custom, b.fmt("ConvertMode4Image {}", .{targetPalettePath}), b.allocator, make),
+            .step = Step.init(.Custom, b.fmt("ConvertMode4Image {s}", .{targetPalettePath}), b.allocator, make),
             .images = images,
             .targetPalettePath = targetPalettePath,
         };

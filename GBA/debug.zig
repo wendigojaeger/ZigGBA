@@ -42,7 +42,7 @@ pub const Debug = struct {
             return written;
         }
 
-        pub fn outStream(self: *Self) io.OutStream(*Self, error{BufferTooSmall}, write) {
+        pub fn outStream(self: *Self) io.Writer(*Self, error{BufferTooSmall}, write) {
             return .{ .context = self };
         }
     };

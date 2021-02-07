@@ -16,9 +16,9 @@ pub fn main() noreturn {
 
     const gameName = "DebugPrint";
 
-    var i:u32 = 0;
+    var i: u32 = 0;
     while (i < 10) : (i += 1) {
-        Debug.print("From {}: {}", .{gameName, i}) catch unreachable;
+        Debug.print("From {s}: {}", .{ gameName, i }) catch unreachable;
     }
 
     while (true) {}
