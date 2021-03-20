@@ -24,7 +24,7 @@ pub const Background = struct {
     pub const Background2Control = @intToPtr(*volatile BackgroundControl, 0x400000C);
     pub const Background3Control = @intToPtr(*volatile BackgroundControl, 0x400000E);
 
-    pub inline fn setupBackground(background: *volatile BackgroundControl, settings: BackgroundControl) void {
+    pub fn setupBackground(background: *volatile BackgroundControl, settings: BackgroundControl) callconv(.Inline) void {
         background.* = settings;
     }
 
@@ -35,8 +35,7 @@ pub const Background = struct {
         dummy2: u7 = 0,
 
         const Self = @This();
-
-        pub inline fn setPosition(self: *volatile Self, x: i32, y: i32) void {
+        pub fn setPosition(self: *volatile Self, x: i32, y: i32) callconv(.Inline) void {
             @setRuntimeSafety(false);
             const Mask = (1 << 9) - 1;
             self.x = @intCast(u9, x & Mask);
@@ -63,16 +62,12 @@ pub const Background = struct {
     pub const TextScreenBlock = [1024]TextScreenEntry;
     pub const ScreenBlockMemory = @intToPtr([*]align(4) volatile TextScreenBlock, @ptrToInt(GBA.VRAM));
 
-    pub const Tile = packed struct {
-        data: [8]u32
-    };
+    pub const Tile = packed struct { data: [8]u32 };
 
     pub const CharacterBlock = [512]Tile;
     pub const TileMemory = @intToPtr([*]align(4) volatile CharacterBlock, @ptrToInt(GBA.VRAM));
 
-    pub const Tile8 = packed struct {
-        data: [16]u32
-    };
+    pub const Tile8 = packed struct { data: [16]u32 };
 
     pub const CharacterBlock8 = [256]Tile8;
     pub const Tile8Memory = @intToPtr([*]align(4) volatile CharacterBlock8, @ptrToInt(GBA.VRAM));

@@ -43,22 +43,21 @@ pub const LCD = struct {
 
     const gbaDisplayControl = @ptrCast(*DisplayControl, GBA.REG_DISPCNT);
 
-    pub inline fn setupDisplayControl(displaySettings: DisplayControl) void {
+    pub fn setupDisplayControl(displaySettings: DisplayControl) callconv(.Inline) void {
         gbaDisplayControl.* = displaySettings;
     }
 
-    pub inline fn changeObjVramCharacterMapping(objVramCharacterMapping: ObjCharacterMapping) void {
+    pub fn changeObjVramCharacterMapping(objVramCharacterMapping: ObjCharacterMapping) callconv(.Inline) void {
         gbaDisplayControl.objVramCharacterMapping = objVramCharacterMapping;
     }
 
-    /// Flip Mode 4 page and return the writtable page
-    pub inline fn pageFlip() [*]volatile u16 {
+    pub fn pageFlip() callconv(.Inline) [*]volatile u16 {
         currentPage = @intToPtr([*]volatile u16, @as(u32, @ptrToInt(currentPage)) ^ Mode4PageSize);
         gbaDisplayControl.pageSelect = ~gbaDisplayControl.pageSelect;
         return currentPage;
     }
 
-    pub inline fn naiveVSync() void {
+    pub fn naiveVSync() callconv(.Inline) void {
         while (GBA.REG_VCOUNT.* >= 160) {} // wait till VDraw
         while (GBA.REG_VCOUNT.* < 160) {} // wait till VBlank
     }

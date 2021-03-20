@@ -157,7 +157,7 @@ pub const GBA = struct {
         }
     };
 
-    pub inline fn toNativeColor(red: u8, green: u8, blue: u8) u16 {
+    pub fn toNativeColor(red: u8, green: u8, blue: u8) callconv(.Inline) u16 {
         return @as(u16, red & 0x1f) | (@as(u16, green & 0x1f) << 5) | (@as(u16, blue & 0x1f) << 10);
     }
 

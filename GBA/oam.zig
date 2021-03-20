@@ -105,16 +105,16 @@ pub const OAM = struct {
             }
         }
 
-        pub inline fn setRotationParameterIndex(self: *Self, index: u5) void {
+        pub fn setRotationParameterIndex(self: *Self, index: u5) callconv(.Inline) void {
             self.flip = @bitCast(FlipSettings, index);
         }
 
-        pub inline fn setTileIndex(self: *Self, tileIndex: i32) void {
+        pub fn setTileIndex(self: *Self, tileIndex: i32) callconv(.Inline) void {
             @setRuntimeSafety(false);
             self.tileIndex = @intCast(u10, tileIndex);
         }
 
-        pub inline fn setPosition(self: *Self, x: i32, y: i32) void {
+        pub fn setPosition(self: *Self, x: i32, y: i32) callconv(.Inline) void {
             @setRuntimeSafety(false);
             self.x = @intCast(u9, x);
             self.y = @intCast(u8, y);
