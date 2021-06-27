@@ -2,9 +2,9 @@ const Builder = @import("std").build.Builder;
 usingnamespace @import("GBA/builder.zig");
 
 pub fn build(b: *Builder) void {
-    const first = addGBAExecutable(b, "first", "examples/first/first.zig");
-    const mode3Draw = addGBAExecutable(b, "mode3draw", "examples/mode3draw/mode3draw.zig");
-    const debugPrint = addGBAExecutable(b, "debugPrint", "examples/debugPrint/debugPrint.zig");
+    _ = addGBAExecutable(b, "first", "examples/first/first.zig");
+    _ = addGBAExecutable(b, "mode3draw", "examples/mode3draw/mode3draw.zig");
+    _ = addGBAExecutable(b, "debugPrint", "examples/debugPrint/debugPrint.zig");
 
     // Mode 4 Flip
     const mode4flip = addGBAExecutable(b, "mode4flip", "examples/mode4flip/mode4flip.zig");
@@ -32,7 +32,7 @@ pub fn build(b: *Builder) void {
     tileDemo.addCSourceFile("examples/tileDemo/brin.c", &[_][]const u8{"-std=c99"});
 
     // screenBlock
-    const screenBlock = addGBAExecutable(b, "screenBlock", "examples/screenBlock/screenBlock.zig");
+    _ = addGBAExecutable(b, "screenBlock", "examples/screenBlock/screenBlock.zig");
 
     // charBlock
     const charBlock = addGBAExecutable(b, "charBlock", "examples/charBlock/charBlock.zig");

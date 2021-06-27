@@ -21,8 +21,8 @@ pub fn main() noreturn {
 
     loadImageData();
 
-    comptime const ColorUp = GBA.toNativeColor(27, 27, 29);
-    comptime const ButtonPaletteId = 5;
+    const ColorUp = GBA.toNativeColor(27, 27, 29);
+    const ButtonPaletteId = 5;
 
     var color: u16 = 0;
 

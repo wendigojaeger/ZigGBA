@@ -32,7 +32,7 @@ pub fn addGBAStaticLibrary(b: *Builder, libraryName: []const u8, sourceFile: []c
 
     lib.setTarget(gba_thumb_target);
 
-    lib.setLinkerScriptPath(GBALinkerScript);
+    lib.setLinkerScriptPath(std.build.FileSource{ .path = GBALinkerScript });
     lib.setBuildMode(if (isDebug) builtin.Mode.Debug else builtin.Mode.ReleaseFast);
 
     return lib;
@@ -66,7 +66,7 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
     const exe = b.addExecutable(romName, sourceFile);
 
     exe.setTarget(gba_thumb_target);
-    exe.setLinkerScriptPath(GBALinkerScript);
+    exe.setLinkerScriptPath(std.build.FileSource{ .path = GBALinkerScript });
     exe.setBuildMode(if (isDebug) builtin.Mode.Debug else builtin.Mode.ReleaseFast);
     if (useGDB) {
         exe.install();
@@ -92,7 +92,7 @@ const Mode4ConvertStep = struct {
     pub fn init(b: *Builder, images: []const ImageSourceTarget, targetPalettePath: []const u8) Mode4ConvertStep {
         return Mode4ConvertStep{
             .builder = b,
-            .step = Step.init(.Custom, b.fmt("ConvertMode4Image {s}", .{targetPalettePath}), b.allocator, make),
+            .step = Step.init(.custom, b.fmt("ConvertMode4Image {s}", .{targetPalettePath}), b.allocator, make),
             .images = images,
             .targetPalettePath = targetPalettePath,
         };

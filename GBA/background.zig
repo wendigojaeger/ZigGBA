@@ -11,7 +11,7 @@ pub const Background = struct {
         paletteMode: GBA.PaletteMode = .Color16,
         screenBaseBlock: u5 = 0,
         dummy2: u1 = 0,
-        screenSize: packed enum(u2) {
+        screenSize: enum(u2) {
             Text32x32,
             Text64x32,
             Text32x64,
@@ -24,7 +24,7 @@ pub const Background = struct {
     pub const Background2Control = @intToPtr(*volatile BackgroundControl, 0x400000C);
     pub const Background3Control = @intToPtr(*volatile BackgroundControl, 0x400000E);
 
-    pub fn setupBackground(background: *volatile BackgroundControl, settings: BackgroundControl) callconv(.Inline) void {
+    pub inline fn setupBackground(background: *volatile BackgroundControl, settings: BackgroundControl) void {
         background.* = settings;
     }
 
@@ -35,7 +35,7 @@ pub const Background = struct {
         dummy2: u7 = 0,
 
         const Self = @This();
-        pub fn setPosition(self: *volatile Self, x: i32, y: i32) callconv(.Inline) void {
+        pub inline fn setPosition(self: *volatile Self, x: i32, y: i32) void {
             @setRuntimeSafety(false);
             const Mask = (1 << 9) - 1;
             self.x = @intCast(u9, x & Mask);
