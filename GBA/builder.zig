@@ -71,7 +71,7 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
     if (useGDB) {
         exe.install();
     } else {
-        exe.installRaw(b.fmt("{s}.gba", .{romName}));
+        _ = exe.installRaw(b.fmt("{s}.gba", .{romName}), .{});
     }
 
     const gbaLib = createGBALib(b, isDebug);

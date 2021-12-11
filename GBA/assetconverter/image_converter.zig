@@ -21,7 +21,7 @@ pub const ImageSourceTarget = struct {
 };
 
 pub const ImageConverter = struct {
-    pub fn convertMode4Image(allocator: *Allocator, images: []ImageSourceTarget, targetPaletteFilePath: []const u8) !void {
+    pub fn convertMode4Image(allocator: Allocator, images: []ImageSourceTarget, targetPaletteFilePath: []const u8) !void {
         var quantizer = OctTreeQuantizer.init(allocator);
         defer quantizer.deinit();
 
