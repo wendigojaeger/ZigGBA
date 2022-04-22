@@ -12,7 +12,8 @@ const std = @import("std");
 
 pub const ImageSourceTarget = @import("assetconverter/image_converter.zig").ImageSourceTarget;
 
-const GBALinkerScript = "GBA/gba.ld";
+const GBALinkerScript = libRoot() ++ "/gba.ld";
+const GBALibFile = libRoot() ++ "/gba.zig";
 
 var IsDebugOption: ?bool = null;
 var UseGDBOption: ?bool = null;
@@ -27,6 +28,10 @@ const gba_thumb_target = blk: {
     break :blk target;
 };
 
+fn libRoot() []const u8 {
+    return std.fs.path.dirname(@src().file) orelse ".";
+}
+
 pub fn addGBAStaticLibrary(b: *Builder, libraryName: []const u8, sourceFile: []const u8, isDebug: bool) *LibExeObjStep {
     const lib = b.addStaticLibrary(libraryName, sourceFile);
 
@@ -39,7 +44,7 @@ pub fn addGBAStaticLibrary(b: *Builder, libraryName: []const u8, sourceFile: []c
 }
 
 pub fn createGBALib(b: *Builder, isDebug: bool) *LibExeObjStep {
-    return addGBAStaticLibrary(b, "ZigGBA", "GBA/gba.zig", isDebug);
+    return addGBAStaticLibrary(b, "ZigGBA", GBALibFile, isDebug);
 }
 
 pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8) *LibExeObjStep {
@@ -75,7 +80,7 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
     }
 
     const gbaLib = createGBALib(b, isDebug);
-    exe.addPackagePath("gba", "GBA/gba.zig");
+    exe.addPackagePath("gba", GBALibFile);
     exe.linkLibrary(gbaLib);
 
     b.default_step.dependOn(&exe.step);
