@@ -157,8 +157,8 @@ pub const GBA = struct {
         }
     };
 
-    pub fn toNativeColor(red: u8, green: u8, blue: u8) callconv(.Inline) u16 {
-        return @as(u16, red & 0x1f) | (@as(u16, green & 0x1f) << 5) | (@as(u16, blue & 0x1f) << 10);
+    pub fn toNativeColor(red: u5, green: u5, blue: u5) callconv(.Inline) u16 {
+        return @as(u16, red) | (@as(u16, green) << 5) | (@as(u16, blue) << 10);
     }
 
     // TODO: maybe put this in IWRAM ?
