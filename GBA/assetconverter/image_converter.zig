@@ -1,7 +1,6 @@
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 const zigimg = @import("zigimg/zigimg.zig");
-const IntegerColor8 = zigimg.color.IntegerColor8;
 const OctTreeQuantizer = zigimg.OctTreeQuantizer;
 const fs = std.fs;
 const mem = std.mem;
@@ -41,11 +40,11 @@ pub const ImageConverter = struct {
             var colorIt = convertInfo.image.iterator();
 
             while (colorIt.next()) |pixel| {
-                try quantizer.addColor(pixel.premultipliedAlpha().toIntegerColor8());
+                try quantizer.addColor(pixel.toPremultipliedAlpha().toRgba32());
             }
         }
 
-        var paletteStorage: [256]IntegerColor8 = undefined;
+        var paletteStorage: [256]zigimg.color.Rgba32 = undefined;
         var palette = try quantizer.makePalette(255, paletteStorage[0..]);
 
         var paletteFile = try openWriteFile(targetPaletteFilePath);
@@ -80,7 +79,7 @@ pub const ImageConverter = struct {
             var colorIt = convertInfo.image.iterator();
 
             while (colorIt.next()) |pixel| {
-                var rawPaletteIndex: usize = try quantizer.getPaletteIndex(pixel.premultipliedAlpha().toIntegerColor8());
+                var rawPaletteIndex: usize = try quantizer.getPaletteIndex(pixel.toPremultipliedAlpha().toRgba32());
                 var paletteIndex: u8 = @intCast(u8, rawPaletteIndex);
                 try imageOutStream.writeIntLittle(u8, paletteIndex);
                 pixelCount += 1;
@@ -98,11 +97,11 @@ pub const ImageConverter = struct {
         return try fs.cwd().createFile(path, fs.File.CreateFlags{});
     }
 
-    fn colorToGBAColor(color: IntegerColor8) GBAColor {
+    fn colorToGBAColor(color: zigimg.color.Rgba32) GBAColor {
         return GBAColor{
-            .r = @intCast(u5, (color.R >> 3) & 0x1f),
-            .g = @intCast(u5, (color.G >> 3) & 0x1f),
-            .b = @intCast(u5, (color.B >> 3) & 0x1f),
+            .r = @intCast(u5, (color.r >> 3) & 0x1f),
+            .g = @intCast(u5, (color.g >> 3) & 0x1f),
+            .b = @intCast(u5, (color.b >> 3) & 0x1f),
         };
     }
 };
