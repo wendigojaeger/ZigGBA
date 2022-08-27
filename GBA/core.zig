@@ -50,19 +50,19 @@ pub const GBA = struct {
         gamepak: bool = false,
     };
 
-    pub const Header = packed struct {
-        romEntryPoint: u32,
-        nintendoLogo: [156]u8,
-        gameName: [12]u8,
-        gameCode: [4]u8,
-        makerCode: [2]u8,
-        fixedValue: u8,
-        mainUnitCode: u8,
-        deviceType: u8,
-        reservedArea: [7]u8,
-        softwareVersion: u8,
-        complementCheck: u8,
-        reservedArea2: [2]u8,
+    pub const Header = extern struct {
+        romEntryPoint: u32 align(1),
+        nintendoLogo: [156]u8 align(1),
+        gameName: [12]u8 align(1),
+        gameCode: [4]u8 align(1),
+        makerCode: [2]u8 align(1),
+        fixedValue: u8 align(1),
+        mainUnitCode: u8 align(1),
+        deviceType: u8 align(1),
+        reservedArea: [7]u8 align(1),
+        softwareVersion: u8 align(1),
+        complementCheck: u8 align(1),
+        reservedArea2: [2]u8 align(1),
 
         pub fn setup(comptime gameName: []const u8, comptime gameCode: []const u8, comptime makerCode: ?[]const u8, comptime softwareVersion: ?u8) Header {
             var header = Header{
@@ -157,7 +157,7 @@ pub const GBA = struct {
         }
     };
 
-    pub fn toNativeColor(red: u5, green: u5, blue: u5) callconv(.Inline) u16 {
+    pub inline fn toNativeColor(red: u5, green: u5, blue: u5) u16 {
         return @as(u16, red) | (@as(u16, green) << 5) | (@as(u16, blue) << 10);
     }
 

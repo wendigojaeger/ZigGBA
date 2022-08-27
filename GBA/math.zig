@@ -5,26 +5,26 @@ const alignForward = std.mem.alignForward;
 const pi = std.math.pi;
 
 pub const Math = struct {
-    pub fn FixedPoint(comptime isSigned: bool, comptime integral: comptime_int, comptime fractional: comptime_int) type {
+    pub fn FixedPoint(comptime isSigned: bool, comptime integral_size: comptime_int, comptime fractional_size: comptime_int) type {
         return packed struct {
             raw: RawType = undefined,
 
-            const SignedRawType = @Type(TypeInfo{ .Int = TypeInfo.Int{ .is_signed = true, .bits = integral + fractional } });
-            const UnsignedRawType = @Type(TypeInfo{ .Int = TypeInfo.Int{ .is_signed = false, .bits = integral + fractional } });
+            const SignedRawType = @Type(TypeInfo{ .Int = TypeInfo.Int{ .is_signed = true, .bits = integral_size + fractional_size } });
+            const UnsignedRawType = @Type(TypeInfo{ .Int = TypeInfo.Int{ .is_signed = false, .bits = integral_size + fractional_size } });
             const RawType = if (isSigned) SignedRawType else UnsignedRawType;
 
-            const SignedAlignIntegerType = @Type(TypeInfo{ .Int = TypeInfo.Int{ .is_signed = true, .bits = alignForward(integral + fractional, 8) } });
-            const UnsignedAlignIntegerType = @Type(TypeInfo{ .Int = TypeInfo.Int{ .is_signed = false, .bits = alignForward(integral + fractional, 8) } });
+            const SignedAlignIntegerType = @Type(TypeInfo{ .Int = TypeInfo.Int{ .is_signed = true, .bits = alignForward(integral_size + fractional_size, 8) } });
+            const UnsignedAlignIntegerType = @Type(TypeInfo{ .Int = TypeInfo.Int{ .is_signed = false, .bits = alignForward(integral_size + fractional_size, 8) } });
             const AlignIntegerType = if (isSigned) SignedAlignIntegerType else UnsignedAlignIntegerType;
 
-            const InputIntegerType = @Type(TypeInfo{ .Int = TypeInfo.Int{ .is_signed = isSigned, .bits = integral } });
+            const InputIntegerType = @Type(TypeInfo{ .Int = TypeInfo.Int{ .is_signed = isSigned, .bits = integral_size } });
 
             const MaxIntegerType = if (isSigned) i32 else u32;
 
-            pub const Shift = fractional;
-            pub const Scale = 1 << fractional;
-            pub const IntegralMask = (1 << integral) - 1;
-            pub const FractionalMask = (1 << fractional) - 1;
+            pub const Shift = fractional_size;
+            pub const Scale = 1 << fractional_size;
+            pub const IntegralMask = (1 << integral_size) - 1;
+            pub const FractionalMask = (1 << fractional_size) - 1;
 
             const Self = @This();
 
