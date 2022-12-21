@@ -222,7 +222,7 @@ pub const BIOS = struct {
 
         asm volatile (assembly
             :
-            : [param0] "{r0}" (param0)
+            : [param0] "{r0}" (param0),
             : "r0"
         );
     }
@@ -233,7 +233,7 @@ pub const BIOS = struct {
         asm volatile (assembly
             :
             : [param0] "{r0}" (param0),
-              [param1] "{r1}" (param1)
+              [param1] "{r1}" (param1),
             : "r0", "r1"
         );
     }
@@ -245,7 +245,7 @@ pub const BIOS = struct {
             :
             : [param0] "{r0}" (param0),
               [param1] "{r1}" (param1),
-              [param2] "{r2}" (param2)
+              [param2] "{r2}" (param2),
             : "r0", "r1", "r2"
         );
     }
@@ -258,7 +258,7 @@ pub const BIOS = struct {
             : [param0] "{r0}" (param0),
               [param1] "{r1}" (param1),
               [param2] "{r2}" (param2),
-              [param3] "{r3}" (param3)
+              [param3] "{r3}" (param3),
             : "r0", "r1", "r2", "r3"
         );
     }
@@ -267,8 +267,8 @@ pub const BIOS = struct {
         const assembly = comptime getSystemCallAssemblyCode(call);
 
         return asm volatile (assembly
-            : [ret] "={r0}" (-> u32)
-            : [param0] "{r0}" (param0)
+            : [ret] "={r0}" (-> u32),
+            : [param0] "{r0}" (param0),
             : "r0"
         );
     }
@@ -277,9 +277,9 @@ pub const BIOS = struct {
         const assembly = comptime getSystemCallAssemblyCode(call);
 
         return asm volatile (assembly
-            : [ret] "={r0}" (-> u32)
+            : [ret] "={r0}" (-> u32),
             : [param0] "{r0}" (param0),
-              [param1] "{r1}" (param1)
+              [param1] "{r1}" (param1),
             : "r0", "r1"
         );
     }
@@ -288,10 +288,10 @@ pub const BIOS = struct {
         const assembly = comptime getSystemCallAssemblyCode(call);
 
         return asm volatile (assembly
-            : [ret] "={r0}" (-> u32)
+            : [ret] "={r0}" (-> u32),
             : [param0] "{r0}" (param0),
               [param1] "{r1}" (param1),
-              [param2] "{r2}" (param2)
+              [param2] "{r2}" (param2),
             : "r0", "r1", "r2"
         );
     }

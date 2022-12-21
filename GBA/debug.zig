@@ -89,11 +89,11 @@ pub const Debug = struct {
         }
     }
 
-    fn lockPrint() callconv(.Inline) void {
+    inline fn lockPrint() void {
         AGB_PRINT_PROTECT.* = 0x20;
     }
 
-    fn unlockPrint() callconv(.Inline) void {
+    inline fn unlockPrint() void {
         AGB_PRINT_PROTECT.* = 0x00;
     }
 

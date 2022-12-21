@@ -36,43 +36,43 @@ pub const Input = struct {
         currentInput = ~GBA.REG_KEYINPUT.*;
     }
 
-    pub fn isKeyDown(keys: u16) callconv(.Inline) bool {
+    pub inline fn isKeyDown(keys: u16) bool {
         return (currentInput & keys) == keys;
     }
 
-    pub fn isKeyHeld(keys: u16) callconv(.Inline) bool {
+    pub inline fn isKeyHeld(keys: u16) bool {
         return ((previousInput & currentInput) & keys) == keys;
     }
 
-    pub fn isKeyJustPressed(keys: u16) callconv(.Inline) bool {
+    pub inline fn isKeyJustPressed(keys: u16) bool {
         return ((~previousInput & currentInput) & keys) == keys;
     }
 
-    pub fn isKeyJustReleased(keys: u16) callconv(.Inline) bool {
+    pub inline fn isKeyJustReleased(keys: u16) bool {
         return ((previousInput & ~currentInput) & keys) == keys;
     }
 
-    pub fn isKeyUp(keys: u16) callconv(.Inline) bool {
+    pub inline fn isKeyUp(keys: u16) bool {
         return (currentInput & keys) == 0;
     }
 
-    pub fn getHorizontal() callconv(.Inline) i32 {
+    pub inline fn getHorizontal() i32 {
         return triState(currentInput, KeyIndex.Left, KeyIndex.Right);
     }
 
-    pub fn getVertical() callconv(.Inline) i32 {
+    pub inline fn getVertical() i32 {
         return triState(currentInput, KeyIndex.Up, KeyIndex.Down);
     }
 
-    pub fn getShoulder() callconv(.Inline) i32 {
+    pub inline fn getShoulder() i32 {
         return triState(currentInput, KeyIndex.L, KeyIndex.R);
     }
 
-    pub fn getShoulderJustPressed() callconv(.Inline) i32 {
+    pub inline fn getShoulderJustPressed() i32 {
         return triState((~previousInput & currentInput), KeyIndex.L, KeyIndex.R);
     }
 
-    pub fn triState(input: u16, minus: KeyIndex, plus: KeyIndex) callconv(.Inline) i32 {
+    pub inline fn triState(input: u16, minus: KeyIndex, plus: KeyIndex) i32 {
         return ((@intCast(i32, input) >> @intCast(u5, @enumToInt(plus))) & 1) - ((@intCast(i32, input) >> @intCast(u5, @enumToInt(minus))) & 1);
     }
 };
