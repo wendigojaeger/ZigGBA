@@ -41,7 +41,7 @@ pub const LCD = struct {
         showObjWindow: Visiblity = .Hide,
     };
 
-    const gbaDisplayControl = @ptrCast(*DisplayControl, GBA.REG_DISPCNT);
+    const gbaDisplayControl = @ptrCast(*volatile DisplayControl, GBA.REG_DISPCNT);
 
     pub fn setupDisplayControl(displaySettings: DisplayControl) callconv(.Inline) void {
         gbaDisplayControl.* = displaySettings;
