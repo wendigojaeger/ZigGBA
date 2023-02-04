@@ -1,9 +1,7 @@
 const ArrayList = std.ArrayList;
-const Builder = std.build.Builder;
 const CrossTarget = std.zig.CrossTarget;
 const FixedBufferAllocator = std.heap.FixedBufferAllocator;
 const ImageConverter = @import("assetconverter/image_converter.zig").ImageConverter;
-const LibExeObjStep = std.build.LibExeObjStep;
 const Step = std.build.Step;
 const builtin = std.builtin;
 const fmt = std.fmt;
@@ -32,22 +30,24 @@ fn libRoot() []const u8 {
     return std.fs.path.dirname(@src().file) orelse ".";
 }
 
-pub fn addGBAStaticLibrary(b: *Builder, libraryName: []const u8, sourceFile: []const u8, isDebug: bool) *LibExeObjStep {
-    const lib = b.addStaticLibrary(libraryName, sourceFile);
-
-    lib.setTarget(gba_thumb_target);
+pub fn addGBAStaticLibrary(b: *std.Build, libraryName: []const u8, sourceFile: []const u8, isDebug: bool) *std.build.CompileStep {
+    const lib = b.addStaticLibrary(.{
+        .name = libraryName,
+        .root_source_file = .{ .path = sourceFile },
+        .target = gba_thumb_target,
+        .optimize = if (isDebug) .Debug else .ReleaseFast,
+    });
 
     lib.setLinkerScriptPath(std.build.FileSource{ .path = GBALinkerScript });
-    lib.setBuildMode(if (isDebug) builtin.Mode.Debug else builtin.Mode.ReleaseFast);
 
     return lib;
 }
 
-pub fn createGBALib(b: *Builder, isDebug: bool) *LibExeObjStep {
+pub fn createGBALib(b: *std.Build, isDebug: bool) *std.build.CompileStep {
     return addGBAStaticLibrary(b, "ZigGBA", GBALibFile, isDebug);
 }
 
-pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8) *LibExeObjStep {
+pub fn addGBAExecutable(b: *std.Build, romName: []const u8, sourceFile: []const u8) *std.build.CompileStep {
     const isDebug = blk: {
         if (IsDebugOption) |value| {
             break :blk value;
@@ -68,11 +68,14 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
         }
     };
 
-    const exe = b.addExecutable(romName, sourceFile);
+    const exe = b.addExecutable(.{
+        .name = romName,
+        .root_source_file = .{ .path = sourceFile },
+        .target = gba_thumb_target,
+        .optimize = if (isDebug) .Debug else .ReleaseFast,
+    });
 
-    exe.setTarget(gba_thumb_target);
     exe.setLinkerScriptPath(std.build.FileSource{ .path = GBALinkerScript });
-    exe.setBuildMode(if (isDebug) builtin.Mode.Debug else builtin.Mode.ReleaseFast);
     if (useGDB) {
         exe.install();
     } else {
@@ -90,11 +93,11 @@ pub fn addGBAExecutable(b: *Builder, romName: []const u8, sourceFile: []const u8
 
 const Mode4ConvertStep = struct {
     step: Step,
-    builder: *Builder,
+    builder: *std.Build,
     images: []const ImageSourceTarget,
     targetPalettePath: []const u8,
 
-    pub fn init(b: *Builder, images: []const ImageSourceTarget, targetPalettePath: []const u8) Mode4ConvertStep {
+    pub fn init(b: *std.Build, images: []const ImageSourceTarget, targetPalettePath: []const u8) Mode4ConvertStep {
         return Mode4ConvertStep{
             .builder = b,
             .step = Step.init(.custom, b.fmt("ConvertMode4Image {s}", .{targetPalettePath}), b.allocator, make),
@@ -122,7 +125,7 @@ const Mode4ConvertStep = struct {
     }
 };
 
-pub fn convertMode4Images(libExe: *LibExeObjStep, images: []const ImageSourceTarget, targetPalettePath: []const u8) void {
+pub fn convertMode4Images(libExe: *std.build.CompileStep, images: []const ImageSourceTarget, targetPalettePath: []const u8) void {
     const convertImageStep = libExe.builder.allocator.create(Mode4ConvertStep) catch unreachable;
     convertImageStep.* = Mode4ConvertStep.init(libExe.builder, images, targetPalettePath);
     libExe.step.dependOn(&convertImageStep.step);

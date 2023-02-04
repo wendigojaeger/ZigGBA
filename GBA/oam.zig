@@ -105,16 +105,16 @@ pub const OAM = struct {
             }
         }
 
-        pub fn setRotationParameterIndex(self: *Self, index: u5) callconv(.Inline) void {
+        pub inline fn setRotationParameterIndex(self: *Self, index: u5) void {
             self.flip = @bitCast(FlipSettings, index);
         }
 
-        pub fn setTileIndex(self: *Self, tileIndex: i32) callconv(.Inline) void {
+        pub inline fn setTileIndex(self: *Self, tileIndex: i32) void {
             @setRuntimeSafety(false);
             self.tileIndex = @intCast(u10, tileIndex);
         }
 
-        pub fn setPosition(self: *Self, x: i32, y: i32) callconv(.Inline) void {
+        pub inline fn setPosition(self: *Self, x: i32, y: i32) void {
             @setRuntimeSafety(false);
             self.x = @intCast(u9, x);
             self.y = @intCast(u8, y);
@@ -126,15 +126,15 @@ pub const OAM = struct {
         }
     };
 
-    pub const Affine = packed struct {
-        fill0: [3]u16,
-        pa: i16,
-        fill1: [3]u16,
-        pb: i16,
-        fill2: [3]u16,
-        pc: i16,
-        fill3: [3]u16,
-        pd: i16,
+    pub const Affine = extern struct {
+        fill0: [3]u16 align(1),
+        pa: i16 align(1),
+        fill1: [3]u16 align(1),
+        pb: i16 align(1),
+        fill2: [3]u16 align(1),
+        pc: i16 align(1),
+        fill3: [3]u16 align(1),
+        pd: i16 align(1),
 
         const Self = @This();
 
@@ -146,7 +146,7 @@ pub const OAM = struct {
         }
     };
 
-    const OAMAttributePtr = @ptrCast([*]align(4) volatile Attribute, GBA.OAM);
+    const OAMAttributePtr = @ptrCast([*]align(4) volatile Attribute, @alignCast(4, GBA.OAM));
     const OAMAttribute = OAMAttributePtr[0..128];
 
     var attributeBuffer: [128]Attribute = undefined;

@@ -21,7 +21,7 @@ pub const Mode3 = struct {
     pub fn fill(color: u16) void {
         var index: usize = 0;
 
-        var destination = @ptrCast([*]volatile u32, GBA.VRAM);
+        var destination = @ptrCast([*]volatile u32, @alignCast(4, GBA.VRAM));
         const writeValue: u32 = (@intCast(u32, color) << 16) | color;
         const end = GBA.MODE3_SCREEN_SIZE / 4;
 

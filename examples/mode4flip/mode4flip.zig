@@ -9,9 +9,9 @@ const backImageData = @embedFile("back.agi");
 const paletteData = @embedFile("mode4flip.agp");
 
 fn loadImageData() void {
-    GBA.memcpy32(GBA.MODE4_FRONT_VRAM, @ptrCast([*] align(2) const u8, frontImageData), frontImageData.len);
-    GBA.memcpy32(GBA.MODE4_BACK_VRAM, @ptrCast([*] align(2) const u8, backImageData), backImageData.len);
-    GBA.memcpy32(GBA.BG_PALETTE_RAM, @ptrCast([*] align(2) const u8, paletteData), paletteData.len);
+    GBA.memcpy32(GBA.MODE4_FRONT_VRAM, @ptrCast([*]align(2) const u8, @alignCast(2, frontImageData)), frontImageData.len);
+    GBA.memcpy32(GBA.MODE4_BACK_VRAM, @ptrCast([*]align(2) const u8, @alignCast(2, backImageData)), backImageData.len);
+    GBA.memcpy32(GBA.BG_PALETTE_RAM, @ptrCast([*]align(2) const u8, @alignCast(2, paletteData)), paletteData.len);
 }
 
 pub fn main() noreturn {

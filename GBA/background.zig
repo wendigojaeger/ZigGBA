@@ -62,12 +62,12 @@ pub const Background = struct {
     pub const TextScreenBlock = [1024]TextScreenEntry;
     pub const ScreenBlockMemory = @intToPtr([*]align(4) volatile TextScreenBlock, @ptrToInt(GBA.VRAM));
 
-    pub const Tile = packed struct { data: [8]u32 };
+    pub const Tile = extern struct { data: [8]u32 align(1) };
 
     pub const CharacterBlock = [512]Tile;
     pub const TileMemory = @intToPtr([*]align(4) volatile CharacterBlock, @ptrToInt(GBA.VRAM));
 
-    pub const Tile8 = packed struct { data: [16]u32 };
+    pub const Tile8 = extern struct { data: [16]u32 align(1) };
 
     pub const CharacterBlock8 = [256]Tile8;
     pub const Tile8Memory = @intToPtr([*]align(4) volatile CharacterBlock8, @ptrToInt(GBA.VRAM));
