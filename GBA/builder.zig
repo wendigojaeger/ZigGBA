@@ -83,7 +83,7 @@ pub fn addGBAExecutable(b: *std.Build, romName: []const u8, sourceFile: []const 
     }
 
     const gbaLib = createGBALib(b, isDebug);
-    exe.addPackagePath("gba", GBALibFile);
+    exe.addAnonymousModule("gba", .{ .source_file = .{ .path = GBALibFile } });
     exe.linkLibrary(gbaLib);
 
     b.default_step.dependOn(&exe.step);

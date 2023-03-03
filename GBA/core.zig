@@ -96,7 +96,7 @@ pub const GBA = struct {
                 const isUpper = @import("std").ascii.isUpper;
                 const isDigit = @import("std").ascii.isDigit;
 
-                for (gameName) |value, index| {
+                for (gameName, 0..) |value, index| {
                     var validChar = isUpper(value) or isDigit(value);
 
                     if (validChar and index < 12) {
@@ -110,7 +110,7 @@ pub const GBA = struct {
                     }
                 }
 
-                for (gameCode) |value, index| {
+                for (gameCode, 0..) |value, index| {
                     var validChar = isUpper(value);
 
                     if (validChar and index < 4) {
@@ -125,7 +125,7 @@ pub const GBA = struct {
                 }
 
                 if (makerCode) |mCode| {
-                    for (mCode) |value, index| {
+                    for (mCode, 0..) |value, index| {
                         var validChar = isDigit(value);
                         if (validChar and index < 2) {
                             header.makerCode[index] = value;
