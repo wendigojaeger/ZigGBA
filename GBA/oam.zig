@@ -156,7 +156,7 @@ pub const OAM = struct {
     const affineBuffer = affineBufferPtr[0..32];
 
     pub fn init() void {
-        for (attributeBuffer) |*attribute| {
+        for (&attributeBuffer) |*attribute| {
             attribute.* = Attribute{};
         }
     }

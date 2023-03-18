@@ -79,7 +79,14 @@ pub fn addGBAExecutable(b: *std.Build, romName: []const u8, sourceFile: []const 
     if (useGDB) {
         exe.install();
     } else {
-        _ = exe.installRaw(b.fmt("{s}.gba", .{romName}), .{});
+        const objcopy_step = exe.addObjCopy(.{
+            .format = .bin,
+        });
+
+        const install_bin_step = b.addInstallBinFile(objcopy_step.getOutputSource(), b.fmt("{s}.gba", .{romName}));
+        install_bin_step.step.dependOn(&objcopy_step.step);
+
+        b.default_step.dependOn(&install_bin_step.step);
     }
 
     const gbaLib = createGBALib(b, isDebug);
@@ -93,14 +100,16 @@ pub fn addGBAExecutable(b: *std.Build, romName: []const u8, sourceFile: []const 
 
 const Mode4ConvertStep = struct {
     step: Step,
-    builder: *std.Build,
     images: []const ImageSourceTarget,
     targetPalettePath: []const u8,
 
     pub fn init(b: *std.Build, images: []const ImageSourceTarget, targetPalettePath: []const u8) Mode4ConvertStep {
         return Mode4ConvertStep{
-            .builder = b,
-            .step = Step.init(.custom, b.fmt("ConvertMode4Image {s}", .{targetPalettePath}), b.allocator, make),
+            .step = Step.init(.{
+                .id = .custom,
+                .name = b.fmt("ConvertMode4Image {s}", .{targetPalettePath}),
+                .owner = b,
+            }),
             .images = images,
             .targetPalettePath = targetPalettePath,
         };
@@ -115,18 +124,18 @@ const Mode4ConvertStep = struct {
 
         for (self.images) |imageSourceTarget| {
             try fullImages.append(ImageSourceTarget{
-                .source = self.builder.pathFromRoot(imageSourceTarget.source),
-                .target = self.builder.pathFromRoot(imageSourceTarget.target),
+                .source = self.step.owner.pathFromRoot(imageSourceTarget.source),
+                .target = self.step.owner.pathFromRoot(imageSourceTarget.target),
             });
         }
-        const fullTargetPalettePath = self.builder.pathFromRoot(self.targetPalettePath);
+        const fullTargetPalettePath = self.step.owner.pathFromRoot(self.targetPalettePath);
 
-        try ImageConverter.convertMode4Image(self.builder.allocator, fullImages.items, fullTargetPalettePath);
+        try ImageConverter.convertMode4Image(self.step.owner.allocator, fullImages.items, fullTargetPalettePath);
     }
 };
 
 pub fn convertMode4Images(libExe: *std.build.CompileStep, images: []const ImageSourceTarget, targetPalettePath: []const u8) void {
-    const convertImageStep = libExe.builder.allocator.create(Mode4ConvertStep) catch unreachable;
-    convertImageStep.* = Mode4ConvertStep.init(libExe.builder, images, targetPalettePath);
+    const convertImageStep = libExe.step.owner.allocator.create(Mode4ConvertStep) catch unreachable;
+    convertImageStep.* = Mode4ConvertStep.init(libExe.step.owner, images, targetPalettePath);
     libExe.step.dependOn(&convertImageStep.step);
 }
