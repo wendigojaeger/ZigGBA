@@ -77,7 +77,7 @@ pub fn addGBAExecutable(b: *std.Build, romName: []const u8, sourceFile: []const 
 
     exe.setLinkerScriptPath(std.build.FileSource{ .path = GBALinkerScript });
     if (useGDB) {
-        exe.install();
+        b.installArtifact(exe);
     } else {
         const objcopy_step = exe.addObjCopy(.{
             .format = .bin,
