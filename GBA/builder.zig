@@ -109,18 +109,22 @@ const Mode4ConvertStep = struct {
                 .id = .custom,
                 .name = b.fmt("ConvertMode4Image {s}", .{targetPalettePath}),
                 .owner = b,
+                .makeFn = make,
             }),
             .images = images,
             .targetPalettePath = targetPalettePath,
         };
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *Step, progress_node: *std.Progress.Node) !void {
         const self = @fieldParentPtr(Mode4ConvertStep, "step", step);
         const ImageSourceTargetList = ArrayList(ImageSourceTarget);
 
-        var fullImages = ImageSourceTargetList.init(self.builder.allocator);
+        var fullImages = ImageSourceTargetList.init(step.owner.allocator);
         defer fullImages.deinit();
+
+        var node = progress_node.start("Converting mode4 images", 1);
+        defer node.end();
 
         for (self.images) |imageSourceTarget| {
             try fullImages.append(ImageSourceTarget{
@@ -128,14 +132,14 @@ const Mode4ConvertStep = struct {
                 .target = self.step.owner.pathFromRoot(imageSourceTarget.target),
             });
         }
-        const fullTargetPalettePath = self.step.owner.pathFromRoot(self.targetPalettePath);
 
+        const fullTargetPalettePath = self.step.owner.pathFromRoot(self.targetPalettePath);
         try ImageConverter.convertMode4Image(self.step.owner.allocator, fullImages.items, fullTargetPalettePath);
     }
 };
 
-pub fn convertMode4Images(libExe: *std.build.CompileStep, images: []const ImageSourceTarget, targetPalettePath: []const u8) void {
-    const convertImageStep = libExe.step.owner.allocator.create(Mode4ConvertStep) catch unreachable;
-    convertImageStep.* = Mode4ConvertStep.init(libExe.step.owner, images, targetPalettePath);
-    libExe.step.dependOn(&convertImageStep.step);
+pub fn convertMode4Images(compile_step: *std.build.CompileStep, images: []const ImageSourceTarget, targetPalettePath: []const u8) void {
+    const convertImageStep = compile_step.step.owner.allocator.create(Mode4ConvertStep) catch unreachable;
+    convertImageStep.* = Mode4ConvertStep.init(compile_step.step.owner, images, targetPalettePath);
+    compile_step.step.dependOn(&convertImageStep.step);
 }
