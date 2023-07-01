@@ -106,7 +106,7 @@ pub const BIOS = struct {
     }
 
     pub inline fn registerRamReset(flags: RamResetFlags) void {
-        systemCall1(0x01, @bitCast(u8, flags));
+        systemCall1(0x01, @as(u8, @bitCast(flags)));
     }
 
     pub inline fn half() void {
@@ -118,7 +118,7 @@ pub const BIOS = struct {
     }
 
     pub inline fn interruptWait(waitReturn: InterruptWaitReturn, flags: GBA.InterruptFlags) void {
-        systemCall2(0x04, @bitCast(u32, waitReturn), @intCast(u32, @bitCast(u14, flags)));
+        systemCall2(0x04, @as(u32, @bitCast(waitReturn)), @as(u32, @intCast(@as(u14, @bitCast(flags)))));
     }
 
     pub inline fn vblankWait() void {
@@ -133,74 +133,74 @@ pub const BIOS = struct {
     // TODO: divArm (swi 7)
 
     pub inline fn sqrt(value: u32) u16 {
-        return @truncate(u16, systemCall1Return(0x08, value));
+        return @as(u16, @truncate(systemCall1Return(0x08, value)));
     }
 
     pub inline fn arcTan(value: i16) i16 {
-        const paramValue = @intCast(u32, @bitCast(u16, value));
-        return @truncate(i16, @bitCast(i32, systemCall1Return(0x09, paramValue)));
+        const paramValue = @as(u32, @intCast(@as(u16, @bitCast(value))));
+        return @as(i16, @truncate(@as(i32, @bitCast(systemCall1Return(0x09, paramValue)))));
     }
 
     pub inline fn arcTan2(x: i16, y: i16) i16 {
-        const paramX = @intCast(u32, @bitCast(u16, x));
-        const paramY = @intCast(u32, @bitCast(u16, y));
-        return @truncate(i16, @bitCast(i32, systemCall2Return(0x0A, paramX, paramY)));
+        const paramX = @as(u32, @intCast(@as(u16, @bitCast(x))));
+        const paramY = @as(u32, @intCast(@as(u16, @bitCast(y))));
+        return @as(i16, @truncate(@as(i32, @bitCast(systemCall2Return(0x0A, paramX, paramY)))));
     }
 
     pub inline fn cpuSet(source: *const u32, destination: *u32, args: CpuSetArgs) void {
-        systemCall3(0x0B, @ptrToInt(source), @ptrToInt(destination), @intCast(u32, @bitCast(u26, args)));
+        systemCall3(0x0B, @intFromPtr(source), @intFromPtr(destination), @as(u32, @intCast(@as(u26, @bitCast(args)))));
     }
 
     pub inline fn cpuFastSet(source: *const u32, destination: *u32, args: CpuFastSetArgs) void {
-        systemCall3(0x0C, @ptrToInt(source), @ptrToInt(destination), @intCast(u32, @bitCast(u25, args)));
+        systemCall3(0x0C, @intFromPtr(source), @intFromPtr(destination), @as(u32, @intCast(@as(u25, @bitCast(args)))));
     }
 
     pub inline fn bgAffineSet(source: *const BgAffineSource, destination: *BgAffineDestination, calculationCount: u32) void {
-        systemCall3(0x0E, @ptrToInt(source), @ptrToInt(destination), calculationCount);
+        systemCall3(0x0E, @intFromPtr(source), @intFromPtr(destination), calculationCount);
     }
 
     pub inline fn objAffineSetContinuous(source: *const ObjAffineSource, destination: *ObjAffineDestination, calculationCount: u32) void {
-        systemCall4(0x0F, @ptrToInt(source), @ptrToInt(destination), calculationCount, 2);
+        systemCall4(0x0F, @intFromPtr(source), @intFromPtr(destination), calculationCount, 2);
     }
 
     pub inline fn objAffineSetOam(source: *const ObjAffineSource, destination: *OAM.Affine, calculationCount: u32) void {
-        systemCall4(0x0F, @ptrToInt(source), @ptrToInt(destination), calculationCount, 2);
+        systemCall4(0x0F, @intFromPtr(source), @intFromPtr(destination), calculationCount, 2);
     }
 
     pub inline fn bitUnpack(source: *const u32, destination: *u32, unpackArgs: *const BitUnpackArgs) void {
-        systemCall3(0x10, @ptrToInt(source), @ptrToInt(destination), @ptrToInt(unpackArgs));
+        systemCall3(0x10, @intFromPtr(source), @intFromPtr(destination), @intFromPtr(unpackArgs));
     }
 
     pub inline fn LZ77UnCompReadNormalWrite8bit(source: *const u32, destination: *u32) void {
-        systemCall2(0x11, @ptrToInt(source), @ptrToInt(destination));
+        systemCall2(0x11, @intFromPtr(source), @intFromPtr(destination));
     }
 
     pub inline fn LZ77UnCompReadNormalWrite16bit(source: *const u32, destination: *u32) void {
-        systemCall2(0x12, @ptrToInt(source), @ptrToInt(destination));
+        systemCall2(0x12, @intFromPtr(source), @intFromPtr(destination));
     }
 
     pub inline fn huffUnCompReadNormal(source: *const u32, destination: *u32) void {
-        systemCall2(0x13, @ptrToInt(source), @ptrToInt(destination));
+        systemCall2(0x13, @intFromPtr(source), @intFromPtr(destination));
     }
 
     pub inline fn RLUnCompReadNormalWrite8bit(source: *const u32, destination: *u32) void {
-        systemCall2(0x14, @ptrToInt(source), @ptrToInt(destination));
+        systemCall2(0x14, @intFromPtr(source), @intFromPtr(destination));
     }
 
     pub inline fn RLUnCompReadNormalWrite16bit(source: *const u32, destination: *u32) void {
-        systemCall2(0x15, @ptrToInt(source), @ptrToInt(destination));
+        systemCall2(0x15, @intFromPtr(source), @intFromPtr(destination));
     }
 
     pub inline fn diff8bitUnFilterWrite8bit(source: *const u32, destination: *u32) void {
-        systemCall2(0x16, @ptrToInt(source), @ptrToInt(destination));
+        systemCall2(0x16, @intFromPtr(source), @intFromPtr(destination));
     }
 
     pub inline fn diff8bitUnFilterWrite16bit(source: *const u32, destination: *u32) void {
-        systemCall2(0x17, @ptrToInt(source), @ptrToInt(destination));
+        systemCall2(0x17, @intFromPtr(source), @intFromPtr(destination));
     }
 
     pub inline fn diff16bitUnFilter(source: *const u32, destination: *u32) void {
-        systemCall2(0x18, @ptrToInt(source), @ptrToInt(destination));
+        systemCall2(0x18, @intFromPtr(source), @intFromPtr(destination));
     }
 
     pub inline fn hardReset() void {
@@ -222,7 +222,7 @@ pub const BIOS = struct {
 
         asm volatile (assembly
             :
-            : [param0] "{r0}" (param0)
+            : [param0] "{r0}" (param0),
             : "r0"
         );
     }
@@ -233,7 +233,7 @@ pub const BIOS = struct {
         asm volatile (assembly
             :
             : [param0] "{r0}" (param0),
-              [param1] "{r1}" (param1)
+              [param1] "{r1}" (param1),
             : "r0", "r1"
         );
     }
@@ -245,7 +245,7 @@ pub const BIOS = struct {
             :
             : [param0] "{r0}" (param0),
               [param1] "{r1}" (param1),
-              [param2] "{r2}" (param2)
+              [param2] "{r2}" (param2),
             : "r0", "r1", "r2"
         );
     }
@@ -258,7 +258,7 @@ pub const BIOS = struct {
             : [param0] "{r0}" (param0),
               [param1] "{r1}" (param1),
               [param2] "{r2}" (param2),
-              [param3] "{r3}" (param3)
+              [param3] "{r3}" (param3),
             : "r0", "r1", "r2", "r3"
         );
     }
@@ -267,8 +267,8 @@ pub const BIOS = struct {
         const assembly = comptime getSystemCallAssemblyCode(call);
 
         return asm volatile (assembly
-            : [ret] "={r0}" (-> u32)
-            : [param0] "{r0}" (param0)
+            : [ret] "={r0}" (-> u32),
+            : [param0] "{r0}" (param0),
             : "r0"
         );
     }
@@ -277,9 +277,9 @@ pub const BIOS = struct {
         const assembly = comptime getSystemCallAssemblyCode(call);
 
         return asm volatile (assembly
-            : [ret] "={r0}" (-> u32)
+            : [ret] "={r0}" (-> u32),
             : [param0] "{r0}" (param0),
-              [param1] "{r1}" (param1)
+              [param1] "{r1}" (param1),
             : "r0", "r1"
         );
     }
@@ -288,10 +288,10 @@ pub const BIOS = struct {
         const assembly = comptime getSystemCallAssemblyCode(call);
 
         return asm volatile (assembly
-            : [ret] "={r0}" (-> u32)
+            : [ret] "={r0}" (-> u32),
             : [param0] "{r0}" (param0),
               [param1] "{r1}" (param1),
-              [param2] "{r2}" (param2)
+              [param2] "{r2}" (param2),
             : "r0", "r1", "r2"
         );
     }

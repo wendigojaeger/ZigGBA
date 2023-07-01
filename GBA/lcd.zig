@@ -41,7 +41,7 @@ pub const LCD = struct {
         showObjWindow: Visiblity = .Hide,
     };
 
-    const gbaDisplayControl = @ptrCast(*volatile DisplayControl, GBA.REG_DISPCNT);
+    const gbaDisplayControl = @as(*volatile DisplayControl, @ptrCast(GBA.REG_DISPCNT));
 
     pub inline fn setupDisplayControl(displaySettings: DisplayControl) void {
         gbaDisplayControl.* = displaySettings;
@@ -52,7 +52,7 @@ pub const LCD = struct {
     }
 
     pub inline fn pageFlip() [*]volatile u16 {
-        currentPage = @intToPtr([*]volatile u16, @as(u32, @ptrToInt(currentPage)) ^ Mode4PageSize);
+        currentPage = @as([*]volatile u16, @ptrFromInt(@as(u32, @intFromPtr(currentPage)) ^ Mode4PageSize));
         gbaDisplayControl.pageSelect = ~gbaDisplayControl.pageSelect;
         return currentPage;
     }

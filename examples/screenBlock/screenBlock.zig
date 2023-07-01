@@ -37,7 +37,7 @@ fn initMap() void {
     Background.Palette[2][1] = GBA.toNativeColor(0, 0, 31);
     Background.Palette[3][1] = GBA.toNativeColor(16, 16, 16);
 
-    const bg0_map = @ptrCast([*]volatile Background.TextScreenEntry, &Background.ScreenBlockMemory[28]);
+    const bg0_map: [*]volatile Background.TextScreenEntry = @ptrCast(&Background.ScreenBlockMemory[28]);
 
     // Create the map: four contigent blocks of 0x0000, 0x1000, 0x2000, 0x3000
     var paletteIndex: usize = 0;
@@ -48,7 +48,7 @@ fn initMap() void {
             blockCount += 1;
             mapIndex += 1;
         }) {
-            bg0_map[mapIndex].paletteIndex = @intCast(u4, paletteIndex);
+            bg0_map[mapIndex].paletteIndex = @intCast(paletteIndex);
         }
     }
 }
@@ -69,7 +69,7 @@ pub fn main() noreturn {
     var screenBlockCurrent: usize = 0;
     var screenBlockPrevious: usize = CrossTY * 32 + CrossTX;
 
-    const bg0_map = @ptrCast([*]volatile Background.TextScreenEntry, &Background.ScreenBlockMemory[28]);
+    const bg0_map = @as([*]volatile Background.TextScreenEntry, @ptrCast(&Background.ScreenBlockMemory[28]));
     bg0_map[screenBlockPrevious].tileIndex += 1;
 
     while (true) {
@@ -80,8 +80,8 @@ pub fn main() noreturn {
         x += Input.getHorizontal();
         y += Input.getVertical();
 
-        tx = ((@bitCast(u32, x) >> 3) + CrossTX) & 0x3F;
-        ty = ((@bitCast(u32, y) >> 3) + CrossTY) & 0x3F;
+        tx = ((@as(u32, @bitCast(x)) >> 3) + CrossTX) & 0x3F;
+        ty = ((@as(u32, @bitCast(y)) >> 3) + CrossTY) & 0x3F;
 
         screenBlockCurrent = screenIndex(tx, ty, 64);
 

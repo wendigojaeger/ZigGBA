@@ -10,7 +10,7 @@ extern const brinMap: [2048]c_ushort;
 export var gameHeader linksection(".gbaheader") = GBA.Header.setup("TILEDEMO", "ATDE", "00", 0);
 
 fn loadData() void {
-    const mapRam = @intToPtr([*]volatile u16, @ptrToInt(GBA.VRAM) + (30 * 2048));
+    const mapRam: [*]volatile u16 = @ptrFromInt(@intFromPtr(GBA.VRAM) + (30 * 2048));
 
     GBA.memcpy32(GBA.BG_PALETTE_RAM, &brinPal, brinPal.len * 2);
     GBA.memcpy32(GBA.VRAM, &brinTiles, brinTiles.len * 2);

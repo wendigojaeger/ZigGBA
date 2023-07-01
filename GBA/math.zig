@@ -30,13 +30,13 @@ pub const Math = struct {
 
             pub inline fn fromInt(value: InputIntegerType) Self {
                 return Self{
-                    .raw = @truncate(RawType, @intCast(AlignIntegerType, value) << Shift),
+                    .raw = @as(RawType, @truncate(@as(AlignIntegerType, @intCast(value)) << Shift)),
                 };
             }
 
             pub inline fn fromF32(comptime value: f32) Self {
                 return Self{
-                    .raw = @floatToInt(RawType, value * Scale),
+                    .raw = @as(RawType, @intFromFloat(value * Scale)),
                 };
             }
 
@@ -49,15 +49,15 @@ pub const Math = struct {
             }
 
             pub inline fn integral(self: Self) UnsignedAlignIntegerType {
-                return @intCast(UnsignedAlignIntegerType, (@bitCast(UnsignedRawType, self.raw) >> Shift) & (IntegralMask));
+                return @as(UnsignedAlignIntegerType, @intCast((@as(UnsignedRawType, @bitCast(self.raw)) >> Shift) & (IntegralMask)));
             }
 
             pub inline fn fractional(self: Self) UnsignedAlignIntegerType {
-                return @intCast(UnsignedAlignIntegerType, @bitCast(UnsignedRawType, self.raw) & FractionalMask);
+                return @as(UnsignedAlignIntegerType, @intCast(@as(UnsignedRawType, @bitCast(self.raw)) & FractionalMask));
             }
 
             pub inline fn toF32(self: Self) f32 {
-                return @intToFloat(f32, self.raw) / Scale;
+                return @as(f32, @floatFromInt(self.raw)) / Scale;
             }
 
             pub inline fn add(left: Self, right: Self) Self {
@@ -82,7 +82,7 @@ pub const Math = struct {
 
             pub inline fn mul(left: Self, right: Self) Self {
                 return Self{
-                    .raw = @truncate(RawType, (@intCast(MaxIntegerType, left.raw) * @intCast(MaxIntegerType, right.raw)) >> Shift),
+                    .raw = @as(RawType, @truncate((@as(MaxIntegerType, @intCast(left.raw)) * @as(MaxIntegerType, @intCast(right.raw))) >> Shift)),
                 };
             }
 
@@ -92,7 +92,7 @@ pub const Math = struct {
 
             pub inline fn div(left: Self, right: Self) Self {
                 return Self{
-                    .raw = @truncate(RawType, @divTrunc(@intCast(MaxIntegerType, left.raw) * Scale, @intCast(MaxIntegerType, right.raw))),
+                    .raw = @as(RawType, @truncate(@divTrunc(@as(MaxIntegerType, @intCast(left.raw)) * Scale, @as(MaxIntegerType, @intCast(right.raw))))),
                 };
             }
 
@@ -127,7 +127,7 @@ pub const Math = struct {
 
         var i: usize = 0;
         while (i < result.len) : (i += 1) {
-            const sinValue = std.math.sin(@intToFloat(f32, i) * 2.0 * pi / 512.0);
+            const sinValue = std.math.sin(@as(f32, @floatFromInt(i)) * 2.0 * pi / 512.0);
             const fixedValue = FixedI4_12.fromF32(sinValue);
 
             result[i] = fixedValue.raw;
@@ -137,21 +137,21 @@ pub const Math = struct {
 
     pub fn sin(theta: i32) FixedI4_12 {
         return FixedI4_12{
-            .raw = sin_lut[@bitCast(u32, (theta >> 7) & 0x1FF)],
+            .raw = sin_lut[@as(u32, @bitCast((theta >> 7) & 0x1FF))],
         };
     }
 
     pub fn cos(theta: i32) FixedI4_12 {
         return FixedI4_12{
-            .raw = sin_lut[@bitCast(u32, ((theta >> 7) + 128) & 0x1FF)],
+            .raw = sin_lut[@as(u32, @bitCast(((theta >> 7) + 128) & 0x1FF))],
         };
     }
 
     pub inline fn degreeToGbaAngle(comptime input: i32) i32 {
-        return @floatToInt(i32, @intToFloat(f32, input) * ((1 << 16) / 360.0));
+        return @as(i32, @intFromFloat(@as(f32, @floatFromInt(input)) * ((1 << 16) / 360.0)));
     }
 
     pub inline fn radianToGbaAngle(comptime input: f32) i32 {
-        return @floatToInt(i32, input * ((1 << 16) / (std.math.tau)));
+        return @as(i32, @intFromFloat(input * ((1 << 16) / (std.math.tau))));
     }
 };

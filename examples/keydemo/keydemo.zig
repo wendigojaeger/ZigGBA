@@ -35,9 +35,9 @@ pub fn main() noreturn {
         }
 
         var keyIndex: usize = 0;
-        while (keyIndex < @enumToInt(Input.KeyIndex.Count)) : (keyIndex += 1) {
+        while (keyIndex < @intFromEnum(Input.KeyIndex.Count)) : (keyIndex += 1) {
             color = 0;
-            const key = @as(u16, 1) << @intCast(u4, keyIndex);
+            const key = @as(u16, 1) << @intCast(keyIndex);
 
             if (Input.isKeyJustPressed(key)) {
                 color = Color.Red;

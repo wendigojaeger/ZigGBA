@@ -1,7 +1,7 @@
 const GBA = @import("core.zig").GBA;
 
 pub const Background = struct {
-    pub const Palette = @intToPtr([*]GBA.PaletteBank, @ptrToInt(GBA.BG_PALETTE_RAM));
+    pub const Palette: [*]GBA.PaletteBank = @ptrFromInt(@intFromPtr(GBA.BG_PALETTE_RAM));
 
     pub const BackgroundControl = packed struct {
         priority: u2 = 0,
@@ -19,10 +19,10 @@ pub const Background = struct {
         } = .Text32x32,
     };
 
-    pub const Background0Control = @intToPtr(*volatile BackgroundControl, 0x4000008);
-    pub const Background1Control = @intToPtr(*volatile BackgroundControl, 0x400000A);
-    pub const Background2Control = @intToPtr(*volatile BackgroundControl, 0x400000C);
-    pub const Background3Control = @intToPtr(*volatile BackgroundControl, 0x400000E);
+    pub const Background0Control: *volatile BackgroundControl = @ptrFromInt(0x4000008);
+    pub const Background1Control: *volatile BackgroundControl = @ptrFromInt(0x400000A);
+    pub const Background2Control: *volatile BackgroundControl = @ptrFromInt(0x400000C);
+    pub const Background3Control: *volatile BackgroundControl = @ptrFromInt(0x400000E);
 
     pub inline fn setupBackground(background: *volatile BackgroundControl, settings: BackgroundControl) void {
         background.* = settings;
@@ -38,15 +38,15 @@ pub const Background = struct {
         pub inline fn setPosition(self: *volatile Self, x: i32, y: i32) void {
             @setRuntimeSafety(false);
             const Mask = (1 << 9) - 1;
-            self.x = @intCast(u9, x & Mask);
-            self.y = @intCast(u9, y & Mask);
+            self.x = @intCast(x & Mask);
+            self.y = @intCast(y & Mask);
         }
     };
 
-    pub const Background0Scroll = @intToPtr(*volatile Scroll, 0x4000010);
-    pub const Background1Scroll = @intToPtr(*volatile Scroll, 0x4000014);
-    pub const Background2Scroll = @intToPtr(*volatile Scroll, 0x4000018);
-    pub const Background3Scroll = @intToPtr(*volatile Scroll, 0x400001C);
+    pub const Background0Scroll: *volatile Scroll = @ptrFromInt(0x4000010);
+    pub const Background1Scroll: *volatile Scroll = @ptrFromInt(0x4000014);
+    pub const Background2Scroll: *volatile Scroll = @ptrFromInt(0x4000018);
+    pub const Background3Scroll: *volatile Scroll = @ptrFromInt(0x400001C);
 
     pub const TextScreenEntry = packed struct {
         tileIndex: u10 = 0,
@@ -60,15 +60,15 @@ pub const Background = struct {
     };
 
     pub const TextScreenBlock = [1024]TextScreenEntry;
-    pub const ScreenBlockMemory = @intToPtr([*]align(4) volatile TextScreenBlock, @ptrToInt(GBA.VRAM));
+    pub const ScreenBlockMemory: [*]align(4) volatile TextScreenBlock = @ptrFromInt(@intFromPtr(GBA.VRAM));
 
     pub const Tile = extern struct { data: [8]u32 align(1) };
 
     pub const CharacterBlock = [512]Tile;
-    pub const TileMemory = @intToPtr([*]align(4) volatile CharacterBlock, @ptrToInt(GBA.VRAM));
+    pub const TileMemory: [*]align(4) volatile CharacterBlock = @ptrFromInt(@intFromPtr(GBA.VRAM));
 
     pub const Tile8 = extern struct { data: [16]u32 align(1) };
 
     pub const CharacterBlock8 = [256]Tile8;
-    pub const Tile8Memory = @intToPtr([*]align(4) volatile CharacterBlock8, @ptrToInt(GBA.VRAM));
+    pub const Tile8Memory: [*]align(4) volatile CharacterBlock8 = @ptrFromInt(@intFromPtr(GBA.VRAM));
 };

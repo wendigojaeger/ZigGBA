@@ -2,22 +2,22 @@ const root = @import("root");
 const BIOS = @import("bios.zig").BIOS;
 
 pub const GBA = struct {
-    pub const VRAM = @intToPtr([*]align(2) volatile u16, 0x06000000);
-    pub const SPRITE_VRAM = @intToPtr([*]align(2) volatile u16, 0x06010000);
-    pub const BG_PALETTE_RAM = @intToPtr([*]align(2) volatile u16, 0x05000000);
-    pub const OBJ_PALETTE_RAM = @intToPtr([*]align(2) volatile u16, 0x05000200);
-    pub const EWRAM = @intToPtr([*]volatile u8, 0x02000000);
-    pub const IWRAM = @intToPtr([*]volatile u8, 0x03000000);
-    pub const OAM = @intToPtr([*]volatile u16, 0x07000000);
+    pub const VRAM = @as([*]align(2) volatile u16, @ptrFromInt(0x06000000));
+    pub const SPRITE_VRAM = @as([*]align(2) volatile u16, @ptrFromInt(0x06010000));
+    pub const BG_PALETTE_RAM = @as([*]align(2) volatile u16, @ptrFromInt(0x05000000));
+    pub const OBJ_PALETTE_RAM = @as([*]align(2) volatile u16, @ptrFromInt(0x05000200));
+    pub const EWRAM = @as([*]volatile u8, @ptrFromInt(0x02000000));
+    pub const IWRAM = @as([*]volatile u8, @ptrFromInt(0x03000000));
+    pub const OAM = @as([*]volatile u16, @ptrFromInt(0x07000000));
 
-    pub const MEM_IO = @intToPtr(*volatile u32, 0x04000000);
-    pub const REG_DISPCNT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0000);
-    pub const REG_DISPSTAT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0004);
-    pub const REG_VCOUNT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0006);
-    pub const REG_KEYINPUT = @intToPtr(*volatile u16, @ptrToInt(MEM_IO) + 0x0130);
+    pub const MEM_IO = @as(*volatile u32, @ptrFromInt(0x04000000));
+    pub const REG_DISPCNT = @as(*volatile u16, @ptrFromInt(@intFromPtr(MEM_IO) + 0x0000));
+    pub const REG_DISPSTAT = @as(*volatile u16, @ptrFromInt(@intFromPtr(MEM_IO) + 0x0004));
+    pub const REG_VCOUNT = @as(*volatile u16, @ptrFromInt(@intFromPtr(MEM_IO) + 0x0006));
+    pub const REG_KEYINPUT = @as(*volatile u16, @ptrFromInt(@intFromPtr(MEM_IO) + 0x0130));
 
     pub const MODE4_FRONT_VRAM = VRAM;
-    pub const MODE4_BACK_VRAM = @intToPtr([*]align(2) volatile u16, 0x0600A000);
+    pub const MODE4_BACK_VRAM = @as([*]align(2) volatile u16, @ptrFromInt(0x0600A000));
 
     pub const SCREEN_WIDTH = 240;
     pub const SCREEN_HEIGHT = 160;
@@ -144,13 +144,13 @@ pub const GBA = struct {
                 var complementCheck: u8 = 0;
                 var index: usize = 0xA0;
 
-                var computeCheckData = @bitCast([192]u8, header);
+                var computeCheckData = @as([192]u8, @bitCast(header));
                 while (index < 0xA0 + (0xBD - 0xA0)) : (index += 1) {
                     complementCheck +%= computeCheckData[index];
                 }
 
-                var tempCheck = -(0x19 + @intCast(i32, complementCheck));
-                header.complementCheck = @intCast(u8, tempCheck & 0xFF);
+                var tempCheck = -(0x19 + @as(i32, @intCast(complementCheck)));
+                header.complementCheck = @as(u8, @intCast(tempCheck & 0xFF));
             }
 
             return header;
@@ -164,26 +164,26 @@ pub const GBA = struct {
     // TODO: maybe put this in IWRAM ?
     pub fn memcpy32(noalias destination: anytype, noalias source: anytype, count: usize) void {
         if (count < 4) {
-            genericMemcpy(@ptrCast([*]volatile u8, destination), @ptrCast([*]const u8, source), count);
+            genericMemcpy(@as([*]volatile u8, @ptrCast(destination)), @as([*]const u8, @ptrCast(source)), count);
         } else {
-            if ((@ptrToInt(@ptrCast(*volatile u8, destination)) % 4) == 0 and (@ptrToInt(@ptrCast(*const u8, source)) % 4) == 0) {
-                alignedMemcpy(u32, @ptrCast([*]align(4) volatile u8, @alignCast(4, destination)), @ptrCast([*]align(4) const u8, @alignCast(4, source)), count);
-            } else if ((@ptrToInt(@ptrCast(*volatile u8, destination)) % 2) == 0 and (@ptrToInt(@ptrCast(*const u8, source)) % 2) == 0) {
-                alignedMemcpy(u16, @ptrCast([*]align(2) volatile u8, @alignCast(2, destination)), @ptrCast([*]align(2) const u8, @alignCast(2, source)), count);
+            if ((@intFromPtr(@as(*volatile u8, @ptrCast(destination))) % 4) == 0 and (@intFromPtr(@as(*const u8, @ptrCast(source))) % 4) == 0) {
+                alignedMemcpy(u32, @as([*]align(4) volatile u8, @ptrCast(@alignCast(destination))), @as([*]align(4) const u8, @ptrCast(@alignCast(source))), count);
+            } else if ((@intFromPtr(@as(*volatile u8, @ptrCast(destination))) % 2) == 0 and (@intFromPtr(@as(*const u8, @ptrCast(source))) % 2) == 0) {
+                alignedMemcpy(u16, @as([*]align(2) volatile u8, @ptrCast(@alignCast(destination))), @as([*]align(2) const u8, @ptrCast(@alignCast( source))), count);
             } else {
-                genericMemcpy(@ptrCast([*]volatile u8, destination), @ptrCast([*]const u8, source), count);
+                genericMemcpy(@as([*]volatile u8, @ptrCast(destination)), @as([*]const u8, @ptrCast(source)), count);
             }
         }
     }
 
     pub fn memcpy16(noalias destination: anytype, noalias source: anytype, count: usize) void {
         if (count < 2) {
-            genericMemcpy(@ptrCast([*]u8, destination), @ptrCast([*]const u8, source), count);
+            genericMemcpy(@as([*]u8, @ptrCast(destination)), @as([*]const u8, @ptrCast(source)), count);
         } else {
-            if ((@ptrToInt(@ptrCast(*u8, destination)) % 2) == 0 and (@ptrToInt(@ptrCast(*const u8, source)) % 2) == 0) {
-                alignedMemcpy(u16, @ptrCast([*]align(2) volatile u8, @alignCast(2, destination)), @ptrCast([*]align(2) const u8, @alignCast(2, source)), count);
+            if ((@intFromPtr(@as(*u8, @ptrCast(destination))) % 2) == 0 and (@intFromPtr(@as(*const u8, @ptrCast(source))) % 2) == 0) {
+                alignedMemcpy(u16, @as([*]align(2) volatile u8, @ptrCast(@alignCast(destination))), @as([*]align(2) const u8, @ptrCast(@alignCast(source))), count);
             } else {
-                genericMemcpy(@ptrCast([*]volatile u8, destination), @ptrCast([*]const u8, source), count);
+                genericMemcpy(@as([*]volatile u8, @ptrCast(destination)), @as([*]const u8, @ptrCast(source)), count);
             }
         }
     }
@@ -193,8 +193,8 @@ pub const GBA = struct {
         const alignSize = count / @sizeOf(T);
         const remainderSize = count % @sizeOf(T);
 
-        const alignDestination = @ptrCast([*]volatile T, destination);
-        const alignSource = @ptrCast([*]const T, source);
+        const alignDestination = @as([*]volatile T, @ptrCast(destination));
+        const alignSource = @as([*]const T, @ptrCast(source));
 
         var index: usize = 0;
         while (index != alignSize) : (index += 1) {
@@ -217,24 +217,24 @@ pub const GBA = struct {
 
     // TODO: maybe put it in IWRAM ?
     pub fn memset32(destination: anytype, value: u32, count: usize) void {
-        if ((@ptrToInt(@ptrCast(*volatile u8, destination)) % 4) == 0) {
-            alignedMemset(u32, @ptrCast([*]align(4) volatile u8, @alignCast(4, destination)), value, count);
+        if ((@intFromPtr(@as(*volatile u8, @ptrCast(destination))) % 4) == 0) {
+            alignedMemset(u32, @as([*]align(4) volatile u8, @ptrCast(@alignCast(destination))), value, count);
         } else {
-            genericMemset(u32, @ptrCast([*]volatile u8, destination), value, count);
+            genericMemset(u32, @as([*]volatile u8, @ptrCast(destination)), value, count);
         }
     }
 
     pub fn memset16(destination: anytype, value: u16, count: usize) void {
-        if ((@ptrToInt(@ptrCast(*u8, destination)) % 4) == 0) {
-            alignedMemset(u16, @ptrCast([*]align(2) volatile u8, @alignCast(2, destination)), value, count);
+        if ((@intFromPtr(@as(*u8, @ptrCast(destination))) % 4) == 0) {
+            alignedMemset(u16, @as([*]align(2) volatile u8, @ptrCast(@alignCast(destination))), value, count);
         } else {
-            genericMemset(u16, @ptrCast([*]volatile u8, destination), value, count);
+            genericMemset(u16, @as([*]volatile u8, @ptrCast(destination)), value, count);
         }
     }
 
     pub fn alignedMemset(comptime T: type, destination: [*]align(@alignOf(T)) volatile u8, value: T, count: usize) void {
         @setRuntimeSafety(false);
-        const alignedDestination = @ptrCast([*]volatile T, destination);
+        const alignedDestination = @as([*]volatile T, @ptrCast(destination));
         var index: usize = 0;
         while (index != count) : (index += 1) {
             alignedDestination[index] = value;
@@ -243,7 +243,7 @@ pub const GBA = struct {
 
     pub fn genericMemset(comptime T: type, destination: [*]volatile u8, value: T, count: usize) void {
         @setRuntimeSafety(false);
-        const valueBytes = @ptrCast([*]const u8, &value);
+        const valueBytes = @as([*]const u8, @ptrCast(&value));
         var index: usize = 0;
         while (index != count) : (index += 1) {
             comptime var expandIndex = 0;
@@ -287,10 +287,10 @@ fn GBAZigStartup() noreturn {
     BIOS.registerRamReset(BIOS.RamResetFlags.All);
 
     // Clear .bss
-    GBA.memset32(@ptrCast([*]volatile u8, &__bss_start__), 0, @ptrToInt(&__bss_end__) - @ptrToInt(&__bss_start__));
+    GBA.memset32(@as([*]volatile u8, @ptrCast(&__bss_start__)), 0, @intFromPtr(&__bss_end__) - @intFromPtr(&__bss_start__));
 
     // Copy .data section to EWRAM
-    GBA.memcpy32(@ptrCast([*]volatile u8, &__data_start__), @ptrCast([*]const u8, &__data_lma), @ptrToInt(&__data_end__) - @ptrToInt(&__data_start__));
+    GBA.memcpy32(@as([*]volatile u8, @ptrCast(&__data_start__)), @as([*]const u8, @ptrCast(&__data_lma)), @intFromPtr(&__data_end__) - @intFromPtr(&__data_start__));
 
     // call user's main
     if (@hasDecl(root, "main")) {

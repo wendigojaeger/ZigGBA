@@ -22,7 +22,7 @@ const gba_thumb_target = blk: {
         .cpu_model = .{ .explicit = &std.Target.arm.cpu.arm7tdmi },
         .os_tag = .freestanding,
     };
-    target.cpu_features_add.addFeature(@enumToInt(std.Target.arm.Feature.thumb_mode));
+    target.cpu_features_add.addFeature(@intFromEnum(std.Target.arm.Feature.thumb_mode));
     break :blk target;
 };
 

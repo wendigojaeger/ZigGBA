@@ -106,22 +106,22 @@ pub const OAM = struct {
         }
 
         pub inline fn setRotationParameterIndex(self: *Self, index: u5) void {
-            self.flip = @bitCast(FlipSettings, index);
+            self.flip = @as(FlipSettings, @bitCast(index));
         }
 
         pub inline fn setTileIndex(self: *Self, tileIndex: i32) void {
             @setRuntimeSafety(false);
-            self.tileIndex = @intCast(u10, tileIndex);
+            self.tileIndex = @as(u10, @intCast(tileIndex));
         }
 
         pub inline fn setPosition(self: *Self, x: i32, y: i32) void {
             @setRuntimeSafety(false);
-            self.x = @intCast(u9, x);
-            self.y = @intCast(u8, y);
+            self.x = @as(u9, @intCast(x));
+            self.y = @as(u8, @intCast(y));
         }
 
         pub fn getAffine(self: Self) *Affine {
-            const affine_index = @bitCast(u5, self.flip);
+            const affine_index = @as(u5, @bitCast(self.flip));
             return &affineBuffer[affine_index];
         }
     };
@@ -146,13 +146,13 @@ pub const OAM = struct {
         }
     };
 
-    const OAMAttributePtr = @ptrCast([*]align(4) volatile Attribute, @alignCast(4, GBA.OAM));
+    const OAMAttributePtr = @as([*]align(4) volatile Attribute, @ptrCast(@alignCast(GBA.OAM)));
     const OAMAttribute = OAMAttributePtr[0..128];
 
     var attributeBuffer: [128]Attribute = undefined;
     var currentAttribute: usize = 0;
 
-    const affineBufferPtr = @ptrCast([*]align(4) Affine, &attributeBuffer);
+    const affineBufferPtr = @as([*]align(4) Affine, @ptrCast(&attributeBuffer));
     const affineBuffer = affineBufferPtr[0..32];
 
     pub fn init() void {

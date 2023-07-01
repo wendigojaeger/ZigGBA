@@ -56,12 +56,12 @@ pub const ImageConverter = struct {
         var paletteCount: usize = 0;
         for (palette) |entry| {
             const gbaColor = colorToGBAColor(entry);
-            try paletteOutStream.writeIntLittle(u15, @bitCast(u15, gbaColor));
+            try paletteOutStream.writeIntLittle(u15, @as(u15, @bitCast(gbaColor)));
             paletteCount += 2;
         }
 
         // Align palette file to a power of 4
-        var diff = mem.alignForward(paletteCount, 4) - paletteCount;
+        var diff = mem.alignForward(usize, paletteCount, 4) - paletteCount;
         var index: usize = 0;
         while (index < diff) : (index += 1) {
             try paletteOutStream.writeIntLittle(u8, 0);
@@ -80,12 +80,12 @@ pub const ImageConverter = struct {
 
             while (colorIt.next()) |pixel| {
                 var rawPaletteIndex: usize = try quantizer.getPaletteIndex(pixel.toPremultipliedAlpha().toRgba32());
-                var paletteIndex: u8 = @intCast(u8, rawPaletteIndex);
+                var paletteIndex: u8 = @as(u8, @intCast(rawPaletteIndex));
                 try imageOutStream.writeIntLittle(u8, paletteIndex);
                 pixelCount += 1;
             }
 
-            diff = mem.alignForward(pixelCount, 4) - pixelCount;
+            diff = mem.alignForward(usize, pixelCount, 4) - pixelCount;
             index = 0;
             while (index < diff) : (index += 1) {
                 try imageOutStream.writeIntLittle(u8, 0);
@@ -99,9 +99,9 @@ pub const ImageConverter = struct {
 
     fn colorToGBAColor(color: zigimg.color.Rgba32) GBAColor {
         return GBAColor{
-            .r = @intCast(u5, (color.r >> 3) & 0x1f),
-            .g = @intCast(u5, (color.g >> 3) & 0x1f),
-            .b = @intCast(u5, (color.b >> 3) & 0x1f),
+            .r = @as(u5, @intCast((color.r >> 3) & 0x1f)),
+            .g = @as(u5, @intCast((color.g >> 3) & 0x1f)),
+            .b = @as(u5, @intCast((color.b >> 3) & 0x1f)),
         };
     }
 };

@@ -30,15 +30,15 @@ pub fn main() noreturn {
     // Lines in top right frame
     while (i <= 8) : (i += 1) {
         j = 3 * i + 7;
-        Mode3.line(132 + 11 * i, 9, 226, 12 + 7 * i, GBA.toNativeColor(@intCast(u5, j), 0, @intCast(u5, j)));
-        Mode3.line(226 - 11 * i, 70, 133, 69 - 7 * i, GBA.toNativeColor(@intCast(u5, j), 0, @intCast(u5, j)));
+        Mode3.line(132 + 11 * i, 9, 226, 12 + 7 * i, GBA.toNativeColor(@intCast(j), 0, @intCast(j)));
+        Mode3.line(226 - 11 * i, 70, 133, 69 - 7 * i, GBA.toNativeColor(@intCast(j), 0, @intCast(j)));
     }
 
     // Lines in bottom left frame
     i = 0;
     while (i <= 8) : (i += 1) {
         j = 3 * i + 7;
-        Mode3.line(15 + 11 * i, 88, 104 - 11 * i, 150, GBA.toNativeColor(0, @intCast(u5, j), @intCast(u5, j)));
+        Mode3.line(15 + 11 * i, 88, 104 - 11 * i, 150, GBA.toNativeColor(0, @intCast(j), @intCast(j)));
     }
 
     while (true) {}

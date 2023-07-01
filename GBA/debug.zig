@@ -47,9 +47,9 @@ pub const Debug = struct {
         }
     };
 
-    const AGB_PRINT_PROTECT = @intToPtr(*volatile u16, 0x09FE2FFE);
-    const AGB_PRINT_CONTEXT = @intToPtr(*volatile PrintContext, 0x09FE20F8);
-    const AGB_PRINT_BUFFER = @intToPtr([*]volatile u16, 0x09FD0000);
+    const AGB_PRINT_PROTECT = @as(*volatile u16, @ptrFromInt(0x09FE2FFE));
+    const AGB_PRINT_CONTEXT = @as(*volatile PrintContext, @ptrFromInt(0x09FE20F8));
+    const AGB_PRINT_BUFFER = @as([*]volatile u16, @ptrFromInt(0x09FD0000));
     const AGB_BUFFER_SIZE = 0x100;
 
     pub fn init() void {
@@ -89,11 +89,11 @@ pub const Debug = struct {
         }
     }
 
-    fn lockPrint() callconv(.Inline) void {
+    inline fn lockPrint() void {
         AGB_PRINT_PROTECT.* = 0x20;
     }
 
-    fn unlockPrint() callconv(.Inline) void {
+    inline fn unlockPrint() void {
         AGB_PRINT_PROTECT.* = 0x00;
     }
 
@@ -101,7 +101,7 @@ pub const Debug = struct {
         var data: u16 = AGB_PRINT_BUFFER[AGB_PRINT_CONTEXT.put >> 1];
 
         if ((AGB_PRINT_CONTEXT.put & 1) == 1) {
-            data = (@intCast(u16, value) << 8) | (data & 0xFF);
+            data = (@as(u16, @intCast(value)) << 8) | (data & 0xFF);
         } else {
             data = (data & 0xFF00) | value;
         }

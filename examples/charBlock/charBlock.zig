@@ -16,8 +16,8 @@ const ScreenBlock8 = 4;
 export var gameHeader linksection(".gbaheader") = GBA.Header.setup("CHARBLOCK", "ASBE", "00", 0);
 
 fn loadTiles() void {
-    const tl = @intToPtr([*]align(4) Background.Tile, @ptrToInt(&ids4Tiles[0]));
-    const tl8 = @intToPtr([*]align(4) Background.Tile8, @ptrToInt(&ids8Tiles[0]));
+    const tl: [*]align(4) Background.Tile = @ptrFromInt(@intFromPtr(&ids4Tiles[0]));
+    const tl8: [*]align(4) Background.Tile8 = @ptrFromInt(@intFromPtr(&ids8Tiles[0]));
 
     // Loading tiles. 4-bit tiles to blocks 0 and 1
     Background.TileMemory[0][1] = tl[1];
@@ -42,9 +42,9 @@ fn loadTiles() void {
 
 fn initMaps() void {
     // map coords (0,2)
-    const screenEntry4_ptr = @intToPtr(?[*]Background.TextScreenEntry, @ptrToInt(&Background.ScreenBlockMemory[ScreenBlock4][2 * 32]));
+    const screenEntry4_ptr: ?[*]Background.TextScreenEntry = @ptrFromInt(@intFromPtr(&Background.ScreenBlockMemory[ScreenBlock4][2 * 32]));
     // map coords (0, 8)
-    const screenEntry8_ptr = @intToPtr(?[*]Background.TextScreenEntry, @ptrToInt(&Background.ScreenBlockMemory[ScreenBlock8][8 * 32]));
+    const screenEntry8_ptr: ?[*]Background.TextScreenEntry = @ptrFromInt(@intFromPtr(&Background.ScreenBlockMemory[ScreenBlock8][8 * 32]));
 
     if (screenEntry4_ptr) |screenEntry4| {
         // Show first tiles of char-blocks available to background 0
