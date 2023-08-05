@@ -169,7 +169,7 @@ pub const GBA = struct {
             if ((@intFromPtr(@as(*volatile u8, @ptrCast(destination))) % 4) == 0 and (@intFromPtr(@as(*const u8, @ptrCast(source))) % 4) == 0) {
                 alignedMemcpy(u32, @as([*]align(4) volatile u8, @ptrCast(@alignCast(destination))), @as([*]align(4) const u8, @ptrCast(@alignCast(source))), count);
             } else if ((@intFromPtr(@as(*volatile u8, @ptrCast(destination))) % 2) == 0 and (@intFromPtr(@as(*const u8, @ptrCast(source))) % 2) == 0) {
-                alignedMemcpy(u16, @as([*]align(2) volatile u8, @ptrCast(@alignCast(destination))), @as([*]align(2) const u8, @ptrCast(@alignCast( source))), count);
+                alignedMemcpy(u16, @as([*]align(2) volatile u8, @ptrCast(@alignCast(destination))), @as([*]align(2) const u8, @ptrCast(@alignCast(source))), count);
             } else {
                 genericMemcpy(@as([*]volatile u8, @ptrCast(destination)), @as([*]const u8, @ptrCast(source)), count);
             }
@@ -254,7 +254,7 @@ pub const GBA = struct {
     }
 };
 
-export fn GBAMain() linksection(".gbamain") callconv(.Naked) noreturn {
+export fn GBAMain() linksection(".gbamain") void {
     // Assembly init code
     asm volatile (
         \\.arm
@@ -282,7 +282,7 @@ extern var __data_lma: u8;
 extern var __data_start__: u8;
 extern var __data_end__: u8;
 
-fn GBAZigStartup() noreturn {
+fn GBAZigStartup() void {
     // Use BIOS function to clear all data
     BIOS.registerRamReset(BIOS.RamResetFlags.All);
 
