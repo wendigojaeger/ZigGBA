@@ -162,7 +162,7 @@ pub const OAM = struct {
     }
 
     pub fn allocate() *Attribute {
-        var result = &attributeBuffer[currentAttribute];
+        const result = &attributeBuffer[currentAttribute];
         currentAttribute += 1;
         return result;
     }

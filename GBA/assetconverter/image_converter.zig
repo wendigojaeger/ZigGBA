@@ -45,7 +45,7 @@ pub const ImageConverter = struct {
         }
 
         var paletteStorage: [256]zigimg.color.Rgba32 = undefined;
-        var palette = try quantizer.makePalette(255, paletteStorage[0..]);
+        const palette = try quantizer.makePalette(255, paletteStorage[0..]);
 
         var paletteFile = try openWriteFile(targetPaletteFilePath);
         defer paletteFile.close();
@@ -56,7 +56,7 @@ pub const ImageConverter = struct {
         var paletteCount: usize = 0;
         for (palette) |entry| {
             const gbaColor = colorToGBAColor(entry);
-            try paletteOutStream.writeIntLittle(u15, @as(u15, @bitCast(gbaColor)));
+            try paletteOutStream.writeInt(u16, @as(u15, @bitCast(gbaColor)), .little);
             paletteCount += 2;
         }
 
@@ -64,7 +64,7 @@ pub const ImageConverter = struct {
         var diff = mem.alignForward(usize, paletteCount, 4) - paletteCount;
         var index: usize = 0;
         while (index < diff) : (index += 1) {
-            try paletteOutStream.writeIntLittle(u8, 0);
+            try paletteOutStream.writeInt(u8, 0, .little);
         }
 
         for (imageConvertList.items) |convertInfo| {
@@ -79,16 +79,16 @@ pub const ImageConverter = struct {
             var colorIt = convertInfo.image.iterator();
 
             while (colorIt.next()) |pixel| {
-                var rawPaletteIndex: usize = try quantizer.getPaletteIndex(pixel.toPremultipliedAlpha().toRgba32());
-                var paletteIndex: u8 = @as(u8, @intCast(rawPaletteIndex));
-                try imageOutStream.writeIntLittle(u8, paletteIndex);
+                const rawPaletteIndex: usize = try quantizer.getPaletteIndex(pixel.toPremultipliedAlpha().toRgba32());
+                const paletteIndex: u8 = @as(u8, @intCast(rawPaletteIndex));
+                try imageOutStream.writeInt(u8, paletteIndex, .little);
                 pixelCount += 1;
             }
 
             diff = mem.alignForward(usize, pixelCount, 4) - pixelCount;
             index = 0;
             while (index < diff) : (index += 1) {
-                try imageOutStream.writeIntLittle(u8, 0);
+                try imageOutStream.writeInt(u8, 0, .little);
             }
         }
     }

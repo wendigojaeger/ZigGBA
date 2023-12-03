@@ -23,7 +23,7 @@ pub const Debug = struct {
         }
 
         pub fn write(self: *Self, bytes: []const u8) !usize {
-            var remaining = AGB_BUFFER_SIZE - self.streamWritten;
+            const remaining = AGB_BUFFER_SIZE - self.streamWritten;
             if (remaining < bytes.len) {
                 var index: usize = 0;
                 while (index < remaining) : (index += 1) {

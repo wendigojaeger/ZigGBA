@@ -97,7 +97,7 @@ pub const GBA = struct {
                 const isDigit = @import("std").ascii.isDigit;
 
                 for (gameName, 0..) |value, index| {
-                    var validChar = isUpper(value) or isDigit(value);
+                    const validChar = isUpper(value) or isDigit(value);
 
                     if (validChar and index < 12) {
                         header.gameName[index] = value;
@@ -111,7 +111,7 @@ pub const GBA = struct {
                 }
 
                 for (gameCode, 0..) |value, index| {
-                    var validChar = isUpper(value);
+                    const validChar = isUpper(value);
 
                     if (validChar and index < 4) {
                         header.gameCode[index] = value;
@@ -126,7 +126,7 @@ pub const GBA = struct {
 
                 if (makerCode) |mCode| {
                     for (mCode, 0..) |value, index| {
-                        var validChar = isDigit(value);
+                        const validChar = isDigit(value);
                         if (validChar and index < 2) {
                             header.makerCode[index] = value;
                         } else {
@@ -144,12 +144,12 @@ pub const GBA = struct {
                 var complementCheck: u8 = 0;
                 var index: usize = 0xA0;
 
-                var computeCheckData = @as([192]u8, @bitCast(header));
+                const computeCheckData = @as([192]u8, @bitCast(header));
                 while (index < 0xA0 + (0xBD - 0xA0)) : (index += 1) {
                     complementCheck +%= computeCheckData[index];
                 }
 
-                var tempCheck = -(0x19 + @as(i32, @intCast(complementCheck)));
+                const tempCheck = -(0x19 + @as(i32, @intCast(complementCheck)));
                 header.complementCheck = @as(u8, @intCast(tempCheck & 0xFF));
             }
 

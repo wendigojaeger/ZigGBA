@@ -76,15 +76,15 @@ pub const Bitmap16 = struct {
     pub fn rect(left: i32, top: i32, right: i32, bottom: i32, color: u16, destinationBase: [*]volatile u16, rawPitch: i32) void {
         var ix: i32 = 0;
         var iy: i32 = 0;
-        var width: i32 = right - left;
-        var height: i32 = bottom - top;
-        var destinationPitch: i32 = @divExact(rawPitch, 2);
+        const width: i32 = right - left;
+        const height: i32 = bottom - top;
+        const destinationPitch: i32 = @divExact(rawPitch, 2);
 
         var destination = @as([*]u16, @ptrFromInt(@intFromPtr(destinationBase) + @as(usize, @intCast(top)) * @as(usize, @intCast(rawPitch)) + @as(usize, @intCast(left)) * 2));
 
         iy = 0;
         while (iy < height) : (iy += 1) {
-            var rectPitch: i32 = iy * destinationPitch;
+            const rectPitch: i32 = iy * destinationPitch;
 
             ix = 0;
             while (ix < width) : (ix += 1) {
@@ -94,8 +94,8 @@ pub const Bitmap16 = struct {
     }
 
     pub fn frame(left: i32, top: i32, right: i32, bottom: i32, color: u16, destinationBase: [*]volatile u16, rawPitch: i32) void {
-        var actualRight: i32 = right - 1;
-        var actualBottom: i32 = bottom - 1;
+        const actualRight: i32 = right - 1;
+        const actualBottom: i32 = bottom - 1;
 
         line(left, top, actualRight, top, color, destinationBase, rawPitch);
         line(left, actualBottom, actualRight, actualBottom, color, destinationBase, rawPitch);
