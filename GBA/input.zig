@@ -1,78 +1,102 @@
-const GBA = @import("core.zig").GBA;
+const std = @import("std");
 
-pub const Input = struct {
-    var previousInput: u16 = 0;
-    var currentInput: u16 = 0;
+var prev_input: Keys = Keys.initEmpty();
+/// The keypad should always be read through this variable, never directly.
+var curr_input: Keys = Keys.initEmpty();
 
-    pub const Keys = struct {
-        pub const A = 1 << 0;
-        pub const B = 1 << 1;
-        pub const Select = 1 << 2;
-        pub const Start = 1 << 3;
-        pub const Right = 1 << 4;
-        pub const Left = 1 << 5;
-        pub const Up = 1 << 6;
-        pub const Down = 1 << 7;
-        pub const R = 1 << 8;
-        pub const L = 1 << 9;
+const REG_KEYINPUT: *align(2) volatile const u10 = @ptrFromInt(0x4000130);
+
+pub const Key = enum {
+    A,
+    B,
+    Select,
+    Start,
+    Right,
+    Left,
+    Up,
+    Down,
+    R,
+    L,
+};
+
+pub const KeyCtrl = packed struct(u16) {
+    const Op = enum(u1) {
+        Or = 0,
+        And = 1,
     };
 
-    pub const KeyIndex = enum {
-        A,
-        B,
-        Select,
-        Start,
-        Right,
-        Left,
-        Up,
-        Down,
-        R,
-        L,
-        Count,
-    };
+    keys: Keys,
+    _: u4,
+    interrupt: bool,
+    op: Op,
+};
 
-    pub fn readInput() void {
-        previousInput = currentInput;
-        currentInput = ~GBA.REG_KEYINPUT.*;
-    }
+/// Allows reading the D-pad and shoulders as connected axes
+/// that can be read as -1, 0, or 1. 
+/// 
+/// Negative axes are Left, Up, and L.
+pub const Axis = enum {
+    Horizontal,
+    Vertical,
+    Shoulders,
 
-    pub inline fn isKeyDown(keys: u16) bool {
-        return (currentInput & keys) == keys;
-    }
-
-    pub inline fn isKeyHeld(keys: u16) bool {
-        return ((previousInput & currentInput) & keys) == keys;
-    }
-
-    pub inline fn isKeyJustPressed(keys: u16) bool {
-        return ((~previousInput & currentInput) & keys) == keys;
-    }
-
-    pub inline fn isKeyJustReleased(keys: u16) bool {
-        return ((previousInput & ~currentInput) & keys) == keys;
-    }
-
-    pub inline fn isKeyUp(keys: u16) bool {
-        return (currentInput & keys) == 0;
-    }
-
-    pub inline fn getHorizontal() i32 {
-        return triState(currentInput, KeyIndex.Left, KeyIndex.Right);
-    }
-
-    pub inline fn getVertical() i32 {
-        return triState(currentInput, KeyIndex.Up, KeyIndex.Down);
-    }
-
-    pub inline fn getShoulder() i32 {
-        return triState(currentInput, KeyIndex.L, KeyIndex.R);
-    }
-
-    pub inline fn getShoulderJustPressed() i32 {
-        return triState((~previousInput & currentInput), KeyIndex.L, KeyIndex.R);
-    }
-
-    pub inline fn triState(input: u16, minus: KeyIndex, plus: KeyIndex) i32 {
-        return ((@as(i32, @intCast(input)) >> @as(u5, @intCast(@intFromEnum(plus)))) & 1) - ((@as(i32, @intCast(input)) >> @as(u5, @intCast(@intFromEnum(minus)))) & 1);
+    /// Get the current value of this axis. Returns 0 if both buttons
+    /// or neither are pressed.
+    pub fn get(axis: Axis) i2 {
+        return switch (axis) {
+            .Horizontal => triState(curr_input, .Left, .Right),
+            .Vertical => triState(curr_input, .Up, .Down),
+            .Shoulders => triState(curr_input, .L, .R),
+        };
     }
 };
+
+pub const Keys = std.EnumSet(Key);
+
+fn pressedInt(input: Keys, key: Key) i2 {
+    return @intFromBool(input.contains(key));
+}
+
+pub fn pollInput() void {
+    prev_input = curr_input;
+    curr_input = .{.bits = .{ .mask = ~REG_KEYINPUT.*}};
+}
+
+pub fn isKeyChanged(key: Key) bool {
+    return prev_input.xorWith(curr_input).contains(key);
+}
+
+pub fn isComboPressed(combo: Keys) bool {
+    return combo.subsetOf(curr_input);
+}
+
+pub fn isComboHeld(combo: Keys) bool {
+    return combo.subsetOf(curr_input.intersectWith(prev_input));
+}
+
+pub fn isAnyJustPressed(keys: Keys) bool {
+    return curr_input.differenceWith(prev_input).intersectWith(keys).eql(Keys.initEmpty());
+}
+
+pub fn isKeyJustPressed(key: Key) bool {
+    return curr_input.differenceWith(prev_input).contains(key);
+}
+
+pub fn isKeyJustReleased(key: Key) bool {
+    return prev_input.differenceWith(curr_input).contains(key);
+}
+
+pub fn triState(input: Keys, minus: Key, plus: Key) u2 {
+    return pressedInt(input, plus) - pressedInt(input, minus);
+}
+
+test "Test Axis.get()" {
+    curr_input = Keys.initOne(.Left);
+    try std.testing.expectEqual(-1, Axis.Horizontal.get());
+    curr_input.insert(.Right);
+    try std.testing.expectEqual(0, Axis.Horizontal.get());
+    curr_input.remove(.Left);
+    try std.testing.expectEqual(1, Axis.Horizontal.get());
+    curr_input.remove(.Right);
+    try std.testing.expectEqual(0, Axis.Horizontal.get());
+}
