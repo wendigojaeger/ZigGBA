@@ -6,7 +6,6 @@ const BIOS = @import("bios.zig").BIOS;
 pub const GBA = struct {
     pub const VRAM = @as([*]align(2) volatile u16, @ptrFromInt(0x06000000));
     pub const SPRITE_VRAM = @as([*]align(2) volatile u16, @ptrFromInt(0x06010000));
-    pub const BG_PALETTE_RAM = @as([*]align(2) volatile u16, @ptrFromInt(0x05000000));
     pub const OBJ_PALETTE_RAM = @as([*]align(2) volatile u16, @ptrFromInt(0x05000200));
     pub const EWRAM = @as([*]volatile u8, @ptrFromInt(0x02000000));
     pub const IWRAM = @as([*]volatile u8, @ptrFromInt(0x03000000));

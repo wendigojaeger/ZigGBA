@@ -20,3 +20,15 @@ pub const Color = packed struct(u16) {
         };
     }
 };
+
+
+pub const PaletteBank = [16]Color;
+
+/// Determines whether palettes are accessed via banks of 16 colors
+/// or a single palette of 256 colors
+pub const PaletteMode = enum(u1) {
+    /// Palettes are stored in 16 banks of 16 colors, 4bpp
+    Color16,
+    /// Single palette of 256 colors, 8bpp
+    Color256,
+};

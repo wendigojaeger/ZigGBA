@@ -4,7 +4,7 @@ const Display = @import("lcd.zig");
 const DisplayMode = Display.DisplayMode;
 const DisplayStatus = Display.DisplayStatus;
 const MosaicSettings = Display.MosaicSettings;
-const BackgroundLayer = Display.BackgroundLayer;
+const Bg = @import("background.zig");
 
 const IO_BASE_ADDR = 0x4000000;
 
@@ -22,32 +22,18 @@ pub const display_status: *volatile DisplayStatus = @ptrFromInt(IO_BASE_ADDR + 0
 /// 
 /// (REG_VCOUNT)
 pub const reg_vcount: *align(2) volatile const u8 = @ptrFromInt(IO_BASE_ADDR + 0x06);
-
-/// Background Registers
+/// Background control registers for tile modes
 /// 
-/// bg_layers[x] Contains pointers to REG_BGxCNT, REG_BGxHOFS, and REG_BGxVOFS
-pub const bg_layers: []BackgroundLayer = &[_]BackgroundLayer{
-    .{
-        .control = @ptrCast(IO_BASE_ADDR + 0x08),
-        .h_offset = @ptrCast(IO_BASE_ADDR + 0x10),
-        .v_offset = @ptrCast(IO_BASE_ADDR + 0x12),
-    },
-    .{
-        .control = @ptrCast(IO_BASE_ADDR + 0x0A),
-        .h_offset = @ptrCast(IO_BASE_ADDR + 0x14),
-        .v_offset = @ptrCast(IO_BASE_ADDR + 0x16),
-    },
-    .{
-        .control = @ptrCast(IO_BASE_ADDR + 0x0C),
-        .h_offset = @ptrCast(IO_BASE_ADDR + 0x18),
-        .v_offset = @ptrCast(IO_BASE_ADDR + 0x1A),
-    },
-    .{
-        .control = @ptrCast(IO_BASE_ADDR + 0x0E),
-        .h_offset = @ptrCast(IO_BASE_ADDR + 0x1C),
-        .v_offset = @ptrCast(IO_BASE_ADDR + 0x1E),
-    },
-};
+/// Mode 0 - Normal: 0, 1, 2, 3
+/// 
+/// Mode 1 - Normal: 0, 1; Affine: 2
+/// 
+/// Mode 2 - Affine: 2, 3
+pub const bg_ctrl: *volatile [4]Bg.BackgroundControl = @ptrFromInt(IO_BASE_ADDR + 0x08);
+/// Controls background scroll. Values are modulo map size (wrapping is automatic)
+/// 
+/// These registers are write only.
+pub const bg_scroll: *volatile [4]Bg.Scroll = @ptrFromInt(IO_BASE_ADDR + 0x10);
 
 /// Controls size of mosaic effects for backgrounds and sprites where it is active
 /// 

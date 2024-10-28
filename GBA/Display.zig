@@ -13,15 +13,15 @@ var current_page = VRAM_BASE_ADDR;
 pub const DisplayMode = enum(u3) {
     /// Tiled mode
     ///
-    /// Provides 4 static background layers
+    /// Provides 4 normal background layers (0-3)
     Mode0,
     /// Tiled mode
     ///
-    /// Provides 2 static and one affine background layer
+    /// Provides 2 normal (0, 1) and one affine (2) background layer
     Mode1,
     /// Tiled mode
     ///
-    /// Provides 2 affine background layers
+    /// Provides 2 affine (2, 3) background layers
     Mode2,
     /// Bitmap mode
     ///
@@ -35,17 +35,6 @@ pub const DisplayMode = enum(u3) {
     ///
     /// Provides two 16bpp 160x128 pixel frames (half size)
     Mode5,
-};
-
-pub const PaletteBank = [16]Color;
-
-/// Determines whether palettes are accessed via banks of 16 colors
-/// or a single palette of 256 colors
-pub const PaletteMode = enum(u1) {
-    /// Palettes are stored in 16 banks of 16 colors, 4bpp
-    Color16,
-    /// Single palette of 256 colors, 8bpp
-    Color256,
 };
 
 pub const RefreshState = enum(u1) {
@@ -112,45 +101,6 @@ pub const MosaicSize = packed struct(u8) {
 pub const MosaicSettings = packed struct(u16) {
     bg: MosaicSize = .{ .x = 0, .y = 0 },
     sprite: MosaicSize = .{ .x = 0, .y = 0 },
-};
-
-pub const BgSize = packed union {
-    normal: enum(u2) {
-        w32h32 = 0b00,
-        w64h32 = 0b01,
-        w32h64 = 0b10,
-        w64h64 = 0b11,
-    },
-    affine: enum(u2) {
-        w16h16 = 0b00,
-        w32h32 = 0b01,
-        w64h64 = 0b10,
-        w128h128 = 0b11,
-    }
-};
-
-// TODO: fix the high bit names
-pub const BackgroundControl = packed struct(u16) {
-    priority: Priority = .Highest,
-    /// Actual address = VRAM_BASE_ADDR + (tile_addr * 0x4000)
-    tile_addr: u2 = 0,
-    _: u2 = undefined,
-    mosaic: bool = false,
-    palette_mode: PaletteMode = .Color16,
-    /// Actual address = VRAM_BASE_ADDR + (obj_addr * 0x800)
-    obj_addr: u5 = 0,
-    /// Whether affine backgrounds should wrap. No effect on normal backgrounds.
-    affine_wrap: bool = false,
-    /// Sizes differ depending on whether the background is affine.
-    tile_map_size: BgSize = .{ .normal = .w32h32 },
-};
-
-pub const BackgroundLayer = struct {
-    control: *volatile BackgroundControl,
-    /// Write-only
-    h_offset: *align(2) volatile u10,
-    /// Write-only
-    v_offset: *align(2) volatile u10,
 };
 
 pub inline fn currentPage() *volatile [MODE_4_PAGE_SIZE]u16 {

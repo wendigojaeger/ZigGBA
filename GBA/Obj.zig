@@ -9,8 +9,8 @@ const oam_data: *[128]Attribute = @ptrCast(OAM_BASE_ADDR);
 /// A buffer that can be updated at any time, then copied
 /// to OAM during VBlank
 pub var obj_attr_buf: [128]Attribute = .{.{}} ** 128;
-/// Corresponding affine entries interleaved with the attribute buffer 
-/// 
+/// Corresponding affine entries interleaved with the attribute buffer
+///
 /// Will be copied alongside objects
 pub var affine_buf: *[32]Affine align(4) = @ptrCast(&obj_attr_buf);
 
@@ -23,9 +23,9 @@ pub const GfxMode = enum(u2) {
 };
 
 /// Used to set transformation effects on an object
-/// 
+///
 /// For normal sprites: whether to flip horizontally and/or vertically
-/// 
+///
 /// For affine sprites: the 5 bit index into the affine data
 pub const Transformation = packed union {
     normal: packed struct(u5) {
@@ -37,18 +37,18 @@ pub const Transformation = packed union {
 };
 
 pub const ObjectSize = enum {
-    Size8x8,
-    Size16x8,
-    Size8x16,
-    Size16x16,
-    Size32x8,
-    Size8x32,
-    Size32x32,
-    Size32x16,
-    Size16x32,
-    Size64x64,
-    Size64x32,
-    Size32x64,
+    x8y8,
+    x16y8,
+    x8y16,
+    x16y16,
+    x32y8,
+    x8y32,
+    x32y32,
+    x32y16,
+    x16y32,
+    x64y64,
+    x64y32,
+    x32y64,
 };
 
 const AffineMode = enum(u2) {
@@ -56,9 +56,9 @@ const AffineMode = enum(u2) {
     Normal,
     /// Uses affine transform controls
     Affine,
-    /// Disables rendering 
+    /// Disables rendering
     Hidden,
-    /// Uses affine transform controls, and also allows affine 
+    /// Uses affine transform controls, and also allows affine
     /// transformations to use twice the sprite's dimensions.
     AffineDouble,
 };
@@ -76,13 +76,13 @@ pub const Attribute = packed struct {
     mode: GfxMode = .Normal,
     /// Enables mosaic effects on this object
     mosaic: bool = false,
-    palette_mode: @import("lcd.zig").PaletteMode = .Color16,
+    palette_mode: @import(".zig").PaletteMode = .Color16,
     /// Used in combination with size, see setSize
     shape: ObjectShape = .Square,
     /// For normal sprites, the left side; for affine sprites, the center
     x_pos: u9 = 0,
     /// For normal sprites: whether to flip horizontally and/or vertically
-    /// 
+    ///
     /// For affine sprites: the 5 bit index into the affine data
     transform: Transformation = .{ .normal = .{} },
     /// Used in combination with shape, see setSize
@@ -101,51 +101,51 @@ pub const Attribute = packed struct {
     /// object size.
     pub fn setSize(self: *Self, size: ObjectSize) void {
         switch (size) {
-            .Size8x8 => {
+            .x8y8 => {
                 self.shape = .Square;
                 self.size = 0;
             },
-            .Size16x8 => {
+            .x16y8 => {
                 self.shape = .Horizontal;
                 self.size = 0;
             },
-            .Size8x16 => {
+            .x8y16 => {
                 self.shape = .Vertical;
                 self.size = 0;
             },
-            .Size16x16 => {
+            .x16y16 => {
                 self.shape = .Square;
                 self.size = 1;
             },
-            .Size32x8 => {
+            .x32y8 => {
                 self.shape = .Horizontal;
                 self.size = 1;
             },
-            .Size8x32 => {
+            .x8y32 => {
                 self.shape = .Vertical;
                 self.size = 1;
             },
-            .Size32x32 => {
+            .x32y32 => {
                 self.shape = .Square;
                 self.size = 2;
             },
-            .Size32x16 => {
+            .x32y16 => {
                 self.shape = .Horizontal;
                 self.size = 2;
             },
-            .Size16x32 => {
+            .x16y32 => {
                 self.shape = .Vertical;
                 self.size = 2;
             },
-            .Size64x64 => {
+            .x64y64 => {
                 self.shape = .Square;
                 self.size = 3;
             },
-            .Size64x32 => {
+            .x64y32 => {
                 self.shape = .Horizontal;
                 self.size = 3;
             },
-            .Size32x64 => {
+            .x32y64 => {
                 self.shape = .Vertical;
                 self.size = 3;
             },

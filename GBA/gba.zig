@@ -1,10 +1,10 @@
-pub const Background = @import("background.zig").Background;
+pub const Background = @import("background.zig");
 pub const BIOS = @import("bios.zig").BIOS;
-pub const Color = @import("color.zig").Color;
+pub const Color = @import("Palette.zig").Color;
 pub const Debug = @import("debug.zig").Debug;
 pub const GBA = @import("core.zig").GBA;
 pub const Input = @import("input.zig");
-pub const LCD = @import("lcd.zig").LCD;
+pub const LCD = @import("Display.zig");
 pub const Mode3 = @import("mode3.zig").Mode3;
-pub const OAM = @import("oam.zig").OAM;
-pub const Math = @import("math.zig");
+pub const Obj = @import("Obj.zig");
+pub const Math = @import("Math.zig");
