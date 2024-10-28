@@ -1,10 +1,16 @@
+//! Access to the key control and status registers should
+//! go through the functions in this module.
+//!
+//! Keys are active low, which doesn't play well intuitively
+//! with checking them. These functions abstract that conversion
 const std = @import("std");
 
-var prev_input: Keys = Keys.initEmpty();
-/// The keypad should always be read through this variable, never directly.
-var curr_input: Keys = Keys.initEmpty();
+pub const Keys = std.EnumSet(Key);
 
-const REG_KEYINPUT: *align(2) volatile const u10 = @ptrFromInt(0x4000130);
+var prev_input: Keys = .{};
+var curr_input: Keys = .{};
+
+const REG_KEYINPUT: *align(2) const volatile u10 = @ptrFromInt(0x4000130);
 
 pub const Key = enum {
     A,
@@ -20,20 +26,20 @@ pub const Key = enum {
 };
 
 pub const KeyCtrl = packed struct(u16) {
-    const Op = enum(u1) {
-        Or = 0,
-        And = 1,
+    const Condition = enum(u1) {
+        Any = 0,
+        All = 1,
     };
 
     keys: Keys,
     _: u4,
     interrupt: bool,
-    op: Op,
+    op: Condition,
 };
 
 /// Allows reading the D-pad and shoulders as connected axes
-/// that can be read as -1, 0, or 1. 
-/// 
+/// that can be read as -1, 0, or 1.
+///
 /// Negative axes are Left, Up, and L.
 pub const Axis = enum {
     Horizontal,
@@ -51,15 +57,14 @@ pub const Axis = enum {
     }
 };
 
-pub const Keys = std.EnumSet(Key);
-
 fn pressedInt(input: Keys, key: Key) i2 {
     return @intFromBool(input.contains(key));
 }
 
-pub fn pollInput() void {
+/// The keypad should always be read through this function, never directly.
+pub fn poll() void {
     prev_input = curr_input;
-    curr_input = .{.bits = .{ .mask = ~REG_KEYINPUT.*}};
+    curr_input = .{ .bits = .{ .mask = ~REG_KEYINPUT.* } };
 }
 
 pub fn isKeyChanged(key: Key) bool {
