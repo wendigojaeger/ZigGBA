@@ -76,9 +76,8 @@ pub const Debug = struct {
         defer BIOS.debugFlush();
 
         if (message.len >= AGB_BUFFER_SIZE) {
-            var index: usize = 0;
-            while (index < AGB_BUFFER_SIZE) : (index += 1) {
-                printChar(message[index]);
+            for (message[0..AGB_BUFFER_SIZE]) |char| {
+                printChar(char);
             }
 
             return error.BufferTooSmall;

@@ -1,10 +1,13 @@
 //! Access to MMIO registers
 
-const Display = @import("lcd.zig");
+const Display = @import("Display.zig");
 const DisplayMode = Display.DisplayMode;
 const DisplayStatus = Display.DisplayStatus;
 const MosaicSettings = Display.MosaicSettings;
 const Bg = @import("background.zig");
+const GBA = @import("core.zig").GBA;
+const Interrupt = GBA.Interrupt;
+const InterruptFlags = GBA.InterruptFlags;
 
 const IO_BASE_ADDR = 0x4000000;
 
@@ -66,3 +69,27 @@ pub const BlendSettings = packed struct(u16) {
 /// 
 /// (REG_BLDMOD)
 pub const blend_settings: *volatile BlendSettings =  @ptrCast(IO_BASE_ADDR + 0x50);
+
+pub const InterruptCtrl = extern struct {
+    /// When `master_enable` is true, the events specified by these
+    /// flags will trigger an interrupt.
+    /// 
+    /// Since interrupts can trigger at any point, `master_enable` 
+    /// should be disabled while clearing flags from this register
+    /// to avoid spurious interrupts.
+    enable: InterruptFlags align(2),
+    /// Interrupt requests can be read from this register.
+    /// 
+    /// To clear an interrupt, write ONLY that flag to this register.
+    /// the `acknowledge` method exists for this purpose.
+    irq_ack: InterruptFlags align(2),
+    /// Must be true for interrupts specified in `enable` to trigger.
+    master_enable: bool,
+
+    /// Acknowledges only the given interrupt, without ignoring others.
+    fn acknowledge(self: *InterruptCtrl, flag: Interrupt) void {
+        self.irq_ack = InterruptFlags.initOne(flag);
+    }
+};
+
+pub const interrupt_ctrl: *volatile InterruptCtrl = @ptrCast(IO_BASE_ADDR + 0x200);

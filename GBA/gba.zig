@@ -1,5 +1,5 @@
 pub const Background = @import("background.zig");
-pub const BIOS = @import("bios.zig").BIOS;
+pub const BIOS = @import("Bios.zig");
 pub const Color = @import("Palette.zig").Color;
 pub const Debug = @import("debug.zig").Debug;
 pub const GBA = @import("core.zig").GBA;

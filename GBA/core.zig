@@ -20,22 +20,23 @@ pub const GBA = struct {
     pub const MODE4_SCREEN_SIZE = 0x9600;
     pub const MODE5_SCREEN_SIZE = 40 * 1024;
 
-    pub const InterruptFlags = packed struct {
-        vblank: bool = false,
-        hblank: bool = false,
-        vcounter: bool = false,
-        timer0: bool = false,
-        timer1: bool = false,
-        timer2: bool = false,
-        timer3: bool = false,
-        serial: bool = false,
-        dma0: bool = false,
-        dma1: bool = false,
-        dma2: bool = false,
-        dma3: bool = false,
-        keypad: bool = false,
-        gamepak: bool = false,
+    pub const Interrupt = enum {
+        VBlank,
+        HBlank,
+        Timer0,
+        Timer1,
+        Timer2,
+        Timer3,
+        Serial,
+        DMA0,
+        DMA1,
+        DMA2,
+        DMA3,
+        Keypad,
+        Gamepak,
     };
+
+    pub const InterruptFlags = std.EnumSet(Interrupt);
 
     pub const Header = extern struct {
         romEntryPoint: u32 align(1) = 0xEA00002E,
