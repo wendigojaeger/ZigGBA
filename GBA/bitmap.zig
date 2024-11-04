@@ -3,6 +3,7 @@ const gba = @import("gba.zig");
 pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
     return struct {
         pub const Color = C;
+        pub const page_size: comptime_int = @as(u17, @intCast(@sizeOf(Color))) * width * height;
         
         const HalfWordColor = if (@sizeOf(Color) == 2) Color else packed struct(u16) {
             lo: u8,
@@ -20,7 +21,7 @@ pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
             return @ptrCast(gba.display.currentPage());
         }
 
-        pub inline fn setPixel(x: u8, y: u8, color: Color) void {
+        pub fn setPixel(x: u8, y: u8, color: Color) void {
             if (@sizeOf(Color) == 2) {
                 screen()[y][x] = color;
             } else {
@@ -33,22 +34,27 @@ pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
         }
 
         // TODO: Test using full word memcpy.
-        inline fn lineHorizontal(x1: u8, x2: u8, y: u8, color: Color) void {
+        fn lineHorizontal(x1: u8, x2: u8, y: u8, color: Color) void {
             if (@sizeOf(Color) == 2) {
                 for (screen()[y][x1 .. x2 + 1]) |*pixel| pixel.* = color;
             } else {
+                // Have to do first and last separately because we could need both pixels
+                // or just one
                 const first = x1 >> 1;
                 const last = x2 >> 1;
-                const full: Color = .{ .lo = color, .hi = color };
+                // TODO: I think this is unnecessary and just writing a single 8 bit 
+                // number to the register will write it to both high and low bytes
+                // const full: Color = .{ .lo = color, .hi = color };
                 if (x1 & 1 == 0)
-                    screen()[y][first] = full
+                    screen()[y][first] = color
                 else
                     screen()[y][first].hi = color;
-                for (screen[y][first + 1 .. last]) |*x| x.* = full;
+                // Fill all the middle registers 2 at a time
+                for (screen[y][first + 1 .. last]) |*x| x.* = color;
                 if (x2 & 1 == 0)
                     screen()[y][last].lo = color
                 else
-                    screen()[y][last] = full;
+                    screen()[y][last] = color;
             }
         }
 

@@ -1,6 +1,6 @@
 const gba = @import("gba");
 const Color = gba.Color;
-const Mode3 = gba.Bitmap(Color, 240, 160);
+const Mode3 = display.Mode3;
 const display = gba.display;
 
 export var gameHeader linksection(".gbaheader") = gba.Header.init("MODE3DRAW", "AWJE", "00", 0);

@@ -1,7 +1,7 @@
 const gba = @import("gba");
 const io = gba.io;
 const display = gba.display;
-const Mode3 = display.Mode.mode3.bitmap().?;
+const Mode3 = display.Mode3;
 const Color = gba.Color;
 
 export var gameHeader linksection(".gbaheader") = gba.Header.init("FIRST", "AFSE", "00", 0);
