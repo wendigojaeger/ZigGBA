@@ -2,8 +2,7 @@ const gba = @import("gba.zig");
 const io = gba.io;
 
 const VRAM_BASE_ADDR = 0x06000000;
-const SPRITE_VRAM = VRAM_BASE_ADDR + 0x10000;
-const MODE_4_PAGE_SIZE = 0xA000;
+const OBJ_VRAM_ADDR = VRAM_BASE_ADDR + 0x10000;
 var current_page: u32 = VRAM_BASE_ADDR;
 
 /// Controls the capabilities of background layers
@@ -32,18 +31,27 @@ pub const Mode = enum(u3) {
     mode4,
     /// Bitmap mode
     ///
-    /// Provides two 16bpp 160x128 pixel frames (half size)
+    /// Provides two 16bpp 160x128 pixel frames
     mode5,
 
     pub fn bitmap(mode: Mode) ?type {
         return switch (mode) {
             .mode3 => gba.Bitmap(gba.Color, 240, 160),
             .mode4 => gba.Bitmap(u8, 240, 160),
-            .mode5 => gba.Bitmap(gba.Color, 120, 80),
+            .mode5 => gba.Bitmap(gba.Color, 160, 128),
             else => null,
         };
     }
 };
+
+fn pageSize() u17 {
+    return switch (io.display_ctrl.mode) {
+        .mode3 => 0x12C00,
+        .mode4 => 0x9600,
+        .mode5 => 0xA000,
+        else => 0,
+    };
+}
 
 pub const RefreshState = enum(u1) {
     draw,
@@ -56,7 +64,7 @@ pub const Status = packed struct(u16) {
     /// Read only
     h_refresh: RefreshState,
     /// Read only
-    vcount_triggered: bool = false,
+    vcount_triggered: bool,
     enable_vblank_irq: bool = false,
     enable_hblank_irq: bool = false,
     enable_vcount_trigger: bool = false,
@@ -110,16 +118,25 @@ pub const MosaicSettings = packed struct(u16) {
     sprite: Size = .{ .x = 0, .y = 0 },
 };
 
-pub inline fn currentPage() *volatile [MODE_4_PAGE_SIZE]u16 {
+pub inline fn currentPage() *volatile [pageSize()]u16 {
     // Could consider making the page a *[2][0xA000]PixelData
     // And just index in with display_ctrl.page_select
     // Probably too cheeky though
     return @ptrFromInt(current_page);
 }
 
-pub inline fn pageFlip() [*]volatile u16 {
-    current_page ^= MODE_4_PAGE_SIZE;
-    io.display_ctrl.page_select = ~io.display_ctrl.page_select;
+pub inline fn pageFlip() *volatile [pageSize()]u16 {
+    switch (io.display_ctrl.mode) {
+        .mode4 => {
+            current_page ^= 0x9600;
+            io.display_ctrl.page_select ^= 1;
+        },
+        .mode5 => {
+            current_page ^= 0xA000;
+            io.display_ctrl.page_select ^= 1;
+        },
+        else => {},
+    }
     return currentPage();
 }
 

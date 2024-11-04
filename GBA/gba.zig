@@ -89,17 +89,17 @@ pub const Header = extern struct {
         0x78, 0x00, 0x90, 0xCB, 0x88, 0x11, 0x3A, 0x94, 0x65, 0xC0, 0x7C, 0x63, 0x87, 0xF0, 0x3C, 0xAF,
         0xD6, 0x25, 0xE4, 0x8B, 0x38, 0x0A, 0xAC, 0x72, 0x21, 0xD4, 0xF8, 0x07,
     },
-    gameName: [12]u8 align(1) = [_]u8{0x00} ** 12,
-    gameCode: [4]u8 align(1) = [_]u8{0x00} ** 4,
-    makerCode: [2]u8 align(1) = [_]u8{0x00} ** 2,
+    gameName: [12]u8 align(1) = @splat(0),
+    gameCode: [4]u8 align(1) = @splat(0),
+    makerCode: [2]u8 align(1) = @splat(0),
     /// Cannot be changed
     fixedValue: u8 align(1) = 0x96,
     mainUnitCode: u8 align(1) = 0x00,
     deviceType: u8 align(1) = 0x00,
-    reservedArea: [7]u8 align(1) = [_]u8{0x00} ** 7,
+    reservedArea: [7]u8 align(1) = @splat(0),
     softwareVersion: u8 align(1) = 0x00,
     complementCheck: u8 align(1) = 0x00,
-    reservedArea2: [2]u8 align(1) = [_]u8{0x00} ** 2,
+    reservedArea2: [2]u8 align(1) = @splat(0),
 
     pub fn init(comptime gameName: []const u8, comptime gameCode: []const u8, comptime makerCode: ?[]const u8, comptime softwareVersion: ?u8) Header {
         var header: Header = .{};

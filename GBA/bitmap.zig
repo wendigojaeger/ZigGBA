@@ -1,8 +1,9 @@
 const gba = @import("gba.zig");
-const std = @import("std");
 
-pub fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) type {
+pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
     return struct {
+        pub const Color = C;
+        
         const HalfWordColor = if (@sizeOf(Color) == 2) Color else packed struct(u16) {
             lo: u8,
             hi: u8,
@@ -14,7 +15,7 @@ pub fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) typ
 
         const real_width = @divExact(width, 2) * @sizeOf(Color);
 
-        /// Returns a pointer to a
+        // TODO: Currently only works for mode 3, also, does it need to be volatile?
         pub inline fn screen() *volatile [height][real_width]HalfWordColor {
             return @ptrCast(gba.display.currentPage());
         }
@@ -51,9 +52,8 @@ pub fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) typ
             }
         }
 
-        //const pitch = @divExact(width, @intFromEnum(bpp));
-        // TODO: Does this need to be volatile?
         pub fn line(start: [2]u8, end: [2]u8, color: Color) void {
+            // y always moves down
             const p1, const p2 = if (start[1] < end[1])
                 .{ start, end }
             else
@@ -63,7 +63,7 @@ pub fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) typ
             //  Horizontal case
             if (y1 == y2) {
                 lineHorizontal(@min(x1, x2), @max(x1, x2) + 1, y1, color);
-                //  Vertical case
+            //  Vertical case
             } else if (x1 == x2) {
                 for (y1..y2 + 1) |y| setPixel(x1, @truncate(y), color);
             } else {
