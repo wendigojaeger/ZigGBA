@@ -8,11 +8,7 @@ const std = @import("std");
 
 pub const ImageConverterError = error{InvalidPixelData};
 
-const GBAColor = packed struct {
-    r: u5,
-    g: u5,
-    b: u5,
-};
+const GBAColor = @import("../Palette.zig").Color;
 
 pub const ImageSourceTarget = struct {
     source: []const u8,
@@ -45,7 +41,7 @@ pub const ImageConverter = struct {
         }
 
         var paletteStorage: [256]zigimg.color.Rgba32 = undefined;
-        const palette = try quantizer.makePalette(255, paletteStorage[0..]);
+        const palette = quantizer.makePalette(255, paletteStorage[0..]);
 
         var paletteFile = try openWriteFile(targetPaletteFilePath);
         defer paletteFile.close();
@@ -56,7 +52,7 @@ pub const ImageConverter = struct {
         var paletteCount: usize = 0;
         for (palette) |entry| {
             const gbaColor = colorToGBAColor(entry);
-            try paletteOutStream.writeInt(u16, @as(u15, @bitCast(gbaColor)), .little);
+            try paletteOutStream.writeInt(u16, @bitCast(gbaColor), .little);
             paletteCount += 2;
         }
 

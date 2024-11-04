@@ -1,18 +1,18 @@
+const std = @import("std");
+const ImageConverter = @import("assetconverter/image_converter.zig").ImageConverter;
 const ArrayList = std.ArrayList;
 const FixedBufferAllocator = std.heap.FixedBufferAllocator;
-const ImageConverter = @import("assetconverter/image_converter.zig").ImageConverter;
 const Step = std.Build.Step;
 const builtin = std.builtin;
 const fmt = std.fmt;
 const fs = std.fs;
-const std = @import("std");
 
 pub const ImageSourceTarget = @import("assetconverter/image_converter.zig").ImageSourceTarget;
 
 const GBALinkerScript = libRoot() ++ "/gba.ld";
 const GBALibFile = libRoot() ++ "/gba.zig";
 
-var IsDebugOption: ?bool = null;
+var is_debug: ?bool = null;
 var UseGDBOption: ?bool = null;
 
 const gba_thumb_target_query = blk: {
@@ -29,31 +29,31 @@ fn libRoot() []const u8 {
     return std.fs.path.dirname(@src().file) orelse ".";
 }
 
-pub fn addGBAStaticLibrary(b: *std.Build, libraryName: []const u8, sourceFile: []const u8, isDebug: bool) *std.Build.Step.Compile {
+pub fn addGBAStaticLibrary(b: *std.Build, libraryName: []const u8, sourceFile: []const u8, debug: bool) *std.Build.Step.Compile {
     const lib = b.addStaticLibrary(.{
         .name = libraryName,
-        .root_source_file = .{ .path = sourceFile },
+        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = sourceFile } },
         .target = b.resolveTargetQuery(gba_thumb_target_query),
-        .optimize = if (isDebug) .Debug else .ReleaseFast,
+        .optimize = if (debug) .Debug else .ReleaseFast,
     });
 
-    lib.setLinkerScriptPath(.{ .path = GBALinkerScript });
+    lib.setLinkerScriptPath(.{ .src_path = .{ .owner = b, .sub_path = GBALinkerScript } });
 
     return lib;
 }
 
-pub fn createGBALib(b: *std.Build, isDebug: bool) *std.Build.Step.Compile {
-    return addGBAStaticLibrary(b, "ZigGBA", GBALibFile, isDebug);
+pub fn createGBALib(b: *std.Build, debug: bool) *std.Build.Step.Compile {
+    return addGBAStaticLibrary(b, "ZigGBA", GBALibFile, debug);
 }
 
 pub fn addGBAExecutable(b: *std.Build, romName: []const u8, sourceFile: []const u8) *std.Build.Step.Compile {
-    const isDebug = blk: {
-        if (IsDebugOption) |value| {
+    const debug = blk: {
+        if (is_debug) |value| {
             break :blk value;
         } else {
-            const newIsDebug = b.option(bool, "debug", "Generate a debug build") orelse false;
-            IsDebugOption = newIsDebug;
-            break :blk newIsDebug;
+            const new_dbg = b.option(bool, "debug", "Generate a debug build") orelse false;
+            is_debug = new_dbg;
+            break :blk new_dbg;
         }
     };
 
@@ -69,12 +69,12 @@ pub fn addGBAExecutable(b: *std.Build, romName: []const u8, sourceFile: []const 
 
     const exe = b.addExecutable(.{
         .name = romName,
-        .root_source_file = .{ .path = sourceFile },
+        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = sourceFile } },
         .target = b.resolveTargetQuery(gba_thumb_target_query),
-        .optimize = if (isDebug) .Debug else .ReleaseFast,
+        .optimize = if (debug) .Debug else .ReleaseFast,
     });
 
-    exe.setLinkerScriptPath(.{ .path = GBALinkerScript });
+    exe.setLinkerScriptPath(.{ .src_path = .{ .owner = b, .sub_path = GBALinkerScript } });
     if (useGDB) {
         b.installArtifact(exe);
     } else {
@@ -88,8 +88,8 @@ pub fn addGBAExecutable(b: *std.Build, romName: []const u8, sourceFile: []const 
         b.default_step.dependOn(&install_bin_step.step);
     }
 
-    const gbaLib = createGBALib(b, isDebug);
-    exe.root_module.addAnonymousImport("gba", .{ .root_source_file = .{ .path = GBALibFile } });
+    const gbaLib = createGBALib(b, debug);
+    exe.root_module.addAnonymousImport("gba", .{ .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = GBALibFile } } });
     exe.linkLibrary(gbaLib);
 
     b.default_step.dependOn(&exe.step);
@@ -115,14 +115,14 @@ const Mode4ConvertStep = struct {
         };
     }
 
-    fn make(step: *Step, progress_node: *std.Progress.Node) !void {
-        const self = @fieldParentPtr(Mode4ConvertStep, "step", step);
+    fn make(step: *Step, options: Step.MakeOptions) anyerror!void {
+        const self: *Mode4ConvertStep = @fieldParentPtr("step", step);
         const ImageSourceTargetList = ArrayList(ImageSourceTarget);
 
         var fullImages = ImageSourceTargetList.init(step.owner.allocator);
         defer fullImages.deinit();
 
-        var node = progress_node.start("Converting mode4 images", 1);
+        var node = options.progress_node.start("Converting mode4 images", 1);
         defer node.end();
 
         for (self.images) |imageSourceTarget| {

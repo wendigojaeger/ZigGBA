@@ -1,106 +1,114 @@
-const GBA = @import("core.zig").GBA;
+const gba = @import("gba.zig");
+const std = @import("std");
 
-pub const Bitmap16 = struct {
-    pub fn line(x1: i32, y1: i32, x2: i32, y2: i32, color: u16, destinationBase: [*]volatile u16, rawPitch: i32) void {
-        var ii: i32 = 0;
-        var dx: i32 = 0;
-        var dy: i32 = 0;
-        var xstep: i32 = 0;
-        var ystep: i32 = 0;
-        var dd: i32 = 0;
-        var destinationPitch: i32 = 0;
-        destinationPitch = @divExact(rawPitch, 2);
+pub fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) type {
+    return struct {
+        const HalfWordColor = if (@sizeOf(Color) == 2) Color else packed struct(u16) {
+            lo: u8,
+            hi: u8,
+        };
 
-        var destination = @as([*]u16, @ptrFromInt(@intFromPtr(destinationBase) + @as(usize, @intCast(y1)) * @as(usize, @intCast(rawPitch)) + @as(usize, @intCast(x1)) * 2));
-
-        // Normalization
-        if (x1 > x2) {
-            xstep = -1;
-            dx = x1 - x2;
-        } else {
-            xstep = 1;
-            dx = x2 - x1;
-        }
-        if (y1 > y2) {
-            ystep = -destinationPitch;
-            dy = y1 - y2;
-        } else {
-            ystep = destinationPitch;
-            dy = y2 - y1;
+        fn fullHalfwordColor(color: Color) HalfWordColor {
+            return if (@sizeOf(Color) == 2) color else .{ .lo = color, .hi = color };
         }
 
-        if (dy == 0) {
-            // Horizontal line case
-            ii = 0;
-            while (ii <= dx) : (ii += 1) {
-                destination[@as(usize, @bitCast(ii * xstep))] = color;
-            }
-        } else if (dx == 0) {
-            // Vertical line case
-            ii = 0;
-            while (ii <= dy) : (ii += 1) {
-                destination[@as(usize, @bitCast(ii * ystep))] = color;
-            }
-        } else if (dx >= dy) {
-            // Diagonal, slope <= 1
-            dd = 2 * dy - dx;
-            ii = 0;
-            var destinationIndex: i32 = 0;
-            while (ii <= dx) : (ii += 1) {
-                destination[@as(usize, @bitCast(destinationIndex))] = color;
-                if (dd >= 0) {
-                    dd -= 2 * dx;
-                    destinationIndex += ystep;
+        const real_width = @divExact(width, 2) * @sizeOf(Color);
+
+        /// Returns a pointer to a
+        pub inline fn screen() *volatile [height][real_width]HalfWordColor {
+            return @ptrCast(gba.display.currentPage());
+        }
+
+        pub inline fn setPixel(x: u8, y: u8, color: Color) void {
+            if (@sizeOf(Color) == 2) {
+                screen()[y][x] = color;
+            } else {
+                if (x & 1 == 0) {
+                    screen()[y][x >> 1].lo = color;
+                } else {
+                    screen()[y][x >> 1].hi = color;
                 }
-                dd += 2 * dy;
-                destinationIndex += xstep;
             }
-        } else {
-            // Diagonal, slop > 1
-            dd = 2 * dx - dy;
-            ii = 0;
-            var destinationIndex: i32 = 0;
-            while (ii <= dy) : (ii += 1) {
-                destination[@as(usize, @bitCast(destinationIndex))] = color;
-                if (dd >= 0) {
-                    dd -= 2 * dy;
-                    destinationIndex += xstep;
+        }
+
+        // TODO: Test using full word memcpy.
+        inline fn lineHorizontal(x1: u8, x2: u8, y: u8, color: Color) void {
+            if (@sizeOf(Color) == 2) {
+                for (screen()[y][x1 .. x2 + 1]) |*pixel| pixel.* = color;
+            } else {
+                const first = x1 >> 1;
+                const last = x2 >> 1;
+                const full: Color = .{ .lo = color, .hi = color };
+                if (x1 & 1 == 0)
+                    screen()[y][first] = full
+                else
+                    screen()[y][first].hi = color;
+                for (screen[y][first + 1 .. last]) |*x| x.* = full;
+                if (x2 & 1 == 0)
+                    screen()[y][last].lo = color
+                else
+                    screen()[y][last] = full;
+            }
+        }
+
+        //const pitch = @divExact(width, @intFromEnum(bpp));
+        // TODO: Does this need to be volatile?
+        pub fn line(start: [2]u8, end: [2]u8, color: Color) void {
+            const p1, const p2 = if (start[1] < end[1])
+                .{ start, end }
+            else
+                .{ end, start };
+            const x1, const y1 = p1;
+            const x2, const y2 = p2;
+            //  Horizontal case
+            if (y1 == y2) {
+                lineHorizontal(@min(x1, x2), @max(x1, x2) + 1, y1, color);
+                //  Vertical case
+            } else if (x1 == x2) {
+                for (y1..y2 + 1) |y| setPixel(x1, @truncate(y), color);
+            } else {
+                var diff: i16 = 0;
+                var x, var y = p1;
+                const dx, const x_step: u8 = if (x1 < x2)
+                    .{ x2 - x1, 1 }
+                else
+                    .{ x1 - x2, @bitCast(@as(i8, -1)) };
+                const dy = y2 - y1;
+                while (true) {
+                    setPixel(x, y, color);
+                    if (x == x2 and y == y2)
+                        break;
+                    if (diff < 0) {
+                        x +%= x_step;
+                        diff += dy;
+                    } else {
+                        y += 1;
+                        diff -= dx;
+                    }
                 }
-
-                dd += 2 * dx;
-                destinationIndex += ystep;
             }
         }
-    }
 
-    pub fn rect(left: i32, top: i32, right: i32, bottom: i32, color: u16, destinationBase: [*]volatile u16, rawPitch: i32) void {
-        var ix: i32 = 0;
-        var iy: i32 = 0;
-        const width: i32 = right - left;
-        const height: i32 = bottom - top;
-        const destinationPitch: i32 = @divExact(rawPitch, 2);
-
-        var destination = @as([*]u16, @ptrFromInt(@intFromPtr(destinationBase) + @as(usize, @intCast(top)) * @as(usize, @intCast(rawPitch)) + @as(usize, @intCast(left)) * 2));
-
-        iy = 0;
-        while (iy < height) : (iy += 1) {
-            const rectPitch: i32 = iy * destinationPitch;
-
-            ix = 0;
-            while (ix < width) : (ix += 1) {
-                destination[@as(usize, @bitCast(rectPitch + ix))] = color;
+        pub fn rect(top_left: [2]u8, bottom_right: [2]u8, color: Color) void {
+            for (top_left[1]..bottom_right[1] + 1) |y| {
+                lineHorizontal(top_left[0], bottom_right[0], @truncate(y), color);
             }
         }
-    }
 
-    pub fn frame(left: i32, top: i32, right: i32, bottom: i32, color: u16, destinationBase: [*]volatile u16, rawPitch: i32) void {
-        const actualRight: i32 = right - 1;
-        const actualBottom: i32 = bottom - 1;
+        pub fn frame(top_left: [2]u8, bottom_right: [2]u8, color: Color) void {
+            const left, const top = top_left;
+            const right, const bottom = bottom_right;
+            lineHorizontal(left, right, top, color);
+            line(.{ left, top + 1 }, .{ left, bottom - 1 }, color);
+            line(.{ right, top + 1 }, .{ right, bottom - 1 }, color);
+            lineHorizontal(left, right, bottom, color);
+        }
 
-        line(left, top, actualRight, top, color, destinationBase, rawPitch);
-        line(left, actualBottom, actualRight, actualBottom, color, destinationBase, rawPitch);
-
-        line(left, top, left, actualBottom, color, destinationBase, rawPitch);
-        line(actualRight, top, actualRight, actualBottom, color, destinationBase, rawPitch);
-    }
-};
+        // TODO: This should absolutely be a 32bit memcpy, but quick and dirty for now
+        pub fn fill(color: Color) void {
+            for (screen()[0..]) |*row| {
+                for (row[0..]) |*cell| cell.* = fullHalfwordColor(color);
+            }
+        }
+    };
+}

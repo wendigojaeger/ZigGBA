@@ -20,40 +20,40 @@ pub fn build(b: *std.Build) void {
     }, "examples/mode4flip/mode4flip.agp");
 
     // Key demo, TODO: Use image created by the build system once we support indexed image
-    const keydemo = GBABuilder.addGBAExecutable(b, "keydemo", "examples/keydemo/keydemo.zig");
-    keydemo.addCSourceFile(.{
-        .file = .{ .path = "examples/keydemo/gba_pic.c" },
-        .flags = &[_][]const u8{"-std=c99"},
-    });
+    _ = GBABuilder.addGBAExecutable(b, "keydemo", "examples/keydemo/keydemo.zig");
+    // keydemo.addCSourceFile(.{
+    //     .file = .{ .src_path = .{ .owner = b, .sub_path = "examples/keydemo/gba_pic.c" } },
+    //     .flags = &[_][]const u8{"-std=c99"},
+    // });
 
     // Simple OBJ demo, TODO: Use tile and palette data created by the build system
-    const objDemo = GBABuilder.addGBAExecutable(b, "objDemo", "examples/objDemo/objDemo.zig");
-    objDemo.addCSourceFile(.{
-        .file = .{ .path = "examples/objDemo/metroid_sprite_data.c" },
-        .flags = &[_][]const u8{"-std=c99"},
-    });
+    _ = GBABuilder.addGBAExecutable(b, "objDemo", "examples/objDemo/objDemo.zig");
+    // objDemo.addCSourceFile(.{
+    //     .file = .{ .src_path = .{ .owner = b, .sub_path = "examples/objDemo/metroid_sprite_data.c" } },
+    //     .flags = &[_][]const u8{"-std=c99"},
+    // });
 
     // tileDemo, TODO: Use tileset, tile and palette created by the build system
-    const tileDemo = GBABuilder.addGBAExecutable(b, "tileDemo", "examples/tileDemo/tileDemo.zig");
-    tileDemo.addCSourceFile(.{
-        .file = .{ .path = "examples/tileDemo/brin.c" },
-        .flags = &[_][]const u8{"-std=c99"},
-    });
+    _ = GBABuilder.addGBAExecutable(b, "tileDemo", "examples/tileDemo/tileDemo.zig");
+    // tileDemo.addCSourceFile(.{
+    //     .file = .{ .src_path = .{ .owner = b, .sub_path = "examples/tileDemo/brin.c" } },
+    //     .flags = &[_][]const u8{"-std=c99"},
+    // });
 
     // screenBlock
     _ = GBABuilder.addGBAExecutable(b, "screenBlock", "examples/screenBlock/screenBlock.zig");
 
     // charBlock
-    const charBlock = GBABuilder.addGBAExecutable(b, "charBlock", "examples/charBlock/charBlock.zig");
-    charBlock.addCSourceFile(.{
-        .file = .{ .path = "examples/charBlock/cbb_ids.c" },
-        .flags = &[_][]const u8{"-std=c99"},
-    });
+    _ = GBABuilder.addGBAExecutable(b, "charBlock", "examples/charBlock/charBlock.zig");
+    // charBlock.addCSourceFile(.{
+    //     .file = .{ .src_path = .{.owner = b, .sub_path = "examples/charBlock/cbb_ids.c" } },
+    //     .flags = &[_][]const u8{"-std=c99"},
+    // });
 
     // objAffine
-    const objAffine = GBABuilder.addGBAExecutable(b, "objAffine", "examples/objAffine/objAffine.zig");
-    objAffine.addCSourceFile(.{
-        .file = .{ .path = "examples/objAffine/metr.c" },
-        .flags = &[_][]const u8{"-std=c99"},
-    });
+    _ = GBABuilder.addGBAExecutable(b, "objAffine", "examples/objAffine/objAffine.zig");
+    // objAffine.addCSourceFile(.{
+    //     .file = .{ .src_path = .{ .owner = b, .sub_path = "examples/objAffine/metr.c" } },
+    //     .flags = &[_][]const u8{"-std=c99"},
+    // });
 }

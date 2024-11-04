@@ -1,7 +1,8 @@
-const fmt = @import("std").fmt;
-const io = @import("std").io;
-
-const BIOS = @import("bios.zig").BIOS;
+const std = @import("std");
+const fmt = std.fmt;
+const io = std.io;
+const gba = @import("gba.zig");
+const BIOS = gba.BIOS;
 
 pub const Debug = struct {
     const PrintContext = packed struct {
@@ -25,9 +26,8 @@ pub const Debug = struct {
         pub fn write(self: *Self, bytes: []const u8) !usize {
             const remaining = AGB_BUFFER_SIZE - self.streamWritten;
             if (remaining < bytes.len) {
-                var index: usize = 0;
-                while (index < remaining) : (index += 1) {
-                    printChar(bytes[index]);
+                for (bytes[0..remaining]) |c| {
+                    printChar(c);
                 }
                 return error.BufferTooSmall;
             }

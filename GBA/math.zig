@@ -96,15 +96,16 @@ pub const FixedU8_8 = FixedPoint(.unsigned, 8, 8);
 pub const FixedI4_12 = FixedPoint(.signed, 4, 12);
 pub const FixedU4_12 = FixedPoint(.unsigned, 4, 12);
 
-pub const FixedI19_8 = FixedPoint(.signed, 19, 8);
-pub const FixedU19_8 = FixedPoint(.unsigned, 19, 8);
+pub const FixedI20_8 = FixedPoint(.signed, 20, 8);
+pub const FixedU20_8 = FixedPoint(.unsigned, 20, 8);
 
+// TODO: Consider a comptime function allowing users to define their own lookup tables
+// Some sound engines have one that they already use
 pub const sin_lut: [512]FixedI4_12 = blk: {
     @setEvalBranchQuota(10000);
     var result: [512]FixedI4_12 = undefined;
 
-    var i: usize = 0;
-    while (i < result.len) : (i += 1) {
+    for (0..result.len) |i| {
         const sinValue = std.math.sin(@as(f32, @floatFromInt(i)) * std.math.tau / 512.0);
         result[i] = FixedI4_12.fromF32(sinValue);
     }

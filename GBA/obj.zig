@@ -1,11 +1,12 @@
 //! Module for operations related to Object/Sprite memory
-
-const I8_8 = @import("Math.zig").FixedI8_8;
-const Priority = @import("Display.zig").Priority;
+const gba = @import("gba.zig");
+const I8_8 = gba.math.FixedI8_8;
+const Priority = gba.display.Priority;
+const palette = gba.palette;
 
 const OAM_BASE_ADDR = 0x07000000;
 /// The actual location of object data in VRAM
-const oam_data: *[128]Attribute = @ptrCast(OAM_BASE_ADDR);
+pub const oam_data: *[128]Attribute = @ptrFromInt(OAM_BASE_ADDR);
 /// A buffer that can be updated at any time, then copied
 /// to OAM during VBlank
 pub var obj_attr_buf: [128]Attribute = .{.{}} ** 128;
@@ -17,68 +18,66 @@ pub var affine_buf: *[32]Affine align(4) = @ptrCast(&obj_attr_buf);
 var current_attr: usize = 0;
 
 pub const GfxMode = enum(u2) {
-    Normal,
-    SemiTransparent,
-    ObjWindow,
+    normal,
+    alpha_blend,
+    obj_window,
 };
 
-/// Used to set transformation effects on an object
-///
-/// For normal sprites: whether to flip horizontally and/or vertically
-///
-/// For affine sprites: the 5 bit index into the affine data
-pub const Transformation = packed union {
-    normal: packed struct(u5) {
-        _: u3 = 0,
-        flip_h: bool = false,
-        flip_v: bool = false,
-    },
-    affine_idx: u5,
-};
-
-pub const ObjectSize = enum {
-    x8y8,
-    x16y8,
-    x8y16,
-    x16y16,
-    x32y8,
-    x8y32,
-    x32y32,
-    x32y16,
-    x16y32,
-    x64y64,
-    x64y32,
-    x32y64,
+/// WIDTHxHEIGHT
+pub const Size = enum {
+    @"8x8",
+    @"16x8",
+    @"8x16",
+    @"16x16",
+    @"32x8",
+    @"8x32",
+    @"32x32",
+    @"32x16",
+    @"16x32",
+    @"64x64",
+    @"64x32",
+    @"32x64",
 };
 
 const AffineMode = enum(u2) {
     /// Normal rendering, uses normal transform controls
-    Normal,
+    normal,
     /// Uses affine transform controls
-    Affine,
+    affine,
     /// Disables rendering
-    Hidden,
+    hidden,
     /// Uses affine transform controls, and also allows affine
     /// transformations to use twice the sprite's dimensions.
-    AffineDouble,
+    affine_double,
 };
 
-pub const ObjectShape = enum(u2) {
-    Square,
-    Horizontal,
-    Vertical,
+pub const Shape = enum(u2) {
+    square,
+    horizontal,
+    vertical,
 };
 
 pub const Attribute = packed struct {
+    /// Used to set transformation effects on an object
+    const Transformation = packed union {
+        normal: packed struct(u5) {
+            _: u3 = 0,
+            flip_h: bool = false,
+            flip_v: bool = false,
+        },
+        affine_idx: u5,
+    };
+
+
     /// For normal sprites, the top; for affine sprites, the center
     y_pos: u8 = 0,
-    affine_mode: AffineMode,
-    mode: GfxMode = .Normal,
+    affine_mode: AffineMode = .normal,
+    mode: GfxMode = .normal,
     /// Enables mosaic effects on this object
     mosaic: bool = false,
-    palette_mode: @import(".zig").PaletteMode = .Color16,
+    palette_mode: palette.Mode = .color_16,
     /// Used in combination with size, see setSize
-    shape: ObjectShape = .Square,
+    shape: Shape = .square,
     /// For normal sprites, the left side; for affine sprites, the center
     x_pos: u9 = 0,
     /// For normal sprites: whether to flip horizontally and/or vertically
@@ -89,100 +88,98 @@ pub const Attribute = packed struct {
     size: u2 = 0,
     /// In bitmap modes, this must be 512 or higher
     tile_idx: u10 = 0,
-    priority: Priority = 0,
+    priority: Priority = .highest,
     palette: u4 = 0,
-    /// This field is used to store the Affine data.
+    // This field is used to store the Affine data.
     // TODO: should maybe be undefined or left out?
-    _: I8_8 = I8_8.ZERO,
-
-    const Self = @This();
+    //_: I8_8 = ,
 
     /// Sets size and shape to the appropriate values for the given
     /// object size.
-    pub fn setSize(self: *Self, size: ObjectSize) void {
+    pub fn setSize(self: *Attribute, size: Size) void {
         switch (size) {
-            .x8y8 => {
-                self.shape = .Square;
+            .@"8x8" => {
+                self.shape = .square;
                 self.size = 0;
             },
-            .x16y8 => {
-                self.shape = .Horizontal;
+            .@"16x8" => {
+                self.shape = .horizontal;
                 self.size = 0;
             },
-            .x8y16 => {
-                self.shape = .Vertical;
+            .@"8x16" => {
+                self.shape = .vertical;
                 self.size = 0;
             },
-            .x16y16 => {
-                self.shape = .Square;
+            .@"16x16" => {
+                self.shape = .square;
                 self.size = 1;
             },
-            .x32y8 => {
-                self.shape = .Horizontal;
+            .@"32x8" => {
+                self.shape = .horizontal;
                 self.size = 1;
             },
-            .x8y32 => {
-                self.shape = .Vertical;
+            .@"8x32" => {
+                self.shape = .vertical;
                 self.size = 1;
             },
-            .x32y32 => {
-                self.shape = .Square;
+            .@"32x32" => {
+                self.shape = .square;
                 self.size = 2;
             },
-            .x32y16 => {
-                self.shape = .Horizontal;
+            .@"32x16" => {
+                self.shape = .horizontal;
                 self.size = 2;
             },
-            .x16y32 => {
-                self.shape = .Vertical;
+            .@"16x32" => {
+                self.shape = .vertical;
                 self.size = 2;
             },
-            .x64y64 => {
-                self.shape = .Square;
+            .@"64x64" => {
+                self.shape = .square;
                 self.size = 3;
             },
-            .x64y32 => {
-                self.shape = .Horizontal;
+            .@"64x32" => {
+                self.shape = .horizontal;
                 self.size = 3;
             },
-            .x32y64 => {
-                self.shape = .Vertical;
+            .@"32x64" => {
+                self.shape = .vertical;
                 self.size = 3;
             },
         }
     }
 
-    pub inline fn setPosition(self: *Self, x: u9, y: u8) void {
+    pub inline fn setPosition(self: *Attribute, x: u9, y: u8) void {
         self.x_pos = x;
         self.y_pos = y;
     }
 
-    pub fn getAffine(self: Self) *Affine {
+    pub fn getAffine(self: Attribute) *Affine {
         return &affine_buf[self.transform.affine_idx];
     }
 };
 
 pub const Affine = packed struct {
     _0: u48,
-    pa: I8_8,
+    pa: I8_8 = I8_8.fromInt(1),
     _1: u48,
-    pb: I8_8,
+    pb: I8_8 = .{},
     _2: u48,
-    pc: I8_8,
+    pc: I8_8 = .{},
     _3: u48,
-    pd: I8_8,
+    pd: I8_8 = I8_8.fromInt(1),
 
-    fn set(self: *Affine, pa: I8_8, pb: I8_8, pc: I8_8, pd: I8_8) void {
+    pub fn set(self: *Affine, pa: I8_8, pb: I8_8, pc: I8_8, pd: I8_8) void {
         self.pa = pa;
         self.pb = pb;
         self.pc = pc;
         self.pd = pd;
     }
 
-    fn setIdentity(self: *Affine) void {
+    pub fn setIdentity(self: *Affine) void {
         self.pa = I8_8.fromInt(1);
-        self.pb = I8_8.ZERO;
-        self.pc = I8_8.ZERO;
+        self.pb = .{};
+        self.pc = .{};
         self.pd = I8_8.fromInt(1);
     }
 };

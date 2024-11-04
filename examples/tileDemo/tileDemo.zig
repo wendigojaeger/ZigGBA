@@ -1,48 +1,43 @@
-const GBA = @import("gba").GBA;
-const Input = @import("gba").Input;
-const LCD = @import("gba").LCD;
-const Background = @import("gba").Background;
+const gba = @import("gba");
+const input = gba.input;
+const display = gba.display;
+const bg = gba.bg;
+const io = gba.io;
 
-extern const brinPal: [256]c_ushort;
-extern const brinTiles: [496]c_ushort;
-extern const brinMap: [2048]c_ushort;
+const brin = @import("brin.zig");
 
-export var gameHeader linksection(".gbaheader") = GBA.Header.setup("TILEDEMO", "ATDE", "00", 0);
+export var header linksection(".gbaheader") = gba.Header.init("TILEDEMO", "ATDE", "00", 0);
 
 fn loadData() void {
-    const mapRam: [*]volatile u16 = @ptrFromInt(@intFromPtr(GBA.VRAM) + (30 * 2048));
+    const mapRam: [*]volatile u16 = @ptrFromInt(@intFromPtr(gba.VRAM) + (30 * 2048));
 
-    GBA.memcpy32(GBA.BG_PALETTE_RAM, &brinPal, brinPal.len * 2);
-    GBA.memcpy32(GBA.VRAM, &brinTiles, brinTiles.len * 2);
-    GBA.memcpy32(mapRam, &brinMap, brinMap.len * 2);
+    gba.memcpy32(bg.palette, &brin.pal, brin.pal.len * 2);
+    gba.memcpy32(gba.VRAM, &brin.tiles, brin.tiles.len * 2);
+    gba.memcpy32(mapRam, &brin.map, brin.map.len * 2);
 }
 
 pub fn main() noreturn {
     loadData();
+    io.bg_ctrl[0] = .{
+        .screen_base_block = 30,
+        .tile_map_size = .{ .normal = .@"64x32" },
+    };
 
-    Background.setupBackground(Background.Background0Control, .{
-        .characterBaseBlock = 0,
-        .screenBaseBlock = 30,
-        .paletteMode = .Color16,
-        .screenSize = .Text64x32,
-    });
+    io.display_ctrl.* = .{
+        .show = .{ .bg0 = true },
+    };
 
-    LCD.setupDisplayControl(.{
-        .mode = .Mode0,
-        .backgroundLayer0 = .Show,
-    });
-
-    var x: i32 = 192;
-    var y: i32 = 64;
+    var x: i10 = 192;
+    var y: i10 = 64;
 
     while (true) {
-        LCD.naiveVSync();
+        display.naiveVSync();
 
-        Input.readInput();
+        _ = input.poll();
 
-        x += Input.getHorizontal();
-        y += Input.getVertical();
+        x +%= input.Axis.get(.Horizontal);
+        y +%= input.Axis.get(.Vertical);
 
-        Background.Background0Scroll.setPosition(x, y);
+        io.bg_scroll[0].set(x, y);
     }
 }

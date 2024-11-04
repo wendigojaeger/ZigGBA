@@ -1,24 +1,24 @@
-const GBA = @import("gba").GBA;
-const Debug = @import("gba").Debug;
-const LCD = @import("gba").LCD;
+const gba = @import("gba");
+const debug = gba.debug;
+const display = gba.display;
 
-export var gameHeader linksection(".gbaheader") = GBA.Header.setup("DEBUGPRINT", "ADPE", "00", 0);
+export var gameHeader linksection(".gbaheader") = gba.Header.init("DEBUGPRINT", "ADPE", "00", 0);
 
-pub fn main() noreturn {
-    LCD.setupDisplayControl(.{
-        .mode = .Mode3,
-        .backgroundLayer2 = .Show,
-    });
+pub export fn main() noreturn {
+    gba.io.display_ctrl.* = .{
+        .mode = .mode3,
+        .show = .{ .bg2 = false },
+    };
 
-    Debug.init();
+    debug.init();
 
-    Debug.write("HELLO DEBUGGER!") catch unreachable;
+    debug.write("HELLO DEBUGGER!") catch unreachable;
 
     const gameName = "DebugPrint";
 
     var i: u32 = 0;
     while (i < 10) : (i += 1) {
-        Debug.print("From {s}: {}", .{ gameName, i }) catch unreachable;
+        debug.print("From {s}: {}", .{ gameName, i }) catch unreachable;
     }
 
     while (true) {}
