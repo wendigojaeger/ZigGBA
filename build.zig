@@ -4,6 +4,7 @@ const GBABuilder = @import("GBA/builder.zig");
 pub fn build(b: *std.Build) void {
     _ = GBABuilder.addGBAExecutable(b, "first", "examples/first/first.zig");
     _ = GBABuilder.addGBAExecutable(b, "mode3draw", "examples/mode3draw/mode3draw.zig");
+    _ = GBABuilder.addGBAExecutable(b, "mode4draw", "examples/mode4draw/mode4draw.zig");
     _ = GBABuilder.addGBAExecutable(b, "debugPrint", "examples/debugPrint/debugPrint.zig");
 
     // Mode 4 Flip

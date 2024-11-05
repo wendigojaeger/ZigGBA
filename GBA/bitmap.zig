@@ -4,10 +4,24 @@ pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
     return struct {
         pub const Color = C;
         pub const page_size: comptime_int = @as(u17, @intCast(@sizeOf(Color))) * width * height;
-        
+
         const HalfWordColor = if (@sizeOf(Color) == 2) Color else packed struct(u16) {
             lo: u8,
             hi: u8,
+
+            fn withLo(self: HalfWordColor, color: u8) HalfWordColor {
+                return .{
+                    .lo = color,
+                    .hi = self.hi,
+                };
+            }
+
+            fn withHi(self: HalfWordColor, color: u8) HalfWordColor {
+                return .{
+                    .lo = self.lo,
+                    .hi = color,
+                };
+            }
         };
 
         fn fullHalfwordColor(color: Color) HalfWordColor {
@@ -25,11 +39,8 @@ pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
             if (@sizeOf(Color) == 2) {
                 screen()[y][x] = color;
             } else {
-                if (x & 1 == 0) {
-                    screen()[y][x >> 1].lo = color;
-                } else {
-                    screen()[y][x >> 1].hi = color;
-                }
+                const cell = &screen()[y][x >> 1];
+                cell.* = if (x & 1 == 0) cell.withLo(color) else cell.withHi(color);
             }
         }
 
@@ -40,21 +51,19 @@ pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
             } else {
                 // Have to do first and last separately because we could need both pixels
                 // or just one
-                const first = x1 >> 1;
-                const last = x2 >> 1;
-                // TODO: I think this is unnecessary and just writing a single 8 bit 
+                const l = x1 >> 1;
+                const r = x2 >> 1;
+                const first = &screen()[y][l];
+                const last = &screen()[y][r];
+                // TODO: I think this is unnecessary and just writing a single 8 bit
                 // number to the register will write it to both high and low bytes
-                // const full: Color = .{ .lo = color, .hi = color };
-                if (x1 & 1 == 0)
-                    screen()[y][first] = color
-                else
-                    screen()[y][first].hi = color;
+                const full: HalfWordColor = .{ .lo = color, .hi = color };
+                // Even = fill both, odd: only high byte
+                first.* = if (x1 & 1 == 0) full else first.withHi(color);
                 // Fill all the middle registers 2 at a time
-                for (screen[y][first + 1 .. last]) |*x| x.* = color;
-                if (x2 & 1 == 0)
-                    screen()[y][last].lo = color
-                else
-                    screen()[y][last] = color;
+                for (screen()[y][l + 1 .. r]) |*x| x.* = full;
+                // Odd: fill both, even: only low byte
+                last.* = if (x2 & 1 == 0) last.withLo(color) else full;
             }
         }
 
@@ -69,7 +78,7 @@ pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
             //  Horizontal case
             if (y1 == y2) {
                 lineHorizontal(@min(x1, x2), @max(x1, x2) + 1, y1, color);
-            //  Vertical case
+                //  Vertical case
             } else if (x1 == x2) {
                 for (y1..y2 + 1) |y| setPixel(x1, @truncate(y), color);
             } else {

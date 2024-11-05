@@ -46,7 +46,7 @@ fn initMap() void {
             blockCount += 1;
             mapIndex += 1;
         }) {
-            bg0_map[mapIndex].palette_idx = @intCast(paletteIndex);
+            bg0_map[mapIndex].palette_index = @intCast(paletteIndex);
         }
     }
 }
@@ -66,7 +66,7 @@ pub fn main() noreturn {
     var screenBlockPrevious: usize = CrossTY * 32 + CrossTX;
 
     const bg0_map = @as([*]volatile bg.TextScreenEntry, @ptrCast(&bg.screen_block_memory[28]));
-    bg0_map[screenBlockPrevious].tile_idx += 1;
+    bg0_map[screenBlockPrevious].tile_index += 1;
 
     while (true) {
         display.naiveVSync();
@@ -82,8 +82,8 @@ pub fn main() noreturn {
         screenBlockCurrent = screenIndex(tx, ty, 64);
 
         if (screenBlockPrevious != screenBlockCurrent) {
-            bg0_map[screenBlockPrevious].tile_idx -= 1;
-            bg0_map[screenBlockCurrent].tile_idx += 1;
+            bg0_map[screenBlockPrevious].tile_index -= 1;
+            bg0_map[screenBlockCurrent].tile_index += 1;
             screenBlockPrevious = screenBlockCurrent;
         }
 

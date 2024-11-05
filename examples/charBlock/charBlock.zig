@@ -47,30 +47,30 @@ fn initMaps() void {
     if (screenEntry4_ptr) |screenEntry4| {
         // Show first tiles of char-blocks available to background 0
         // tiles 1, 2 of CharacterBlock4
-        screenEntry4[0x01].tile_idx = 0x0001;
-        screenEntry4[0x02].tile_idx = 0x0002;
+        screenEntry4[0x01].tile_index = 0x0001;
+        screenEntry4[0x02].tile_index = 0x0002;
         // tiles 0, 1 of CharacterBlock4+1
-        screenEntry4[0x20].tile_idx = 0x0200;
-        screenEntry4[0x21].tile_idx = 0x0201;
+        screenEntry4[0x20].tile_index = 0x0200;
+        screenEntry4[0x21].tile_index = 0x0201;
     }
 
     if (screenEntry8_ptr) |screenEntry8| {
         // Show first tiles of char-blocks available to background 1
         // tiles 1, 2 of CharacterBlock8 (== 2)
-        screenEntry8[0x01].tile_idx = 0x0001;
-        screenEntry8[0x02].tile_idx = 0x0002;
+        screenEntry8[0x01].tile_index = 0x0001;
+        screenEntry8[0x02].tile_index = 0x0002;
 
         // tiles 1, 2 of CharacterBlock8+1
-        screenEntry8[0x20].tile_idx = 0x0100;
-        screenEntry8[0x21].tile_idx = 0x0101;
+        screenEntry8[0x20].tile_index = 0x0100;
+        screenEntry8[0x21].tile_index = 0x0101;
 
         // tiles 1, 2 of char-block CharacterBlock8+2 (== CBB_OBJ_LO)
-        screenEntry8[0x40].tile_idx = 0x0200;
-        screenEntry8[0x41].tile_idx = 0x0201;
+        screenEntry8[0x40].tile_index = 0x0200;
+        screenEntry8[0x41].tile_index = 0x0201;
 
         // tiles 1, 2 of char-block CharacterBlock8+3 (== CBB_OBJ_HI)
-        screenEntry8[0x60].tile_idx = 0x0300;
-        screenEntry8[0x61].tile_idx = 0x0301;
+        screenEntry8[0x60].tile_index = 0x0300;
+        screenEntry8[0x61].tile_index = 0x0301;
     }
 }
 

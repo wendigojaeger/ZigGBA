@@ -22,7 +22,7 @@ pub fn main() noreturn {
     loadImageData();
 
     var i: u32 = 0;
-    while (true) {
+    while (true) : (i += 1) {
         _ = input.poll();
         while (input.isKeyPressed(.Start)) {
             _ = input.poll();
@@ -30,10 +30,9 @@ pub fn main() noreturn {
 
         display.naiveVSync();
 
-        i += 1;
         if (i == 60 * 2) {
             i = 0;
-            _ = display.pageFlip();
+            display.pageFlip();
         }
     }
 }

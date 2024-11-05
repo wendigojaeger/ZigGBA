@@ -2,9 +2,6 @@
 
 const gba = @import("gba.zig");
 const display = gba.display;
-const DisplayMode = display.Mode;
-const DisplayStatus = display.Status;
-const MosaicSettings = display.MosaicSettings;
 const bg = gba.bg;
 const Interrupt = gba.Interrupt;
 
@@ -19,7 +16,7 @@ pub const display_ctrl: *volatile display.Control = @ptrFromInt(IO_BASE_ADDR);
 /// Display Status Register
 ///
 /// (REG_DISPSTAT)
-pub const display_status: *volatile DisplayStatus = @ptrFromInt(IO_BASE_ADDR + 0x04);
+pub const display_status: *volatile display.Status = @ptrFromInt(IO_BASE_ADDR + 0x04);
 /// Current y location of the LCD hardware
 ///
 /// (REG_VCOUNT)
@@ -40,7 +37,7 @@ pub const bg_scroll: *volatile [4]bg.Scroll = @ptrFromInt(IO_BASE_ADDR + 0x10);
 /// Controls size of mosaic effects for backgrounds and sprites where it is active
 ///
 /// (REG_MOSAIC)
-pub const mosaic_size: *volatile MosaicSettings = @ptrCast(IO_BASE_ADDR + 0x4C);
+pub const mosaic_size: *volatile display.MosaicSettings = @ptrCast(IO_BASE_ADDR + 0x4C);
 
 pub const BlendFlags = packed struct(u6) {
     bg0: bool,

@@ -49,10 +49,10 @@ pub const Scroll = packed struct {
 };
 
 pub const TextScreenEntry = packed struct {
-    tile_idx: u10 = 0,
+    tile_index: u10 = 0,
     flip_h: bool = false,
     flip_v: bool = false,
-    palette_idx: u4 = 0,
+    palette_index: u4 = 0,
 };
 
 // TODO: consider a generic affine?
@@ -66,7 +66,7 @@ pub const Affine = extern struct {
 };
 
 pub const AffineScreenEntry = packed struct {
-    tile_idx: u8 = 0,
+    tile_index: u8 = 0,
 };
 
 pub const TextScreenBlock = [1024]TextScreenEntry;

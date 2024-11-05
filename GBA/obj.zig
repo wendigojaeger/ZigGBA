@@ -65,9 +65,8 @@ pub const Attribute = packed struct {
             flip_h: bool = false,
             flip_v: bool = false,
         },
-        affine_idx: u5,
+        affine_index: u5,
     };
-
 
     /// For normal sprites, the top; for affine sprites, the center
     y_pos: u8 = 0,
@@ -87,15 +86,14 @@ pub const Attribute = packed struct {
     /// Used in combination with shape, see setSize
     size: u2 = 0,
     /// In bitmap modes, this must be 512 or higher
-    tile_idx: u10 = 0,
+    tile_index: u10 = 0,
     priority: Priority = .highest,
     palette: u4 = 0,
     // This field is used to store the Affine data.
     // TODO: should maybe be undefined or left out?
     //_: I8_8 = ,
 
-    /// Sets size and shape to the appropriate values for the given
-    /// object size.
+    /// Sets size and shape to the appropriate values for the given object size.
     pub fn setSize(self: *Attribute, size: Size) void {
         switch (size) {
             .@"8x8" => {
@@ -155,7 +153,7 @@ pub const Attribute = packed struct {
     }
 
     pub fn getAffine(self: Attribute) *Affine {
-        return &affine_buf[self.transform.affine_idx];
+        return &affine_buf[self.transform.affine_index];
     }
 };
 

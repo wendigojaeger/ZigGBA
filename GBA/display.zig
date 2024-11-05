@@ -115,12 +115,11 @@ pub const MosaicSettings = packed struct(u16) {
 };
 
 pub fn currentPage() []volatile u16 {
-    // Could consider making the page a *[2][0xA000]PixelData
-    // And just index in with display_ctrl.page_select
-    // Probably too cheeky though
+    // TODO: This might make more sense elsewhere
     return @as([*]u16, @ptrFromInt(current_page_addr))[0..pageSize()];
 }
 
+// TODO: This might make more sense elsewhere
 pub inline fn pageFlip() void {
     switch (io.display_ctrl.mode) {
         .mode4, .mode5 => {

@@ -24,7 +24,7 @@ pub fn main() noreturn {
     metroid.x_pos = 100;
     metroid.y_pos = 150;
     metroid.palette = 0;
-    metroid.tile_idx = 0;
+    metroid.tile_index = 0;
     metroid.setSize(.@"64x64");
 
     var x: i9 = 96;
@@ -53,7 +53,7 @@ pub fn main() noreturn {
         gba.io.display_ctrl.obj_mapping = if (input.isKeyPressed(.Start)) .two_dimensions else .one_dimension;
 
         metroid.setPosition(@bitCast(x), @bitCast(y));
-        metroid.tile_idx = @bitCast(tileIndex);
+        metroid.tile_index = @bitCast(tileIndex);
 
         obj.update(1);
     }

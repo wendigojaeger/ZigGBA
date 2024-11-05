@@ -53,7 +53,7 @@ pub const SWI = enum(u8) {
     diff_8bit_unfilter_wram = 0x16,
     /// 16 bit
     diff_8bit_unfilter_vram = 0x17,
-    diff_8bit_unfilter = 0x18,
+    diff_16bit_unfilter = 0x18,
     sound_bias_change = 0x19,
     sound_driver_init = 0x1A,
     sound_driver_mode = 0x1B,
@@ -226,9 +226,21 @@ pub const ObjAffineSource = packed struct {
 };
 
 pub const BitUnpackArgs = packed struct {
-    src_len: u16,
-    src_bit_width: u8,
-    dest_bit_width: u8,
+    src_len_bytes: u16,
+    src_bit_width: enum(u8) {
+        @"1" = 1,
+        @"2" = 2,
+        @"4" = 4,
+        @"8" = 8,
+    },
+    dest_bit_width: enum(u8) {
+        @"1" = 1,
+        @"2" = 2,
+        @"4" = 4,
+        @"8" = 8,
+        @"16" = 16,
+        @"32" = 32,
+    },
     data_offset: u31,
     zero_data: bool,
 };
@@ -250,12 +262,12 @@ pub fn waitVBlank() void {
 }
 
 pub fn div(numerator: i32, denominator: i32) DivResult {
-    return call2Return3(.div, .{ numerator, denominator });
+    return call2Return3(.div, numerator, denominator);
 }
 
 /// 3 cycles slower than div
 pub fn divArm(numerator: i32, denominator: i32) DivResult {
-    return call2Return3(.div_arm, .{ denominator, numerator });
+    return call2Return3(.div_arm, denominator, numerator);
 }
 
 pub fn sqrt(x: u32) u16 {
@@ -270,30 +282,117 @@ pub fn arctan2(x: I2_14, y: I2_14) I2_14 {
     return call2Return1(.arctan2, .{ x, y });
 }
 
-// TODO: Consider whether these could be turned into comptime slices
-//pub fn cpuSetHalfWord(source: []const volatile)
+// TODO: Is there a reasonable way to make this generic over any 16bit type without a type parameter?
+/// Copies all half-words from `source` into `dest`.
+pub fn cpuCopy16(source: []const volatile u16, dest: []volatile u16) void {
+    if (source.len != dest.len) {
+        @compileError("source and destination must be the same size");
+    }
+    call3Return0(.cpu_set, source.ptr, dest.ptr, CpuSetArgs{ .count = @intCast(dest.len), .data_size = .half_word, .fixed_src_addr = .copy });
+}
 
-//pub fn cpuFastSet(src: *const align(4) anyopaque)
-// .CpuSet => .{ *const u32, *u32, CpuSetArgs },
-// .CpuFastSet => .{ *const u32, *u32, CpuFastSetArgs },
-// .BgAffineSet => .{ *const align(4) BgAffineSource, [*]BgAffine, u32 },
-// .ObjAffineSet => .{ *const align(4) ObjAffineSource, *anyopaque, u32, u32 },
-// .BitUnpack => .{ *const anyopaque, *const align(4) anyopaque, *const BitUnpackArgs },
-// .LZ777UnCompWRAM,
-// .LZ777UnCompVRAM,
-// .HuffUnComp,
-// .RLUnCompWRAM,
-// .RLUnCompVRAM,
-// .Diff8BitUnFilterWRAM,
-// .Diff8BitUnFilterVRAM,
-// .Diff8BitUnFilter => .{ *const DecompressionHeader, *anyopaque },
+// TODO: Is there a reasonable way to make this generic over any 16bit type without a type parameter?
+/// Fills `dest` with the value at `source`.
+pub fn cpuSet16(source: *const volatile u16, dest: []volatile u16) void {
+    call3Return0(.cpu_set, source, dest.ptr, CpuSetArgs{ .count = @intCast(dest.len), .data_size = .half_word, .fixed_src_addr = .fill });
+}
+
+// TODO: Is there a reasonable way to make this generic over any 32bit type without a type parameter?
+/// Copies all half-words from `source` into `dest`.
+pub fn cpuCopy32(source: []const volatile u32, dest: []volatile u32) void {
+    std.debug.assert(source.len == dest.len);
+    call3Return0(.cpu_set, source.ptr, dest.ptr, CpuSetArgs{ .count = @intCast(dest.len), .data_size = .word, .fixed_src_addr = .copy });
+}
+
+// TODO: Is there a reasonable way to make this generic over any 32bit type without a type parameter?
+/// Fills `dest` with the value at `source`.
+pub fn cpuSet32(source: *const volatile u32, dest: []volatile u32) void {
+    call3Return0(.cpu_set, source, dest.ptr, CpuSetArgs{ .count = @intCast(dest.len), .data_size = .word, .fixed_src_addr = .fill });
+}
+
+/// Copies chunks of 32 bytes from `source` into `dest`.
+pub fn cpuFastCopy(source: []const volatile u32, dest: []volatile u32) void {
+    // The GBA will round up the number of bytes to write to the nearest multiple of 32.
+    // This is perfectly legal, but may not be the desired behavior, hence the debug assert.
+    std.debug.assert(dest.len % 8 == 0);
+    std.debug.assert(source.len == dest.len);
+    call3Return0(.cpu_fast_set, source, dest, CpuFastSetArgs{ .count = dest.len, .fixed_src_addr = .copy });
+}
+
+/// Copies the value at `source` into `dest` in chunks of 32 bytes.
+pub fn cpuFastSet(source: *const volatile u32, dest: []volatile u32) void {
+    // The GBA will round up the number of bytes to write to the nearest multiple of 32.
+    // This is perfectly legal, but may not be the desired behavior, hence the debug assert.
+    std.debug.assert(dest.len % 8 == 0);
+    call3Return0(.cpu_fast_set, source, dest, CpuFastSetArgs{ .count = dest.len, .fixed_src_addr = .fill });
+}
+
+pub fn bgAffineSet(source: []align(4) const volatile BgAffineSource, dest: *volatile gba.bg.Affine) void {
+    call3Return0(.bg_affine_set, source, dest, source.len);
+}
+
+/// Takes a slice of affine calculation parameters and a pointer to the `pa` field of
+/// the first `obj.Affine` to perform them on.
+pub fn objAffineSet(source: []align(4) const volatile ObjAffineSource, dest: *volatile I8_8) void {
+    call4Return0(.obj_affine_set, source, dest, source.len, 8);
+}
+
+// TODO: objAffineSet2?
+
+// TODO: Might be able to pull bit unpacking stuff into comptime type
+// pub fn BitUnpacker(comptime P: type, comptime U: type) type {
+//     const packed_bits = switch (@bitSizeOf(P)) {
+//         1, 2, 4, 8 => |s| s,
+//         else => @compileError("packed type can only have bit width of 1, 2, 4, or 8."),
+//     };
+//     const unpacked_bits = switch (@bitSizeOf(U)) {
+//         1, 2, 4, 8, 16, 32 => |s| s,
+//         else => @compileError("unpacked type can only have bit width of 1, 2, 4, 8, 16, or 32."),
+//     };
+// }
+
+pub fn bitUnpack(source: []const u8, dest: *align(4) const anyopaque, args: *const BitUnpackArgs) void {
+    call3Return0(.bit_unpack, source, dest, args);
+}
+
+pub fn decompressLZ77WRAM(source: *const DecompressionHeader, dest: *anyopaque) void {
+    call2Return0(.lz77_uncomp_wram, source, dest);
+}
+
+pub fn decompressLZ77VRAM(source: *const DecompressionHeader, dest: *anyopaque) void {
+    call2Return0(.lz77_uncomp_vram, source, dest);
+}
+
+pub fn decompressHuffmann(source: *const DecompressionHeader, dest: *anyopaque) void {
+    call2Return0(.huff_uncomp, source, dest);
+}
+
+pub fn decompressRunLengthWRAM(source: *const DecompressionHeader, dest: *anyopaque) void {
+    call2Return0(.rl_uncomp_wram, source, dest);
+}
+
+pub fn decompressRunLengthVRAM(source: *const DecompressionHeader, dest: *anyopaque) void {
+    call2Return0(.rl_uncomp_vram, source, dest);
+}
+
+pub fn unfilterDiff8BitWRAM(source: *const DecompressionHeader, dest: *anyopaque) void {
+    call2Return0(.diff_8bit_unfilter_wram, source, dest);
+}
+
+pub fn unfilterDiff8BitVRAM(source: *const DecompressionHeader, dest: *anyopaque) void {
+    call2Return0(.diff_8bit_unfilter_vram, source, dest);
+}
+
+pub fn unfilterDiff16Bit(source: *const DecompressionHeader, dest: *anyopaque) void {
+    call2Return0(.diff_16bit_unfilter, source, dest);
+}
+
 // // TODO: define actual sound driver struct
 // .SoundDriverInit => .{ *const volatile anyopaque },
 // .SoundDriverMode => .{ SoundDriverModeArgs },
 // // TODO: WaveData*, Midi stuff
 // .MIDIKey2Freq => .{ *const anyopaque, u8, u8 },
 // .MultiBoot => .{ *const volatile anyopaque, TransferMode },
-// else => void,
 
 pub fn debugFlush() void {
     call0Return0(.agb_print);
@@ -334,9 +433,8 @@ fn call1Return1(comptime swi: SWI, r0: anytype) swi.ReturnType() {
     return ret;
 }
 
-fn call2Return0(comptime swi: SWI, args: anytype) void {
+fn call2Return0(comptime swi: SWI, r0: anytype, r1: anytype) void {
     const assembly = comptime swi.getAsm();
-    const r0, const r1 = args;
     asm volatile (assembly
         :
         : [r0] "{r0}" (r0),
