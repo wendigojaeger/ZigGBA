@@ -4,29 +4,29 @@ const Color = gba.Color;
 const input = gba.input;
 const display = gba.display;
 
-export var gameHeader linksection(".gbaheader") = gba.Header.init("KEYDEMO", "AKDE", "00", 0);
+export var header linksection(".gbaheader") = gba.initHeader("KEYDEMO", "AKDE", "00", 0);
 
 fn loadImageData() void {
-    gba.memcpy32(gba.MODE4_FRONT_VRAM, &gba_pic.bitmap, gba_pic.bitmap.len * 4);
-    gba.memcpy32(gba.bg.palette, &gba_pic.pal, gba_pic.pal.len * 4);
+    gba.mem.memcpy32(gba.display.vram, &gba_pic.bitmap, gba_pic.bitmap.len * 4);
+    gba.mem.memcpy32(gba.bg.palette, &gba_pic.pal, gba_pic.pal.len * 4);
 }
 
-pub fn main() noreturn {
-    gba.io.display_ctrl.* = .{
+pub fn main() void {
+    display.ctrl.* = .{
         .mode = .mode4,
         .show = .{ .bg2 = true },
     };
 
     loadImageData();
 
-    const ColorUp = gba.Color.rgb(27, 27, 29);
-    const ButtonPaletteId = 5;
+    const color_up = Color.rgb(27, 27, 29);
+    const button_palette_id = 5;
 
-    var frame: u32 = 0;
+    var frame: u3 = 0;
     while (true) {
         display.naiveVSync();
 
-        if ((frame & 7) == 0) {
+        if (frame == 0) {
             _ = input.poll();
         }
 
@@ -39,11 +39,11 @@ pub fn main() noreturn {
             else if (input.isKeyHeld(key))
                 Color.lime
             else
-                ColorUp;
+                color_up;
 
-            gba.bg.palette[0][ButtonPaletteId + i] = color;
+            gba.bg.palette.banks[0][button_palette_id + i] = color;
         }
 
-        frame += 1;
+        frame +%= 1;
     }
 }

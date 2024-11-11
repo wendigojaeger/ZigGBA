@@ -1,11 +1,11 @@
 const std = @import("std");
 const bufPrint = std.fmt.bufPrint;
 const gba = @import("gba.zig");
-const Interrupt = gba.Interrupt;
+const interrupt = gba.interrupt;
 const math = gba.math;
-const I8_8 = math.FixedI8_8;
-const U8_8 = math.FixedU8_8;
-const I20_8 = math.FixedI20_8;
+const I8_8 = math.I8_8;
+const U8_8 = math.U8_8;
+const I20_8 = math.I20_8;
 const I2_14 = math.FixedPoint(.signed, 2, 14);
 const Affine = gba.bg.Affine;
 
@@ -126,23 +126,6 @@ const FixedSourceAddr = enum(u1) {
     fill,
 };
 
-const CpuSetSize = enum(u1) {
-    half_word,
-    word,
-
-    fn alignment(self: CpuSetSize) u29 {
-        return switch (self) {
-            .half_word => 2,
-            .word => 4,
-        };
-    }
-};
-
-pub const CpuSet = union(enum) {
-    half_Word: []align(2) anyopaque,
-    word: []align(4) anyopaque,
-};
-
 const CpuSetArgs = packed struct {
     /// the number of words / half-words to write
     count: u21,
@@ -250,8 +233,8 @@ pub fn resetRamRegisters(flags: RamResetFlags) void {
     call1Return0(.register_ram_reset, flags);
 }
 
-pub fn waitInterrupt(return_type: Interrupt.WaitReturn, flags: Interrupt.Flags) void {
-    call2Return0(.intr_wait, .{ return_type, flags });
+pub fn waitInterrupt(return_type: interrupt.WaitReturn, flags: interrupt.Flags) void {
+    call2Return0(.intr_wait, return_type, flags);
 }
 
 pub fn waitVBlank() void {
@@ -279,7 +262,7 @@ pub fn arctan(x: I2_14) I2_14 {
 }
 
 pub fn arctan2(x: I2_14, y: I2_14) I2_14 {
-    return call2Return1(.arctan2, .{ x, y });
+    return call2Return1(.arctan2, x, y);
 }
 
 // TODO: Is there a reasonable way to make this generic over any 16bit type without a type parameter?
@@ -288,26 +271,26 @@ pub fn cpuCopy16(source: []const volatile u16, dest: []volatile u16) void {
     if (source.len != dest.len) {
         @compileError("source and destination must be the same size");
     }
-    call3Return0(.cpu_set, source.ptr, dest.ptr, CpuSetArgs{ .count = @intCast(dest.len), .data_size = .half_word, .fixed_src_addr = .copy });
+    call3Return0(.cpu_set, source.ptr, dest.ptr, CpuSetArgs{ .count = @truncate(dest.len), .data_size = .half_word, .fixed_src_addr = .copy });
 }
 
 // TODO: Is there a reasonable way to make this generic over any 16bit type without a type parameter?
 /// Fills `dest` with the value at `source`.
 pub fn cpuSet16(source: *const volatile u16, dest: []volatile u16) void {
-    call3Return0(.cpu_set, source, dest.ptr, CpuSetArgs{ .count = @intCast(dest.len), .data_size = .half_word, .fixed_src_addr = .fill });
+    call3Return0(.cpu_set, source, dest.ptr, CpuSetArgs{ .count = @truncate(dest.len), .data_size = .half_word, .fixed_src_addr = .fill });
 }
 
 // TODO: Is there a reasonable way to make this generic over any 32bit type without a type parameter?
 /// Copies all half-words from `source` into `dest`.
 pub fn cpuCopy32(source: []const volatile u32, dest: []volatile u32) void {
     std.debug.assert(source.len == dest.len);
-    call3Return0(.cpu_set, source.ptr, dest.ptr, CpuSetArgs{ .count = @intCast(dest.len), .data_size = .word, .fixed_src_addr = .copy });
+    call3Return0(.cpu_set, source.ptr, dest.ptr, CpuSetArgs{ .count = @truncate(dest.len), .data_size = .word, .fixed_src_addr = .copy });
 }
 
 // TODO: Is there a reasonable way to make this generic over any 32bit type without a type parameter?
 /// Fills `dest` with the value at `source`.
 pub fn cpuSet32(source: *const volatile u32, dest: []volatile u32) void {
-    call3Return0(.cpu_set, source, dest.ptr, CpuSetArgs{ .count = @intCast(dest.len), .data_size = .word, .fixed_src_addr = .fill });
+    call3Return0(.cpu_set, source, dest.ptr, CpuSetArgs{ .count = @truncate(dest.len), .data_size = .word, .fixed_src_addr = .fill });
 }
 
 /// Copies chunks of 32 bytes from `source` into `dest`.
@@ -316,7 +299,7 @@ pub fn cpuFastCopy(source: []const volatile u32, dest: []volatile u32) void {
     // This is perfectly legal, but may not be the desired behavior, hence the debug assert.
     std.debug.assert(dest.len % 8 == 0);
     std.debug.assert(source.len == dest.len);
-    call3Return0(.cpu_fast_set, source, dest, CpuFastSetArgs{ .count = dest.len, .fixed_src_addr = .copy });
+    call3Return0(.cpu_fast_set, source, dest, CpuFastSetArgs{ .count = @truncate(dest.len), .fixed_src_addr = .copy });
 }
 
 /// Copies the value at `source` into `dest` in chunks of 32 bytes.
@@ -324,7 +307,7 @@ pub fn cpuFastSet(source: *const volatile u32, dest: []volatile u32) void {
     // The GBA will round up the number of bytes to write to the nearest multiple of 32.
     // This is perfectly legal, but may not be the desired behavior, hence the debug assert.
     std.debug.assert(dest.len % 8 == 0);
-    call3Return0(.cpu_fast_set, source, dest, CpuFastSetArgs{ .count = dest.len, .fixed_src_addr = .fill });
+    call3Return0(.cpu_fast_set, source, dest.ptr, CpuFastSetArgs{ .count = @truncate(dest.len), .fixed_src_addr = .fill });
 }
 
 pub fn bgAffineSet(source: []align(4) const volatile BgAffineSource, dest: *volatile gba.bg.Affine) void {
@@ -411,6 +394,7 @@ fn call0Return1(comptime swi: SWI) swi.ReturnType() {
         :
         : "r0"
     );
+    return ret;
 }
 
 inline fn call1Return0(comptime swi: SWI, r0: anytype) void {

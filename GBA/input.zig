@@ -5,36 +5,46 @@
 //! with checking them. These functions abstract that conversion
 const std = @import("std");
 
+// TODO: Maybe create an enumset that is "active low"
+// or just wrap this one
 pub const Keys = std.EnumSet(Key);
 
 var prev_input: Keys = .{};
 var curr_input: Keys = .{};
 
-const REG_KEYINPUT: *align(2) const volatile u10 = @ptrFromInt(0x4000130);
+const reg_keyinput: *align(2) const volatile u10 = @ptrFromInt(0x4000130);
 
 pub const Key = enum {
     A,
     B,
-    Select,
-    Start,
-    Right,
-    Left,
-    Up,
-    Down,
+    select,
+    start,
+    right,
+    left,
+    up,
+    down,
     R,
     L,
 };
 
-pub const KeyCtrl = packed struct(u16) {
+pub const Control = packed struct(u16) {
     const Condition = enum(u1) {
-        Any = 0,
-        All = 1,
+        any = 0,
+        all = 1,
     };
 
-    keys: Keys,
+    keys_raw: Keys,
     _: u4,
     interrupt: bool,
     op: Condition,
+
+    pub fn getKeys(self: Control) Keys {
+        return self.keys_raw.complement();
+    }
+
+    pub fn setKeys(self: *Control, keys: Keys) void {
+        self.keys_raw = keys.complement();
+    }
 };
 
 /// Allows reading the D-pad and shoulders as connected axes
@@ -42,29 +52,34 @@ pub const KeyCtrl = packed struct(u16) {
 ///
 /// Negative axes are Left, Up, and L.
 pub const Axis = enum {
-    Horizontal,
-    Vertical,
-    Shoulders,
-
-    /// Get the current value of this axis. Returns 0 if both buttons
-    /// or neither are pressed.
-    pub fn get(axis: Axis) i4 {
-        return switch (axis) {
-            .Horizontal => triState(curr_input, .Left, .Right),
-            .Vertical => triState(curr_input, .Up, .Down),
-            .Shoulders => triState(curr_input, .L, .R),
-        };
-    }
+    horizontal,
+    vertical,
+    shoulders,
 };
 
 fn pressedInt(input: Keys, key: Key) i4 {
     return @intFromBool(input.contains(key));
 }
 
+/// Get the current value of this axis. Returns 0 if both buttons
+/// or neither are pressed.
+pub fn getAxis(axis: Axis) i4 {
+    return switch (axis) {
+        .horizontal => triState(curr_input, .left, .right),
+        .vertical => triState(curr_input, .up, .down),
+        .shoulders => triState(curr_input, .L, .R),
+    };
+}
+
 /// The keypad should always be read through this function, never directly.
-pub fn poll() void {
+pub fn poll() Keys {
     prev_input = curr_input;
-    curr_input = .{ .bits = .{ .mask = ~REG_KEYINPUT.* } };
+    curr_input = .{ .bits = .{ .mask = ~reg_keyinput.* } };
+    return curr_input;
+}
+
+pub fn currentInput() Keys {
+    return curr_input;
 }
 
 pub fn isKeyPressed(key: Key) bool {
@@ -104,12 +119,12 @@ pub fn triState(input: Keys, minus: Key, plus: Key) i4 {
 }
 
 test "Test Axis.get()" {
-    curr_input = Keys.initOne(.Left);
-    try std.testing.expectEqual(-1, Axis.Horizontal.get());
-    curr_input.insert(.Right);
-    try std.testing.expectEqual(0, Axis.Horizontal.get());
-    curr_input.remove(.Left);
-    try std.testing.expectEqual(1, Axis.get(.Horizontal));
-    curr_input.remove(.Right);
-    try std.testing.expectEqual(0, Axis.get(.Horizontal));
+    curr_input = Keys.initOne(.left);
+    try std.testing.expectEqual(-1, getAxis(.horizontal));
+    curr_input.insert(.right);
+    try std.testing.expectEqual(0, getAxis(.horizontal));
+    curr_input.remove(.left);
+    try std.testing.expectEqual(1, getAxis(.horizontal));
+    curr_input.remove(.right);
+    try std.testing.expectEqual(0, getAxis(.horizontal));
 }

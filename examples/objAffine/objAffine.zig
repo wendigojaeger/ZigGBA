@@ -4,24 +4,21 @@ const display = gba.display;
 const obj = gba.obj;
 const debug = gba.debug;
 const math = gba.math;
-const io = gba.io;
-
-export var gameHeader linksection(".gbaheader") = gba.Header.init("OBJAFFINE", "AODE", "00", 0);
 const metr = @import("metr.zig");
-const metrPal = metr.pal;
-const metrTiles = metr.tiles;
-const metr_boxTiles = metr.box_tiles;
 
-pub fn main() noreturn {
-    io.display_ctrl.* = .{
+export var header linksection(".gbaheader") = gba.initHeader("OBJAFFINE", "AODE", "00", 0);
+
+
+pub fn main() void {    
+    display.ctrl.* = .{
         .obj_mapping = .one_dimension,
         .show = .{ .obj_layer = true, .bg0 = true },
     };
 
     debug.init();
 
-    gba.memcpy32(gba.SPRITE_VRAM, &metr.box_tiles, metr.box_tiles.len * 4);
-    gba.memcpy32(gba.OBJ_PALETTE_RAM, &metr.pal, metr.pal.len * 4);
+    gba.mem.memcpy32(obj.tile_ram, &metr.box_tiles, metr.box_tiles.len * 4);
+    gba.mem.memcpy32(obj.palette, &metr.pal, metr.pal.len * 4);
 
     const metroid = obj.allocate();
     metroid.transform.affine_index = 0;

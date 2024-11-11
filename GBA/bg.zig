@@ -1,14 +1,14 @@
 const gba = @import("gba.zig");
 const display = gba.display;
 const Priority = display.Priority;
-const PaletteBank = gba.palette.Bank;
+const Palette = gba.palette.Palette;
 const math = gba.math;
-const I8_8 = math.FixedI8_8;
-const I20_8 = math.FixedPoint(.signed, 20, 8);
+const I8_8 = math.I8_8;
+const I20_8 = math.I20_8;
 
-pub const PALETTE_ADDR = 0x05000000;
+const bg = @This();
 
-pub const palette: [*]PaletteBank = @ptrFromInt(PALETTE_ADDR);
+pub const palette: *Palette = @ptrFromInt(gba.mem.region.palette);
 
 /// Background size in tiles
 pub const Size = packed union { normal: enum(u2) {
@@ -38,24 +38,37 @@ pub const Control = packed struct(u16) {
     tile_map_size: Size = .{ .normal = .@"32x32" },
 };
 
-pub const Scroll = packed struct {
-    x: i10 = 0,
-    _: u6 = 0,
-    y: i10 = 0,
+/// Background control registers for tile modes
+///
+/// Mode 0 - Normal: 0, 1, 2, 3
+///
+/// Mode 1 - Normal: 0, 1; Affine: 2
+///
+/// Mode 2 - Affine: 2, 3
+pub const ctrl: *volatile [4]bg.Control = @ptrFromInt(gba.mem.region.io + 0x08);
 
-    pub inline fn set(self: *volatile Scroll, x: i10, y: i10) void {
+/// Only the lowest 10 bits are used
+pub const Scroll = packed struct {
+    x: i16 = 0,
+    y: i16 = 0,
+
+    pub fn set(self: *volatile Scroll, x: i10, y: i10) void {
         self.* = .{ .x = x, .y = y };
     }
 };
 
-pub const TextScreenEntry = packed struct {
+/// Controls background scroll. Values are modulo map size (wrapping is automatic)
+///
+/// These registers are write only.
+pub const scroll: *[4]bg.Scroll = @ptrFromInt(gba.mem.region.io + 0x10);
+
+pub const TextScreenEntry = packed struct(u16) {
     tile_index: u10 = 0,
-    flip_h: bool = false,
-    flip_v: bool = false,
+    flip: display.Flip = .{},
     palette_index: u4 = 0,
 };
 
-// TODO: consider a generic affine?
+// TODO: consider a generic affine matrix type with functions for identity and other common transformations?
 pub const Affine = extern struct {
     pa: I8_8 align(2) = I8_8.fromInt(1),
     pb: I8_8 align(2) = .{},
@@ -65,19 +78,18 @@ pub const Affine = extern struct {
     dy: I20_8 align(4) = .{},
 };
 
-pub const AffineScreenEntry = packed struct {
-    tile_index: u8 = 0,
-};
+/// An index to a color tile
+pub const AffineScreenEntry = u8;
 
 pub const TextScreenBlock = [1024]TextScreenEntry;
-pub const screen_block_memory: [*]align(4) volatile TextScreenBlock = @ptrFromInt(@intFromPtr(gba.VRAM));
+pub const screen_block_memory: [*]volatile TextScreenBlock = @ptrCast(display.vram);
 
 pub const Tile = extern struct { data: [8]u32 align(1) };
 
 pub const CharacterBlock = [512]Tile;
-pub const tile_memory: [*]align(4) volatile CharacterBlock = @ptrFromInt(@intFromPtr(gba.VRAM));
+pub const tile_memory: [*]volatile CharacterBlock = @ptrCast(display.vram);
 
 pub const Tile8 = extern struct { data: [16]u32 align(1) };
 
 pub const CharacterBlock8 = [256]Tile8;
-pub const tile_8_memory: [*]align(4) volatile CharacterBlock8 = @ptrFromInt(@intFromPtr(gba.VRAM));
+pub const tile_8_memory: [*]volatile CharacterBlock8 = @ptrCast(display.vram);

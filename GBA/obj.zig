@@ -1,19 +1,50 @@
 //! Module for operations related to Object/Sprite memory
 const gba = @import("gba.zig");
-const I8_8 = gba.math.FixedI8_8;
-const Priority = gba.display.Priority;
-const palette = gba.palette;
+const I8_8 = gba.math.I8_8;
+const display = gba.display;
+const Priority = display.Priority;
+const PaletteMode = gba.palette.Mode;
+const Palette = gba.palette.Palette;
 
-const OAM_BASE_ADDR = 0x07000000;
-/// The actual location of object data in VRAM
-pub const oam_data: *[128]Attribute = @ptrFromInt(OAM_BASE_ADDR);
+/// Tile data for objects
+pub const tile_ram: [*]align(2) volatile u16 = @ptrFromInt(gba.mem.region.vram + 0x10000);
+
+/// The actual location of objects in VRAM
+pub const oam_data: *[128]Attribute = @ptrFromInt(gba.mem.region.oam);
+
 /// A buffer that can be updated at any time, then copied
 /// to OAM during VBlank
-pub var obj_attr_buf: [128]Attribute = .{.{}} ** 128;
+pub var obj_attr_buffer: [128]Attribute = @splat(.{});
+
 /// Corresponding affine entries interleaved with the attribute buffer
 ///
 /// Will be copied alongside objects
-pub var affine_buf: *[32]Affine align(4) = @ptrCast(&obj_attr_buf);
+pub var affine_buffer: *[32]Affine align(4) = @ptrCast(&obj_attr_buffer);
+
+var sort_keys: [128]u32 = @splat(0);
+
+// TODO: Could make this ?u7 I think.
+var sort_ids: [128]u8 = @splat(0);
+
+pub fn shellSort(count: u8) void {
+    var inc: u8 = 1;
+    while (inc <= count) : (inc += 1)
+        inc *= 3;
+    while (true) {
+        inc /= 3;
+        for (inc..count) |i| {
+            var j = i;
+            const key_0 = sort_keys[sort_ids[i]];
+            while (j >= inc and sort_keys[sort_ids[j - inc]] > key_0) : (j -= inc) {
+                sort_ids[j] = sort_ids[j - inc];
+            }
+            sort_ids[j] = sort_ids[i];
+        }
+        if (inc <= 1) break;
+    }
+}
+
+pub const palette: *Palette = @ptrFromInt(gba.mem.region.palette + 0x200);
 
 var current_attr: usize = 0;
 
@@ -62,8 +93,7 @@ pub const Attribute = packed struct {
     const Transformation = packed union {
         normal: packed struct(u5) {
             _: u3 = 0,
-            flip_h: bool = false,
-            flip_v: bool = false,
+            flip: display.Flip = .{},
         },
         affine_index: u5,
     };
@@ -74,8 +104,8 @@ pub const Attribute = packed struct {
     mode: GfxMode = .normal,
     /// Enables mosaic effects on this object
     mosaic: bool = false,
-    palette_mode: palette.Mode = .color_16,
-    /// Used in combination with size, see setSize
+    palette_mode: PaletteMode = .color_16,
+    /// Used in combination with size, see `setSize`
     shape: Shape = .square,
     /// For normal sprites, the left side; for affine sprites, the center
     x_pos: u9 = 0,
@@ -83,7 +113,7 @@ pub const Attribute = packed struct {
     ///
     /// For affine sprites: the 5 bit index into the affine data
     transform: Transformation = .{ .normal = .{} },
-    /// Used in combination with shape, see setSize
+    /// Used in combination with shape, see `setSize`
     size: u2 = 0,
     /// In bitmap modes, this must be 512 or higher
     tile_index: u10 = 0,
@@ -147,13 +177,13 @@ pub const Attribute = packed struct {
         }
     }
 
-    pub inline fn setPosition(self: *Attribute, x: u9, y: u8) void {
+    pub fn setPosition(self: *Attribute, x: u9, y: u8) void {
         self.x_pos = x;
         self.y_pos = y;
     }
 
     pub fn getAffine(self: Attribute) *Affine {
-        return &affine_buf[self.transform.affine_index];
+        return &affine_buffer[self.transform.affine_index];
     }
 };
 
@@ -182,14 +212,18 @@ pub const Affine = packed struct {
     }
 };
 
+// TODO: Better abstraction for this, maybe even using the allocator API
 pub fn allocate() *Attribute {
-    const result = &obj_attr_buf[current_attr];
+    const result = &obj_attr_buffer[current_attr];
     current_attr += 1;
     return result;
 }
 
+/// Writes the object attribute buffer to OAM data.
+///
+/// Should only be done during VBlank
 pub fn update(count: usize) void {
-    for (obj_attr_buf[0..count], oam_data[0..count]) |buf_entry, *oam_entry| {
+    for (obj_attr_buffer[0..count], oam_data[0..count]) |buf_entry, *oam_entry| {
         oam_entry.* = buf_entry;
     }
     current_attr = 0;

@@ -1,5 +1,3 @@
-const PALETTE_BASE_ADDR = 0x05000000;
-
 pub const Color = packed struct(u16) {
     pub const black = Color.rgb(0, 0, 0);
     pub const red = Color.rgb(31, 0, 0);
@@ -26,6 +24,11 @@ pub const Color = packed struct(u16) {
 
 /// A palette of 16 colors. The color at `bank[0]` is always transparent.
 pub const Bank = [16]Color;
+
+pub const Palette = union {
+    banks: [16]Bank,
+    full: [256]Color,
+};
 
 /// Determines whether palettes are accessed via banks of 16 colors
 /// or a single palette of 256 colors

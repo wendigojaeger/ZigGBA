@@ -2,24 +2,21 @@ const gba = @import("gba");
 const debug = gba.debug;
 const display = gba.display;
 
-export var gameHeader linksection(".gbaheader") = gba.Header.init("DEBUGPRINT", "ADPE", "00", 0);
+export var header linksection(".gbaheader") = gba.initHeader("DEBUGPRINT", "ADPE", "00", 0);
 
-pub export fn main() noreturn {
-    gba.io.display_ctrl.* = .{
+pub fn main() void {
+    display.ctrl.* = .{
         .mode = .mode3,
         .show = .{ .bg2 = false },
     };
 
     debug.init();
 
-    debug.write("HELLO DEBUGGER!") catch unreachable;
+    debug.write("HELLO DEBUGGER!") catch {};
 
-    const gameName = "DebugPrint";
+    const game_name = "DebugPrint";
 
-    var i: u32 = 0;
-    while (i < 10) : (i += 1) {
-        debug.print("From {s}: {}", .{ gameName, i }) catch unreachable;
+    for (0..10) |i| {
+        debug.print("From {s}: {d}", .{ game_name, i }) catch {};
     }
-
-    while (true) {}
 }

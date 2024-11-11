@@ -1,9 +1,13 @@
 const gba = @import("gba.zig");
 
-pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
+pub const Mode3 = Bitmap(gba.Color, 240, 160);
+pub const Mode4 = Bitmap(u8, 240, 160);
+pub const Mode5 = Bitmap(gba.Color, 160, 128);
+
+fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) type {
     return struct {
-        pub const Color = C;
-        pub const page_size: comptime_int = @as(u17, @intCast(@sizeOf(Color))) * width * height;
+        /// Page size of this bitmap type in bytes
+        pub const page_size: u17 = @as(u17, @intCast(@sizeOf(Color))) * width * height;
 
         const HalfWordColor = if (@sizeOf(Color) == 2) Color else packed struct(u16) {
             lo: u8,
@@ -28,10 +32,22 @@ pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
             return if (@sizeOf(Color) == 2) color else .{ .lo = color, .hi = color };
         }
 
+        const FullWordColor = packed struct(u32) {
+            a: HalfWordColor,
+            b: HalfWordColor,
+
+            fn init(color: Color) @This() {
+                return .{
+                    .a = fullHalfwordColor(color),
+                    .b = fullHalfwordColor(color),
+                };
+            }
+        };
+
         const real_width = @divExact(width, 2) * @sizeOf(Color);
 
-        // TODO: Currently only works for mode 3, also, does it need to be volatile?
-        pub inline fn screen() *volatile [height][real_width]HalfWordColor {
+        /// Pointer to the currently active screen VRAM as a 2D array
+        pub fn screen() *volatile [height][real_width]HalfWordColor {
             return @ptrCast(gba.display.currentPage());
         }
 
@@ -55,8 +71,6 @@ pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
                 const r = x2 >> 1;
                 const first = &screen()[y][l];
                 const last = &screen()[y][r];
-                // TODO: I think this is unnecessary and just writing a single 8 bit
-                // number to the register will write it to both high and low bytes
                 const full: HalfWordColor = .{ .lo = color, .hi = color };
                 // Even = fill both, odd: only high byte
                 first.* = if (x1 & 1 == 0) full else first.withHi(color);
@@ -81,6 +95,7 @@ pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
                 //  Vertical case
             } else if (x1 == x2) {
                 for (y1..y2 + 1) |y| setPixel(x1, @truncate(y), color);
+                // Diagonal case
             } else {
                 var diff: i16 = 0;
                 var x, var y = p1;
@@ -119,11 +134,9 @@ pub fn Bitmap(comptime C: type, comptime width: u8, comptime height: u8) type {
             lineHorizontal(left, right, bottom, color);
         }
 
-        // TODO: This should absolutely be a 32bit memcpy, but quick and dirty for now
         pub fn fill(color: Color) void {
-            for (screen()[0..]) |*row| {
-                for (row[0..]) |*cell| cell.* = fullHalfwordColor(color);
-            }
+            // TODO: clean this up when zig allows @ptrCast on slices changing length
+            gba.bios.cpuFastSet(@ptrCast(&FullWordColor.init(color)), @as(*volatile [page_size / 4]u32, @ptrCast(@alignCast(gba.display.currentPage()))));
         }
     };
 }

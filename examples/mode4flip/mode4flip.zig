@@ -2,29 +2,29 @@ const gba = @import("gba");
 const input = gba.input;
 const display = gba.display;
 
-export var gameHeader linksection(".gbaheader") = gba.Header.init("MODE4FLIP", "AMFE", "00", 0);
+export var header linksection(".gbaheader") = gba.initHeader("MODE4FLIP", "AMFE", "00", 0);
 
-const frontImageData = @embedFile("front.agi");
-const backImageData = @embedFile("back.agi");
-const paletteData = @embedFile("mode4flip.agp");
+const front_image_data = @embedFile("front.agi");
+const back_image_data = @embedFile("back.agi");
+const palette_data = @embedFile("mode4flip.agp");
 
 fn loadImageData() void {
-    gba.memcpy32(gba.MODE4_FRONT_VRAM, @as([*]align(2) const u8, @ptrCast(@alignCast(frontImageData))), frontImageData.len);
-    gba.memcpy32(gba.MODE4_BACK_VRAM, @as([*]align(2) const u8, @ptrCast(@alignCast(backImageData))), backImageData.len);
-    gba.memcpy32(gba.bg.palette, @as([*]align(2) const u8, @ptrCast(@alignCast(paletteData))), paletteData.len);
+    gba.mem.memcpy32(display.vram, @as([*]align(2) const u8, @ptrCast(@alignCast(front_image_data))), front_image_data.len);
+    gba.mem.memcpy32(display.back_page, @as([*]align(2) const u8, @ptrCast(@alignCast(back_image_data))), back_image_data.len);
+    gba.mem.memcpy32(gba.bg.palette, @as([*]align(2) const u8, @ptrCast(@alignCast(palette_data))), palette_data.len);
 }
 
-pub fn main() noreturn {
-    gba.io.display_ctrl.* = .{};
-    gba.io.display_ctrl.mode = .mode4;
-    gba.io.display_ctrl.show.bg2 = true;
+pub fn main() void {
+    display.ctrl.* = .{};
+    display.ctrl.mode = .mode4;
+    display.ctrl.show.bg2 = true;
 
     loadImageData();
 
     var i: u32 = 0;
     while (true) : (i += 1) {
         _ = input.poll();
-        while (input.isKeyPressed(.Start)) {
+        while (input.isKeyPressed(.start)) {
             _ = input.poll();
         }
 

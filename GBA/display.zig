@@ -1,14 +1,11 @@
 const gba = @import("gba.zig");
-const io = gba.io;
 
-const VRAM_BASE_ADDR = 0x06000000;
-const PAGE_BREAK = 0xA000;
-const OBJ_VRAM_ADDR = VRAM_BASE_ADDR + 0x10000;
-var current_page_addr: u32 = VRAM_BASE_ADDR;
+var current_page_addr: u32 = gba.mem.region.vram;
 
-pub const Mode3 = gba.Bitmap(gba.Color, 240, 160);
-pub const Mode4 = gba.Bitmap(u8, 240, 160);
-pub const Mode5 = gba.Bitmap(gba.Color, 160, 128);
+const display = @This();
+
+pub const vram: [*]volatile u16 = @ptrFromInt(gba.mem.region.vram);
+pub const back_page: [*]volatile u16 = @ptrFromInt(gba.mem.region.vram + 0xA000);
 
 /// Controls the capabilities of background layers
 ///
@@ -40,33 +37,35 @@ pub const Mode = enum(u3) {
     mode5,
 };
 
+pub const Flip = packed struct(u2) {
+    h: bool = false,
+    v: bool = false,
+};
+
 fn pageSize() u17 {
-    return switch (io.display_ctrl.mode) {
-        .mode3 => Mode3.page_size,
-        .mode4 => Mode4.page_size,
-        .mode5 => Mode5.page_size,
+    return switch (ctrl.mode) {
+        .mode3 => gba.bitmap.Mode3.page_size,
+        .mode4 => gba.bitmap.Mode4.page_size,
+        .mode5 => gba.bitmap.Mode5.page_size,
         else => 0,
     };
 }
 
-pub const RefreshState = enum(u1) {
-    draw,
-    blank,
-};
+// TODO: This might make more sense elsewhere
+pub fn currentPage() []volatile u16 {
+    return @as([*]u16, @ptrFromInt(current_page_addr))[0..pageSize()];
+}
 
-pub const Status = packed struct(u16) {
-    /// Read only
-    v_refresh: RefreshState,
-    /// Read only
-    h_refresh: RefreshState,
-    /// Read only
-    vcount_triggered: bool,
-    enable_vblank_irq: bool = false,
-    enable_hblank_irq: bool = false,
-    enable_vcount_trigger: bool = false,
-    _: u2 = 0,
-    vcount_trigger_at: u8,
-};
+// TODO: This might make more sense elsewhere
+pub fn pageFlip() void {
+    switch (ctrl.mode) {
+        .mode4, .mode5 => {
+            current_page_addr ^= 0xA000;
+            ctrl.page_select ^= 1;
+        },
+        else => {},
+    }
+}
 
 pub const ObjMapping = enum(u1) {
     /// Tiles are stored in rows of 32 * 64 bytes
@@ -82,7 +81,7 @@ pub const Priority = enum(u2) {
     lowest,
 };
 
-pub const Control = packed struct {
+pub const Control = packed struct(u16) {
     const ShowLayers = packed struct(u8) {
         bg0: bool = false,
         bg1: bool = false,
@@ -104,8 +103,48 @@ pub const Control = packed struct {
     show: ShowLayers = .{},
 };
 
+/// Display Control Register
+///
+/// (REG_DISPCNT)
+pub const ctrl: *volatile display.Control = @ptrFromInt(gba.mem.region.io);
+
+pub const RefreshState = enum(u1) {
+    draw,
+    blank,
+};
+
+pub const Status = packed struct(u16) {
+    /// Read only
+    v_refresh: RefreshState,
+    /// Read only
+    h_refresh: RefreshState,
+    /// Read only
+    vcount_triggered: bool,
+    enable_vblank_irq: bool = false,
+    enable_hblank_irq: bool = false,
+    enable_vcount_trigger: bool = false,
+    _: u2 = 0,
+    vcount_trigger_at: u8,
+};
+
+/// Display Status Register
+///
+/// (REG_DISPSTAT)
+pub const status: *volatile display.Status = @ptrFromInt(gba.mem.region.io + 0x04);
+
+/// Current y location of the LCD hardware
+///
+/// (REG_VCOUNT)
+pub const vcount: *align(2) const volatile u8 = @ptrFromInt(gba.mem.region.io + 0x06);
+
+// TODO: port the interrupt-based vsync
+pub fn naiveVSync() void {
+    while (vcount.* >= 160) {} // wait till VDraw
+    while (vcount.* < 160) {} // wait till VBlank
+}
+
 pub const MosaicSettings = packed struct(u16) {
-    const Size = packed struct(u8) {
+    pub const Size = packed struct(u8) {
         x: u4 = 0,
         y: u4 = 0,
     };
@@ -114,23 +153,34 @@ pub const MosaicSettings = packed struct(u16) {
     sprite: Size = .{ .x = 0, .y = 0 },
 };
 
-pub fn currentPage() []volatile u16 {
-    // TODO: This might make more sense elsewhere
-    return @as([*]u16, @ptrFromInt(current_page_addr))[0..pageSize()];
-}
+/// Controls size of mosaic effects for backgrounds and sprites where it is active
+///
+/// (REG_MOSAIC)
+pub const mosaic_size: *volatile display.MosaicSettings = @ptrCast(gba.mem.region.io + 0x4C);
 
-// TODO: This might make more sense elsewhere
-pub inline fn pageFlip() void {
-    switch (io.display_ctrl.mode) {
-        .mode4, .mode5 => {
-            current_page_addr ^= 0xA000;
-            io.display_ctrl.page_select ^= 1;
-        },
-        else => {},
-    }
-}
+pub const BlendFlags = packed struct(u6) {
+    bg0: bool,
+    bg1: bool,
+    bg2: bool,
+    bg3: bool,
+    sprites: bool,
+    backdrop: bool,
+};
 
-pub inline fn naiveVSync() void {
-    while (io.reg_vcount.* >= 160) {} // wait till VDraw
-    while (io.reg_vcount.* < 160) {} // wait till VBlank
-}
+pub const BlendMode = enum(u2) {
+    none,
+    blend_alpha,
+    fade_white,
+    fade_black,
+};
+
+pub const BlendSettings = packed struct(u16) {
+    source: BlendFlags,
+    mode: BlendMode,
+    target: BlendFlags,
+};
+
+/// Controls blend mode and which layers are blended
+///
+/// (REG_BLDMOD)
+pub const blend_settings: *volatile BlendSettings = @ptrCast(gba.mem.region.io + 0x50);

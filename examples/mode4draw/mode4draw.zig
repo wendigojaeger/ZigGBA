@@ -1,9 +1,9 @@
 const gba = @import("gba");
 const Color = gba.Color;
-const Mode4 = display.Mode4;
+const Mode4 = gba.bitmap.Mode4;
 const display = gba.display;
 
-export var gameHeader linksection(".gbaheader") = gba.Header.init("MODE4DRAW", "AWJE", "00", 0);
+export var header linksection(".gbaheader") = gba.initHeader("MODE4DRAW", "AWJE", "00", 0);
 
 const palette: [26]Color = [_]Color{
     Color.black,
@@ -27,10 +27,10 @@ const palette: [26]Color = [_]Color{
     break :blk pink ++ teal;
 };
 
-pub export fn main() noreturn {
-    gba.memcpy32(gba.bg.palette, &palette, 256);
+pub fn main() void {
+    gba.mem.memcpy32(gba.bg.palette, &palette, 256);
 
-    gba.io.display_ctrl.* = .{
+    display.ctrl.* = .{
         .mode = .mode4,
         .show = .{ .bg2 = true },
     };
@@ -48,14 +48,12 @@ pub export fn main() noreturn {
     Mode4.frame(.{ 109, 73 }, .{ 131, 87 }, 6);
     Mode4.frame(.{ 12, 88 }, .{ 108, 152 }, 7);
 
-    for (0..9) |j| {
-        const i: u8 = @intCast(j);
+    for (0..9) |i| {
+        const n: u8 = @intCast(i);
         // Lines in top right frame
-        Mode4.line(.{ 132 + 11 * i, 9 }, .{ 226, 12 + 7 * i }, 8 + i);
-        Mode4.line(.{ 226 - 11 * i, 70 }, .{ 133, 69 - 7 * i }, 8 + i);
+        Mode4.line(.{ 132 + 11 * n, 9 }, .{ 226, 12 + 7 * n }, 8 + n);
+        Mode4.line(.{ 226 - 11 * n, 70 }, .{ 133, 69 - 7 * n }, 8 + n);
         // Lines in bottom left frame
-        Mode4.line(.{ 15 + 11 * i, 88 }, .{ 104 - 11 * i, 150 }, 17 + i);
+        Mode4.line(.{ 15 + 11 * n, 88 }, .{ 104 - 11 * n, 150 }, 17 + n);
     }
-
-    while (true) {}
 }

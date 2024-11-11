@@ -1,18 +1,15 @@
 const gba = @import("gba");
 const Color = gba.Color;
-const Mode3 = display.Mode3;
+const Mode3 = gba.bitmap.Mode3;
 const display = gba.display;
 
-export var gameHeader linksection(".gbaheader") = gba.Header.init("MODE3DRAW", "AWJE", "00", 0);
+export var header linksection(".gbaheader") = gba.initHeader("MODE3DRAW", "AWJE", "00", 0);
 
-pub export fn main() noreturn {
-    gba.io.display_ctrl.* = .{
+pub export fn main() void {
+    display.ctrl.* = .{
         .mode = .mode3,
         .show = .{ .bg2 = true },
     };
-
-    var i: u8 = 0;
-    var j: u8 = 0;
 
     // Fill screen with grey color
     Mode3.fill(Color.rgb(12, 12, 12));
@@ -27,19 +24,13 @@ pub export fn main() noreturn {
     Mode3.frame(.{ 109, 73 }, .{ 131, 87 }, Color.black);
     Mode3.frame(.{ 12, 88 }, .{ 108, 152 }, Color.yellow);
 
-    // Lines in top right frame
-    while (i <= 8) : (i += 1) {
-        j = 3 * i + 7;
-        Mode3.line(.{ 132 + 11 * i, 9 }, .{ 226, 12 + 7 * i }, Color.rgb(@intCast(j), 0, @intCast(j)));
-        Mode3.line(.{ 226 - 11 * i, 70 }, .{ 133, 69 - 7 * i }, Color.rgb(@intCast(j), 0, @intCast(j)));
+    for (0..9) |i| {
+        const m: u8 = @intCast(i);
+        const n = 3 * m + 7;
+        // Lines in top right frame
+        Mode3.line(.{ 132 + 11 * m, 9 }, .{ 226, 12 + 7 * m }, Color.rgb(@intCast(n), 0, @intCast(n)));
+        Mode3.line(.{ 226 - 11 * m, 70 }, .{ 133, 69 - 7 * m }, Color.rgb(@intCast(n), 0, @intCast(n)));
+        // Lines in bottom left frame
+        Mode3.line(.{ 15 + 11 * m, 88 }, .{ 104 - 11 * m, 150 }, Color.rgb(0, @intCast(n), @intCast(n)));
     }
-
-    // Lines in bottom left frame
-    i = 0;
-    while (i <= 8) : (i += 1) {
-        j = 3 * i + 7;
-        Mode3.line(.{ 15 + 11 * i, 88 }, .{ 104 - 11 * i, 150 }, Color.rgb(0, @intCast(j), @intCast(j)));
-    }
-
-    while (true) {}
 }

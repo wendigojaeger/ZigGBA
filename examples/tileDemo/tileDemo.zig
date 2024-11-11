@@ -2,28 +2,26 @@ const gba = @import("gba");
 const input = gba.input;
 const display = gba.display;
 const bg = gba.bg;
-const io = gba.io;
-
 const brin = @import("brin.zig");
 
-export var header linksection(".gbaheader") = gba.Header.init("TILEDEMO", "ATDE", "00", 0);
+export var header linksection(".gbaheader") = gba.initHeader("TILEDEMO", "ATDE", "00", 0);
 
 fn loadData() void {
-    const mapRam: [*]volatile u16 = @ptrFromInt(@intFromPtr(gba.VRAM) + (30 * 2048));
+    const map_ram: [*]volatile u16 = @ptrFromInt(@intFromPtr(display.vram) + (30 * 2048));
 
-    gba.memcpy32(bg.palette, &brin.pal, brin.pal.len * 2);
-    gba.memcpy32(gba.VRAM, &brin.tiles, brin.tiles.len * 2);
-    gba.memcpy32(mapRam, &brin.map, brin.map.len * 2);
+    gba.mem.memcpy32(bg.palette, &brin.pal, brin.pal.len * 2);
+    gba.mem.memcpy32(bg.tile_memory, &brin.tiles, brin.tiles.len * 2);
+    gba.mem.memcpy32(map_ram, &brin.map, brin.map.len * 2);
 }
 
-pub fn main() noreturn {
+pub fn main() void {
     loadData();
-    io.bg_ctrl[0] = .{
+    bg.ctrl[0] = .{
         .screen_base_block = 30,
         .tile_map_size = .{ .normal = .@"64x32" },
     };
 
-    io.display_ctrl.* = .{
+    display.ctrl.* = .{
         .show = .{ .bg0 = true },
     };
 
@@ -35,9 +33,9 @@ pub fn main() noreturn {
 
         _ = input.poll();
 
-        x +%= input.Axis.get(.Horizontal);
-        y +%= input.Axis.get(.Vertical);
+        x +%= input.getAxis(.horizontal);
+        y +%= input.getAxis(.vertical);
 
-        io.bg_scroll[0].set(x, y);
+        bg.scroll[0].set(x, y);
     }
 }
