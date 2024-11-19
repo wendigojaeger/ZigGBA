@@ -1,18 +1,16 @@
-const GBA = @import("gba").GBA;
-const Mode3 = @import("gba").Mode3;
-const LCD = @import("gba").LCD;
+const gba = @import("gba");
+const Color = gba.Color;
+const Mode3 = gba.bitmap.Mode3;
 
-export var gameHeader linksection(".gbaheader") = GBA.Header.setup("FIRST", "AFSE", "00", 0);
+export var header linksection(".gbaheader") = gba.initHeader("FIRST", "AFSE", "00", 0);
 
-pub fn main() noreturn {
-    LCD.setupDisplayControl(.{
-        .mode = .Mode3,
-        .backgroundLayer2 = .Show,
-    });
+pub fn main() void {
+    gba.display.ctrl.* = .{
+        .mode = .mode3,
+        .show = .{ .bg2 = true },
+    };
 
-    Mode3.setPixel(120, 80, GBA.toNativeColor(31, 0, 0));
-    Mode3.setPixel(136, 80, GBA.toNativeColor(0, 31, 0));
-    Mode3.setPixel(120, 96, GBA.toNativeColor(0, 0, 31));
-
-    while (true) {}
+    Mode3.setPixel(120, 80, Color.rgb(31, 0, 0));
+    Mode3.setPixel(136, 80, Color.rgb(0, 31, 0));
+    Mode3.setPixel(120, 96, Color.rgb(0, 0, 31));
 }

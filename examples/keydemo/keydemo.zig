@@ -1,57 +1,49 @@
-const GBA = @import("gba").GBA;
-const Color = @import("gba").Color;
-const Input = @import("gba").Input;
-const LCD = @import("gba").LCD;
+const gba = @import("gba");
+const gba_pic = @import("gba_pic.zig");
+const Color = gba.Color;
+const input = gba.input;
+const display = gba.display;
 
-export var gameHeader linksection(".gbaheader") = GBA.Header.setup("KEYDEMO", "AKDE", "00", 0);
-
-extern const gba_picPal: [8]c_uint;
-extern const gba_picBitmap: [9600]c_uint;
+export var header linksection(".gbaheader") = gba.initHeader("KEYDEMO", "AKDE", "00", 0);
 
 fn loadImageData() void {
-    GBA.memcpy32(GBA.MODE4_FRONT_VRAM, &gba_picBitmap, gba_picBitmap.len * 4);
-    GBA.memcpy32(GBA.BG_PALETTE_RAM, &gba_picPal, gba_picPal.len * 4);
+    gba.mem.memcpy32(gba.display.vram, &gba_pic.bitmap, gba_pic.bitmap.len * 4);
+    gba.mem.memcpy32(gba.bg.palette, &gba_pic.pal, gba_pic.pal.len * 4);
 }
 
-pub fn main() noreturn {
-    LCD.setupDisplayControl(.{
-        .mode = .Mode4,
-        .backgroundLayer2 = .Show,
-    });
+pub fn main() void {
+    display.ctrl.* = .{
+        .mode = .mode4,
+        .show = .{ .bg2 = true },
+    };
 
     loadImageData();
 
-    const ColorUp = GBA.toNativeColor(27, 27, 29);
-    const ButtonPaletteId = 5;
+    const color_up = Color.rgb(27, 27, 29);
+    const button_palette_id = 5;
 
-    var color: u16 = 0;
-
-    var frame: u32 = 0;
+    var frame: u3 = 0;
     while (true) {
-        LCD.naiveVSync();
+        display.naiveVSync();
 
-        if ((frame & 7) == 0) {
-            Input.readInput();
+        if (frame == 0) {
+            _ = input.poll();
         }
 
-        var keyIndex: usize = 0;
-        while (keyIndex < @intFromEnum(Input.KeyIndex.Count)) : (keyIndex += 1) {
-            color = 0;
-            const key = @as(u16, 1) << @intCast(keyIndex);
+        for (0..10) |i| {
+            const key: input.Key = @enumFromInt(i);
+            const color = if (input.isKeyJustPressed(key))
+                Color.red
+            else if (input.isKeyJustReleased(key))
+                Color.yellow
+            else if (input.isKeyHeld(key))
+                Color.lime
+            else
+                color_up;
 
-            if (Input.isKeyJustPressed(key)) {
-                color = Color.Red;
-            } else if (Input.isKeyJustReleased(key)) {
-                color = Color.Yellow;
-            } else if (Input.isKeyHeld(key)) {
-                color = Color.Lime;
-            } else {
-                color = ColorUp;
-            }
-
-            GBA.BG_PALETTE_RAM[ButtonPaletteId + keyIndex] = color;
+            gba.bg.palette.banks[0][button_palette_id + i] = color;
         }
 
-        frame += 1;
+        frame +%= 1;
     }
 }

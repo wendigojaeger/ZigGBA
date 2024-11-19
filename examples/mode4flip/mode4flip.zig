@@ -1,40 +1,38 @@
-const GBA = @import("gba").GBA;
-const Input = @import("gba").Input;
-const LCD = @import("gba").LCD;
+const gba = @import("gba");
+const input = gba.input;
+const display = gba.display;
 
-export var gameHeader linksection(".gbaheader") = GBA.Header.setup("MODE4FLIP", "AMFE", "00", 0);
+export var header linksection(".gbaheader") = gba.initHeader("MODE4FLIP", "AMFE", "00", 0);
 
-const frontImageData = @embedFile("front.agi");
-const backImageData = @embedFile("back.agi");
-const paletteData = @embedFile("mode4flip.agp");
+const front_image_data = @embedFile("front.agi");
+const back_image_data = @embedFile("back.agi");
+const palette_data = @embedFile("mode4flip.agp");
 
 fn loadImageData() void {
-    GBA.memcpy32(GBA.MODE4_FRONT_VRAM, @as([*]align(2) const u8, @ptrCast(@alignCast(frontImageData))), frontImageData.len);
-    GBA.memcpy32(GBA.MODE4_BACK_VRAM, @as([*]align(2) const u8, @ptrCast(@alignCast(backImageData))), backImageData.len);
-    GBA.memcpy32(GBA.BG_PALETTE_RAM, @as([*]align(2) const u8, @ptrCast(@alignCast(paletteData))), paletteData.len);
+    gba.mem.memcpy32(display.vram, @as([*]align(2) const u8, @ptrCast(@alignCast(front_image_data))), front_image_data.len);
+    gba.mem.memcpy32(display.back_page, @as([*]align(2) const u8, @ptrCast(@alignCast(back_image_data))), back_image_data.len);
+    gba.mem.memcpy32(gba.bg.palette, @as([*]align(2) const u8, @ptrCast(@alignCast(palette_data))), palette_data.len);
 }
 
-pub fn main() noreturn {
-    LCD.setupDisplayControl(.{
-        .mode = .Mode4,
-        .backgroundLayer2 = .Show,
-    });
+pub fn main() void {
+    display.ctrl.* = .{};
+    display.ctrl.mode = .mode4;
+    display.ctrl.show.bg2 = true;
 
     loadImageData();
 
     var i: u32 = 0;
-    while (true) {
-        Input.readInput();
-        while (Input.isKeyDown(Input.Keys.Start)) {
-            Input.readInput();
+    while (true) : (i += 1) {
+        _ = input.poll();
+        while (input.isKeyPressed(.start)) {
+            _ = input.poll();
         }
 
-        LCD.naiveVSync();
+        display.naiveVSync();
 
-        i += 1;
         if (i == 60 * 2) {
             i = 0;
-            _ = LCD.pageFlip();
+            display.pageFlip();
         }
     }
 }

@@ -1,63 +1,62 @@
-const GBA = @import("gba").GBA;
-const Input = @import("gba").Input;
-const LCD = @import("gba").LCD;
-const OAM = @import("gba").OAM;
+const gba = @import("gba");
+const input = gba.input;
+const display = gba.display;
+const obj = gba.obj;
 
-export var gameHeader linksection(".gbaheader") = GBA.Header.setup("OBJDEMO", "AODE", "00", 0);
+export var header linksection(".gbaheader") = gba.initHeader("OBJDEMO", "AODE", "00", 0);
 
-extern const metrPal: [16]c_uint;
-extern const metrTiles: [512]c_uint;
+const metr = @import("metroid_sprite_data.zig");
 
 fn loadSpriteData() void {
-    GBA.memcpy32(GBA.SPRITE_VRAM, &metrTiles, metrTiles.len * 4);
-    GBA.memcpy32(GBA.OBJ_PALETTE_RAM, &metrPal, metrPal.len * 4);
+    gba.mem.memcpy32(obj.tile_ram, &metr.tiles, metr.tiles.len * 4);
+    gba.mem.memcpy32(obj.palette, &metr.pal, metr.pal.len * 4);
 }
 
-pub fn main() noreturn {
-    LCD.setupDisplayControl(.{
-        .objVramCharacterMapping = .OneDimension,
-        .objectLayer = .Show,
-    });
-
-    OAM.init();
+pub fn main() void {
+    display.ctrl.* = .{
+        .obj_mapping = .one_dimension,
+        .show = .{ .obj_layer = true },
+    };
 
     loadSpriteData();
 
-    var metroid: *OAM.Attribute = OAM.allocate();
-    metroid.x = 100;
-    metroid.y = 150;
-    metroid.palette = 0;
-    metroid.tileIndex = 0;
-    metroid.setSize(.Size64x64);
+    const metroid: *obj.Attribute = obj.allocate();
+    metroid.* = .{
+        .x_pos = 100,
+        .y_pos = 150,
+        .palette = 0,
+        .tile_index = 0,
+    };
+    metroid.setSize(.@"64x64");
 
-    var x: i32 = 96;
-    var y: i32 = 32;
-    var tileIndex: i32 = 0;
+    var x: i9 = 96;
+    var y: i8 = 32;
+    var tile_index: i10 = 0;
 
     while (true) {
-        LCD.naiveVSync();
+        display.naiveVSync();
 
-        Input.readInput();
+        _ = input.poll();
 
-        x += Input.getHorizontal() * 2;
-        y += Input.getVertical() * 2;
+        x +%= input.getAxis(.horizontal) * 2;
+        y +%= input.getAxis(.vertical) * 2;
 
-        tileIndex += Input.getShoulderJustPressed();
+        tile_index += input.getAxis(.shoulders);
 
-        if (Input.isKeyJustPressed(Input.Keys.A)) {
-            metroid.flip.horizontalFlip = ~metroid.flip.horizontalFlip;
+        if (input.isKeyJustPressed(.A)) {
+            metroid.transform.normal.flip.h = !metroid.transform.normal.flip.h;
         }
-        if (Input.isKeyJustPressed(Input.Keys.B)) {
-            metroid.flip.verticalFlip = ~metroid.flip.verticalFlip;
+        if (input.isKeyJustPressed(.B)) {
+            metroid.transform.normal.flip.v = !metroid.transform.normal.flip.v;
         }
 
-        metroid.palette = if (Input.isKeyDown(Input.Keys.Select)) 1 else 0;
+        metroid.palette = if (input.isKeyPressed(.select)) 1 else 0;
 
-        LCD.changeObjVramCharacterMapping(if (Input.isKeyDown(Input.Keys.Start)) .TwoDimension else .OneDimension);
+        display.ctrl.obj_mapping = if (input.isKeyPressed(.start)) .two_dimensions else .one_dimension;
 
-        metroid.setPosition(x, y);
-        metroid.setTileIndex(tileIndex);
+        metroid.setPosition(@bitCast(x), @bitCast(y));
+        metroid.tile_index = @bitCast(tile_index);
 
-        OAM.update(1);
+        obj.update(1);
     }
 }

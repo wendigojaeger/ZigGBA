@@ -1,52 +1,48 @@
-const GBA = @import("gba").GBA;
-const Input = @import("gba").Input;
-const LCD = @import("gba").LCD;
-const OAM = @import("gba").OAM;
-const Debug = @import("gba").Debug;
-const Math = @import("gba").Math;
+const gba = @import("gba");
+const input = gba.input;
+const display = gba.display;
+const obj = gba.obj;
+const debug = gba.debug;
+const math = gba.math;
+const metr = @import("metr.zig");
 
-export var gameHeader linksection(".gbaheader") = GBA.Header.setup("OBJAFFINE", "AODE", "00", 0);
+export var header linksection(".gbaheader") = gba.initHeader("OBJAFFINE", "AODE", "00", 0);
 
-extern const metrPal: [16]c_uint;
-extern const metrTiles: [512]c_uint;
-extern const metr_boxTiles: [512]c_uint;
 
-pub fn main() noreturn {
-    LCD.setupDisplayControl(.{
-        .objVramCharacterMapping = .OneDimension,
-        .objectLayer = .Show,
-        .backgroundLayer0 = .Show,
-    });
+pub fn main() void {    
+    display.ctrl.* = .{
+        .obj_mapping = .one_dimension,
+        .show = .{ .obj_layer = true, .bg0 = true },
+    };
 
-    Debug.init();
-    OAM.init();
+    debug.init();
 
-    GBA.memcpy32(GBA.SPRITE_VRAM, &metr_boxTiles, metr_boxTiles.len * 4);
-    GBA.memcpy32(GBA.OBJ_PALETTE_RAM, &metrPal, metrPal.len * 4);
+    gba.mem.memcpy32(obj.tile_ram, &metr.box_tiles, metr.box_tiles.len * 4);
+    gba.mem.memcpy32(obj.palette, &metr.pal, metr.pal.len * 4);
 
-    const metroid = OAM.allocate();
-    metroid.setRotationParameterIndex(0);
-    metroid.setSize(.Size64x64);
-    metroid.rotationScaling = true;
+    const metroid = obj.allocate();
+    metroid.transform.affine_index = 0;
+    metroid.setSize(.@"64x64");
+    metroid.affine_mode = .affine;
     metroid.palette = 0;
-    metroid.tileIndex = 0;
+    metroid.tile_index = 0;
     metroid.setPosition(96, 32);
     metroid.getAffine().setIdentity();
 
-    const shadow_metroid = OAM.allocate();
-    shadow_metroid.setRotationParameterIndex(31);
-    shadow_metroid.setSize(.Size64x64);
-    shadow_metroid.rotationScaling = true;
+    const shadow_metroid = obj.allocate();
+    shadow_metroid.transform.affine_index = 31;
+    shadow_metroid.setSize(.@"64x64");
+    shadow_metroid.affine_mode = .affine;
     shadow_metroid.palette = 1;
-    shadow_metroid.tileIndex = 0;
+    shadow_metroid.tile_index = 0;
     shadow_metroid.setPosition(96, 32);
     shadow_metroid.getAffine().setIdentity();
 
-    OAM.update(2);
+    obj.update(2);
 
     while (true) {
-        LCD.naiveVSync();
+        display.naiveVSync();
 
-        Input.readInput();
+        _ = input.poll();
     }
 }

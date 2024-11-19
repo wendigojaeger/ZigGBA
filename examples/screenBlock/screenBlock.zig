@@ -1,12 +1,12 @@
-const GBA = @import("gba").GBA;
-const Input = @import("gba").Input;
-const LCD = @import("gba").LCD;
-const Background = @import("gba").Background;
+const gba = @import("gba");
+const input = gba.input;
+const display = gba.display;
+const bg = gba.bg;
 
-export var gameHeader linksection(".gbaheader") = GBA.Header.setup("SCREENBLOCK", "ASBE", "00", 0);
+export var gameHeader linksection(".gbaheader") = gba.initHeader("SCREENBLOCK", "ASBE", "00", 0);
 
-const CrossTX = 15;
-const CrossTY = 10;
+const cross_tx = 15;
+const cross_ty = 10;
 
 fn screenIndex(tx: u32, ty: u32, pitch: u32) u32 {
     const sbb: u32 = ((tx >> 5) + (ty >> 5) * (pitch >> 5));
@@ -15,82 +15,79 @@ fn screenIndex(tx: u32, ty: u32, pitch: u32) u32 {
 
 fn initMap() void {
     // Init background
-    Background.setupBackground(Background.Background0Control, .{
-        .characterBaseBlock = 0,
-        .screenBaseBlock = 28,
-        .paletteMode = .Color16,
-        .screenSize = .Text64x64,
-    });
-    Background.Background0Scroll.setPosition(0, 0);
+    bg.ctrl[0] = .{
+        .screen_base_block = 28,
+        .tile_map_size = .{ .normal = .@"64x64" },
+    };
+    bg.scroll[0].set(0, 0);
 
     // create the tiles: basic tile and a cross
-    Background.TileMemory[0][0] = .{
+    bg.tile_memory[0][0] = .{
         .data = [_]u32{ 0x11111111, 0x01111111, 0x01111111, 0x01111111, 0x01111111, 0x01111111, 0x01111111, 0x00000001 },
     };
-    Background.TileMemory[0][1] = .{
+    bg.tile_memory[0][1] = .{
         .data = [_]u32{ 0x00000000, 0x00100100, 0x01100110, 0x00011000, 0x00011000, 0x01100110, 0x00100100, 0x00000000 },
     };
 
-    // Create the background palette
-    Background.Palette[0][1] = GBA.toNativeColor(31, 0, 0);
-    Background.Palette[1][1] = GBA.toNativeColor(0, 31, 0);
-    Background.Palette[2][1] = GBA.toNativeColor(0, 0, 31);
-    Background.Palette[3][1] = GBA.toNativeColor(16, 16, 16);
+    const bg_palette = &bg.palette.banks;
 
-    const bg0_map: [*]volatile Background.TextScreenEntry = @ptrCast(&Background.ScreenBlockMemory[28]);
+    // Create the background palette
+    bg_palette[0][1] = gba.Color.rgb(31, 0, 0);
+    bg_palette[1][1] = gba.Color.rgb(0, 31, 0);
+    bg_palette[2][1] = gba.Color.rgb(0, 0, 31);
+    bg_palette[3][1] = gba.Color.rgb(16, 16, 16);
+
+    const bg0_map: [*]volatile bg.TextScreenEntry = @ptrCast(&bg.screen_block_memory[28]);
 
     // Create the map: four contigent blocks of 0x0000, 0x1000, 0x2000, 0x3000
-    var paletteIndex: usize = 0;
-    var mapIndex: usize = 0;
-    while (paletteIndex < 4) : (paletteIndex += 1) {
-        var blockCount: usize = 0;
-        while (blockCount < 32 * 32) : ({
-            blockCount += 1;
-            mapIndex += 1;
+    var map_index: usize = 0;
+    for (0..4) |palette_index| {
+        var block_count: usize = 0;
+        while (block_count < 32 * 32) : ({
+            block_count += 1;
+            map_index += 1;
         }) {
-            bg0_map[mapIndex].paletteIndex = @intCast(paletteIndex);
+            bg0_map[map_index].palette_index = @intCast(palette_index);
         }
     }
 }
 
-pub fn main() noreturn {
+pub fn main() void {
     initMap();
-
-    LCD.setupDisplayControl(.{
-        .mode = .Mode0,
-        .backgroundLayer0 = .Show,
-        .objectLayer = .Show,
-    });
+    display.ctrl.* = .{ .show = .{
+        .bg0 = true,
+        .obj_layer = true,
+    } };
 
     var x: i32 = 0;
     var y: i32 = 0;
     var tx: u32 = 0;
     var ty: u32 = 0;
-    var screenBlockCurrent: usize = 0;
-    var screenBlockPrevious: usize = CrossTY * 32 + CrossTX;
+    var curr_screen_block: usize = 0;
+    var prev_screen_block: usize = cross_ty * 32 + cross_tx;
 
-    const bg0_map = @as([*]volatile Background.TextScreenEntry, @ptrCast(&Background.ScreenBlockMemory[28]));
-    bg0_map[screenBlockPrevious].tileIndex += 1;
+    const bg0_map = @as([*]volatile bg.TextScreenEntry, @ptrCast(&bg.screen_block_memory[28]));
+    bg0_map[prev_screen_block].tile_index += 1;
 
     while (true) {
-        LCD.naiveVSync();
+        display.naiveVSync();
 
-        Input.readInput();
+        _ = input.poll();
 
-        x += Input.getHorizontal();
-        y += Input.getVertical();
+        x += input.getAxis(.horizontal);
+        y += input.getAxis(.vertical);
 
-        tx = ((@as(u32, @bitCast(x)) >> 3) + CrossTX) & 0x3F;
-        ty = ((@as(u32, @bitCast(y)) >> 3) + CrossTY) & 0x3F;
+        tx = ((@as(u32, @bitCast(x)) >> 3) + cross_tx) & 0x3F;
+        ty = ((@as(u32, @bitCast(y)) >> 3) + cross_ty) & 0x3F;
 
-        screenBlockCurrent = screenIndex(tx, ty, 64);
+        curr_screen_block = screenIndex(tx, ty, 64);
 
-        if (screenBlockPrevious != screenBlockCurrent) {
-            bg0_map[screenBlockPrevious].tileIndex -= 1;
-            bg0_map[screenBlockCurrent].tileIndex += 1;
-            screenBlockPrevious = screenBlockCurrent;
+        if (prev_screen_block != curr_screen_block) {
+            bg0_map[prev_screen_block].tile_index -%= 1;
+            bg0_map[curr_screen_block].tile_index +%= 1;
+            prev_screen_block = curr_screen_block;
         }
 
-        Background.Background0Scroll.setPosition(x, y);
+        bg.scroll[0].set(@truncate(x), @truncate(y));
     }
 }
