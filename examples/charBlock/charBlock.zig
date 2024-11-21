@@ -18,20 +18,20 @@ fn loadTiles() void {
     const tl8: [*]align(4) const bg.Tile8 = @ptrCast(&cbb_ids.ids_8_tiles);
 
     // Loading tiles. 4-bit tiles to blocks 0 and 1
-    bg.tile_memory[0][1] = tl4[1];
-    bg.tile_memory[0][2] = tl4[2];
-    bg.tile_memory[1][0] = tl4[3];
-    bg.tile_memory[1][1] = tl4[4];
+    bg.tile_ram[0][1] = tl4[1];
+    bg.tile_ram[0][2] = tl4[2];
+    bg.tile_ram[1][0] = tl4[3];
+    bg.tile_ram[1][1] = tl4[4];
 
     // and the 8-bit tiles to blocks 2 though 5
-    bg.tile_8_memory[2][1] = tl8[1];
-    bg.tile_8_memory[2][2] = tl8[2];
-    bg.tile_8_memory[3][0] = tl8[3];
-    bg.tile_8_memory[3][1] = tl8[4];
-    bg.tile_8_memory[4][0] = tl8[5];
-    bg.tile_8_memory[4][1] = tl8[6];
-    bg.tile_8_memory[5][0] = tl8[7];
-    bg.tile_8_memory[5][1] = tl8[8];
+    bg.tile_8_ram[2][1] = tl8[1];
+    bg.tile_8_ram[2][2] = tl8[2];
+    bg.tile_8_ram[3][0] = tl8[3];
+    bg.tile_8_ram[3][1] = tl8[4];
+    bg.tile_8_ram[4][0] = tl8[5];
+    bg.tile_8_ram[4][1] = tl8[6];
+    bg.tile_8_ram[5][0] = tl8[7];
+    bg.tile_8_ram[5][1] = tl8[8];
 
     // Load palette
     gba.mem.memcpy32(gba.bg.palette, &cbb_ids.ids_4_pal, cbb_ids.ids_4_pal.len * 4);
@@ -40,9 +40,9 @@ fn loadTiles() void {
 
 fn initMaps() void {
     // map coords (0, 2)
-    const screen_entry_4: []volatile bg.TextScreenEntry = bg.screen_block_memory[screen_block_4][2 * 32 ..];
+    const screen_entry_4: []volatile bg.TextScreenEntry = bg.screen_block_ram[screen_block_4][2 * 32 ..];
     // map coords (0, 8)
-    const screen_entry_8: []volatile bg.TextScreenEntry = bg.screen_block_memory[screen_block_8][8 * 32 ..];
+    const screen_entry_8: []volatile bg.TextScreenEntry = bg.screen_block_ram[screen_block_8][8 * 32 ..];
 
     // Show first tiles of char-blocks available to background 0
     // tiles 1, 2 of CharacterBlock4
@@ -75,11 +75,11 @@ pub fn main() void {
 
     initMaps();
 
-    display.ctrl.* = .{ .show = .{
-        .bg0 = true,
-        .bg1 = true,
-        .obj_layer = true,
-    } };
+    display.ctrl.* = .{
+        .bg0 = .enable,
+        .bg1 = .enable,
+        .obj = .enable,
+    };
 
     bg.ctrl[0] = .{
         .tile_base_block = character_block_4,

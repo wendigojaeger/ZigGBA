@@ -22,10 +22,10 @@ fn initMap() void {
     bg.scroll[0].set(0, 0);
 
     // create the tiles: basic tile and a cross
-    bg.tile_memory[0][0] = .{
+    bg.tile_ram[0][0] = .{
         .data = [_]u32{ 0x11111111, 0x01111111, 0x01111111, 0x01111111, 0x01111111, 0x01111111, 0x01111111, 0x00000001 },
     };
-    bg.tile_memory[0][1] = .{
+    bg.tile_ram[0][1] = .{
         .data = [_]u32{ 0x00000000, 0x00100100, 0x01100110, 0x00011000, 0x00011000, 0x01100110, 0x00100100, 0x00000000 },
     };
 
@@ -37,36 +37,33 @@ fn initMap() void {
     bg_palette[2][1] = gba.Color.rgb(0, 0, 31);
     bg_palette[3][1] = gba.Color.rgb(16, 16, 16);
 
-    const bg0_map: [*]volatile bg.TextScreenEntry = @ptrCast(&bg.screen_block_memory[28]);
+    const bg0_map: [*]volatile bg.TextScreenEntry = @ptrCast(&bg.screen_block_ram[28]);
 
     // Create the map: four contigent blocks of 0x0000, 0x1000, 0x2000, 0x3000
     var map_index: usize = 0;
     for (0..4) |palette_index| {
-        var block_count: usize = 0;
-        while (block_count < 32 * 32) : ({
-            block_count += 1;
-            map_index += 1;
-        }) {
+        for (0..32 * 32) |_| {
             bg0_map[map_index].palette_index = @intCast(palette_index);
+            map_index += 1;
         }
     }
 }
 
 pub fn main() void {
     initMap();
-    display.ctrl.* = .{ .show = .{
-        .bg0 = true,
-        .obj_layer = true,
-    } };
+    display.ctrl.* = .{
+        .bg0 = .enable,
+        .obj = .enable,
+    };
 
-    var x: i32 = 0;
-    var y: i32 = 0;
-    var tx: u32 = 0;
-    var ty: u32 = 0;
+    var x: i10 = 0;
+    var y: i10 = 0;
+    var tx: u6 = 0;
+    var ty: u6 = 0;
     var curr_screen_block: usize = 0;
     var prev_screen_block: usize = cross_ty * 32 + cross_tx;
 
-    const bg0_map = @as([*]volatile bg.TextScreenEntry, @ptrCast(&bg.screen_block_memory[28]));
+    const bg0_map: [*]volatile bg.TextScreenEntry = @ptrCast(&bg.screen_block_ram[28]);
     bg0_map[prev_screen_block].tile_index += 1;
 
     while (true) {
@@ -74,11 +71,11 @@ pub fn main() void {
 
         _ = input.poll();
 
-        x += input.getAxis(.horizontal);
-        y += input.getAxis(.vertical);
+        x +%= input.getAxis(.horizontal);
+        y +%= input.getAxis(.vertical);
 
-        tx = ((@as(u32, @bitCast(x)) >> 3) + cross_tx) & 0x3F;
-        ty = ((@as(u32, @bitCast(y)) >> 3) + cross_ty) & 0x3F;
+        tx = @truncate((@as(u10, @bitCast(x)) >> 3) + cross_tx);
+        ty = @truncate((@as(u10, @bitCast(y)) >> 3) + cross_ty);
 
         curr_screen_block = screenIndex(tx, ty, 64);
 
@@ -88,6 +85,6 @@ pub fn main() void {
             prev_screen_block = curr_screen_block;
         }
 
-        bg.scroll[0].set(@truncate(x), @truncate(y));
+        bg.scroll[0].set(x, y);
     }
 }

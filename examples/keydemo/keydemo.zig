@@ -14,13 +14,14 @@ fn loadImageData() void {
 pub fn main() void {
     display.ctrl.* = .{
         .mode = .mode4,
-        .show = .{ .bg2 = true },
+        .bg2 = .enable,
     };
 
     loadImageData();
 
     const color_up = Color.rgb(27, 27, 29);
     const button_palette_id = 5;
+    const bank0 = &gba.bg.palette.banks[0];
 
     var frame: u3 = 0;
     while (true) {
@@ -32,7 +33,7 @@ pub fn main() void {
 
         for (0..10) |i| {
             const key: input.Key = @enumFromInt(i);
-            const color = if (input.isKeyJustPressed(key))
+            bank0[button_palette_id + i] = if (input.isKeyJustPressed(key))
                 Color.red
             else if (input.isKeyJustReleased(key))
                 Color.yellow
@@ -40,8 +41,6 @@ pub fn main() void {
                 Color.lime
             else
                 color_up;
-
-            gba.bg.palette.banks[0][button_palette_id + i] = color;
         }
 
         frame +%= 1;

@@ -1,20 +1,20 @@
 //! Module for operations related to Object/Sprite memory
 const gba = @import("gba.zig");
+const Color = gba.Color;
+const Enable = gba.Enable;
 const I8_8 = gba.math.I8_8;
 const display = gba.display;
 const Priority = display.Priority;
-const PaletteMode = gba.palette.Mode;
-const Palette = gba.palette.Palette;
 
 /// Tile data for objects
-pub const tile_ram: [*]align(2) volatile u16 = @ptrFromInt(gba.mem.region.vram + 0x10000);
+pub const tile_ram: [*]align(2) volatile u16 = @ptrFromInt(gba.mem.vram + 0x10000);
 
 /// The actual location of objects in VRAM
-pub const oam_data: *[128]Attribute = @ptrFromInt(gba.mem.region.oam);
+pub const obj_attributes: *[128]Attributes = @ptrFromInt(gba.mem.oam);
 
 /// A buffer that can be updated at any time, then copied
 /// to OAM during VBlank
-pub var obj_attr_buffer: [128]Attribute = @splat(.{});
+pub var obj_attr_buffer: [128]Attributes = @splat(.{});
 
 /// Corresponding affine entries interleaved with the attribute buffer
 ///
@@ -44,51 +44,51 @@ pub fn shellSort(count: u8) void {
     }
 }
 
-pub const palette: *Palette = @ptrFromInt(gba.mem.region.palette + 0x200);
+pub const palette: *Color.Palette = @ptrFromInt(gba.mem.palette + 0x200);
 
 var current_attr: usize = 0;
 
-pub const GfxMode = enum(u2) {
-    normal,
-    alpha_blend,
-    obj_window,
-};
+pub const Attributes = packed struct {
+    pub const GfxMode = enum(u2) {
+        normal,
+        alpha_blend,
+        obj_window,
+    };
 
-/// WIDTHxHEIGHT
-pub const Size = enum {
-    @"8x8",
-    @"16x8",
-    @"8x16",
-    @"16x16",
-    @"32x8",
-    @"8x32",
-    @"32x32",
-    @"32x16",
-    @"16x32",
-    @"64x64",
-    @"64x32",
-    @"32x64",
-};
+    /// WIDTHxHEIGHT
+    pub const Size = enum {
+        @"8x8",
+        @"16x8",
+        @"8x16",
+        @"16x16",
+        @"32x8",
+        @"8x32",
+        @"32x32",
+        @"32x16",
+        @"16x32",
+        @"64x64",
+        @"64x32",
+        @"32x64",
+    };
 
-const AffineMode = enum(u2) {
-    /// Normal rendering, uses normal transform controls
-    normal,
-    /// Uses affine transform controls
-    affine,
-    /// Disables rendering
-    hidden,
-    /// Uses affine transform controls, and also allows affine
-    /// transformations to use twice the sprite's dimensions.
-    affine_double,
-};
+    const AffineMode = enum(u2) {
+        /// Normal rendering, uses `normal` transform controls
+        normal,
+        /// Uses `affine` transform controls
+        affine,
+        /// Disables rendering
+        hidden,
+        /// Uses `affine` transform controls, and also allows affine
+        /// transformations to use twice the sprite's dimensions.
+        affine_double,
+    };
 
-pub const Shape = enum(u2) {
-    square,
-    horizontal,
-    vertical,
-};
+    pub const Shape = enum(u2) {
+        square,
+        horizontal,
+        vertical,
+    };
 
-pub const Attribute = packed struct {
     /// Used to set transformation effects on an object
     const Transformation = packed union {
         normal: packed struct(u5) {
@@ -103,8 +103,8 @@ pub const Attribute = packed struct {
     affine_mode: AffineMode = .normal,
     mode: GfxMode = .normal,
     /// Enables mosaic effects on this object
-    mosaic: bool = false,
-    palette_mode: PaletteMode = .color_16,
+    mosaic: Enable = .disable,
+    palette_mode: Color.Mode = .color_16,
     /// Used in combination with size, see `setSize`
     shape: Shape = .square,
     /// For normal sprites, the left side; for affine sprites, the center
@@ -124,7 +124,7 @@ pub const Attribute = packed struct {
     //_: I8_8 = ,
 
     /// Sets size and shape to the appropriate values for the given object size.
-    pub fn setSize(self: *Attribute, size: Size) void {
+    pub fn setSize(self: *Attributes, size: Size) void {
         switch (size) {
             .@"8x8" => {
                 self.shape = .square;
@@ -177,13 +177,29 @@ pub const Attribute = packed struct {
         }
     }
 
-    pub fn setPosition(self: *Attribute, x: u9, y: u8) void {
+    pub fn setPosition(self: *Attributes, x: u9, y: u8) void {
         self.x_pos = x;
         self.y_pos = y;
     }
 
-    pub fn getAffine(self: Attribute) *Affine {
+    pub fn getAffine(self: Attributes) *Affine {
         return &affine_buffer[self.transform.affine_index];
+    }
+
+    pub fn flipH(self: *Attributes) void {
+        switch (self.affine_mode) {
+            .normal => self.transform.normal.flip.h = !self.transform.normal.flip.h,
+            .affine, .affine_double => {}, // TODO: implement affine flips"
+            else => {},
+        }
+    }
+
+    pub fn flipV(self: *Attributes) void {
+        switch (self.affine_mode) {
+            .normal => self.transform.normal.flip.v = !self.transform.normal.flip.v,
+            .affine, .affine_double => {}, // TODO: implement affine flips"
+            else => {},
+        }
     }
 };
 
@@ -205,15 +221,12 @@ pub const Affine = packed struct {
     }
 
     pub fn setIdentity(self: *Affine) void {
-        self.pa = I8_8.fromInt(1);
-        self.pb = .{};
-        self.pc = .{};
-        self.pd = I8_8.fromInt(1);
+        self.set(I8_8.fromInt(1), .{}, .{}, I8_8.fromInt(1));
     }
 };
 
-// TODO: Better abstraction for this, maybe even using the allocator API
-pub fn allocate() *Attribute {
+// TODO: Better abstraction for this, maybe even using the `std.Allocator` API
+pub fn allocate() *Attributes {
     const result = &obj_attr_buffer[current_attr];
     current_attr += 1;
     return result;
@@ -223,7 +236,7 @@ pub fn allocate() *Attribute {
 ///
 /// Should only be done during VBlank
 pub fn update(count: usize) void {
-    for (obj_attr_buffer[0..count], oam_data[0..count]) |buf_entry, *oam_entry| {
+    for (obj_attr_buffer[0..count], obj_attributes[0..count]) |buf_entry, *oam_entry| {
         oam_entry.* = buf_entry;
     }
     current_attr = 0;

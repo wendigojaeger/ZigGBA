@@ -29,10 +29,10 @@ fn libRoot() []const u8 {
     return std.fs.path.dirname(@src().file) orelse ".";
 }
 
-pub fn addGBAStaticLibrary(b: *std.Build, libraryName: []const u8, sourceFile: []const u8, debug: bool) *std.Build.Step.Compile {
+pub fn addGBAStaticLibrary(b: *std.Build, lib_name: []const u8, source_file: []const u8, debug: bool) *std.Build.Step.Compile {
     const lib = b.addStaticLibrary(.{
-        .name = libraryName,
-        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = sourceFile } },
+        .name = lib_name,
+        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = source_file } },
         .target = b.resolveTargetQuery(gba_thumb_target_query),
         .optimize = if (debug) .Debug else .ReleaseFast,
     });
@@ -46,7 +46,7 @@ pub fn createGBALib(b: *std.Build, debug: bool) *std.Build.Step.Compile {
     return addGBAStaticLibrary(b, "ZigGBA", gba_lib_file, debug);
 }
 
-pub fn addGBAExecutable(b: *std.Build, rom_name: []const u8, sourceFile: []const u8) *std.Build.Step.Compile {
+pub fn addGBAExecutable(b: *std.Build, rom_name: []const u8, source_file: []const u8) *std.Build.Step.Compile {
     const debug = is_debug orelse blk: {
         const dbg = b.option(bool, "debug", "Generate a debug build") orelse false;
         is_debug = dbg;
@@ -61,7 +61,7 @@ pub fn addGBAExecutable(b: *std.Build, rom_name: []const u8, sourceFile: []const
 
     const exe = b.addExecutable(.{
         .name = rom_name,
-        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = sourceFile } },
+        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = source_file } },
         .target = b.resolveTargetQuery(gba_thumb_target_query),
         .optimize = if (debug) .Debug else .ReleaseFast,
     });

@@ -12,16 +12,16 @@ const PrintContext = packed struct {
 };
 
 const DebugStream = struct {
-    streamWritten: usize,
+    written: usize,
 
     pub fn init() DebugStream {
         return DebugStream{
-            .streamWritten = 0,
+            .written = 0,
         };
     }
 
     pub fn write(self: *DebugStream, bytes: []const u8) !usize {
-        const remaining = AGB_BUFFER_SIZE - self.streamWritten;
+        const remaining = AGB_BUFFER_SIZE - self.written;
         if (remaining < bytes.len) {
             for (bytes[0..remaining]) |c| {
                 printChar(c);
@@ -32,7 +32,7 @@ const DebugStream = struct {
         var written: usize = 0;
         for (bytes) |char| {
             printChar(char);
-            self.streamWritten += 1;
+            self.written += 1;
             written += 1;
         }
 

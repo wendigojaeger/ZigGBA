@@ -2,7 +2,7 @@ const std = @import("std");
 const Signedness = std.builtin.Signedness;
 const Int = std.meta.Int;
 
-// TODO: Add convenience functions for converting fixed point types.
+// TODO: Add convenience functions for converting between fixed point types.
 /// Fixed point integer type
 pub fn FixedPoint(comptime signedness: Signedness, comptime integral_bits: comptime_int, comptime fractional_bits: comptime_int) type {
     if (integral_bits + fractional_bits > 32)
@@ -11,8 +11,8 @@ pub fn FixedPoint(comptime signedness: Signedness, comptime integral_bits: compt
     return packed struct(RawType) {
         const Self = @This();
 
-        const FractionalType = Int(signedness, fractional_bits);
-        const IntegralType = Int(signedness, integral_bits);
+        pub const FractionalType = Int(signedness, fractional_bits);
+        pub const IntegralType = Int(signedness, integral_bits);
         const MaxIntegerType = Int(signedness, 32);
 
         pub const scale = 1 << fractional_bits;

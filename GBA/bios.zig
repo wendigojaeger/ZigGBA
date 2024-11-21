@@ -1,6 +1,7 @@
 const std = @import("std");
 const bufPrint = std.fmt.bufPrint;
 const gba = @import("gba.zig");
+const Enable = gba.Enable;
 const interrupt = gba.interrupt;
 const math = gba.math;
 const I8_8 = math.I8_8;
@@ -163,7 +164,7 @@ pub const DecompressionHeader = packed struct(u32) {
 
 pub const SoundDriverModeArgs = packed struct(u32) {
     reverb_value: u7 = 0,
-    apply_reverb: bool,
+    reverb: Enable,
     simultaneous_channels: u4 = 8,
     master_volume: u4 = 15,
     frequency: enum(u4) {

@@ -32,7 +32,7 @@ pub fn main() void {
 
     display.ctrl.* = .{
         .mode = .mode4,
-        .show = .{ .bg2 = true },
+        .bg2 = .enable,
     };
 
     // Fill screen with grey color

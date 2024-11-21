@@ -8,7 +8,7 @@ export var header linksection(".gbaheader") = gba.initHeader("MODE3DRAW", "AWJE"
 pub export fn main() void {
     display.ctrl.* = .{
         .mode = .mode3,
-        .show = .{ .bg2 = true },
+        .bg2 = .enable,
     };
 
     // Fill screen with grey color

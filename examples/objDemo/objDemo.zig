@@ -15,12 +15,12 @@ fn loadSpriteData() void {
 pub fn main() void {
     display.ctrl.* = .{
         .obj_mapping = .one_dimension,
-        .show = .{ .obj_layer = true },
+        .obj = .enable,
     };
 
     loadSpriteData();
 
-    const metroid: *obj.Attribute = obj.allocate();
+    const metroid = obj.allocate();
     metroid.* = .{
         .x_pos = 100,
         .y_pos = 150,
@@ -41,13 +41,13 @@ pub fn main() void {
         x +%= input.getAxis(.horizontal) * 2;
         y +%= input.getAxis(.vertical) * 2;
 
-        tile_index += input.getAxis(.shoulders);
+        tile_index +%= input.getAxis(.shoulders);
 
         if (input.isKeyJustPressed(.A)) {
-            metroid.transform.normal.flip.h = !metroid.transform.normal.flip.h;
+            metroid.flipH();
         }
         if (input.isKeyJustPressed(.B)) {
-            metroid.transform.normal.flip.v = !metroid.transform.normal.flip.v;
+            metroid.flipV();
         }
 
         metroid.palette = if (input.isKeyPressed(.select)) 1 else 0;

@@ -20,21 +20,21 @@ pub const Color = packed struct(u16) {
             .b = b,
         };
     }
-};
 
-/// A palette of 16 colors. The color at `bank[0]` is always transparent.
-pub const Bank = [16]Color;
+    /// A palette of 16 colors. The color at `bank[0]` is always transparent.
+    pub const Bank = [16]Color;
 
-pub const Palette = union {
-    banks: [16]Bank,
-    full: [256]Color,
-};
+    pub const Palette = union {
+        banks: [16]Bank,
+        full: [256]Color,
+    };
 
-/// Determines whether palettes are accessed via banks of 16 colors
-/// or a single palette of 256 colors
-pub const Mode = enum(u1) {
-    /// Palettes are stored in 16 banks of 16 colors, 4bpp
-    color_16,
-    /// Single palette of 256 colors, 8bpp
-    color_256,
+    /// Determines whether palettes are accessed via banks of 16 colors
+    /// or a single palette of 256 colors
+    pub const Mode = enum(u1) {
+        /// Palettes are stored in 16 banks of 16 colors, 4bpp
+        color_16,
+        /// Single palette of 256 colors, 8bpp
+        color_256,
+    };
 };

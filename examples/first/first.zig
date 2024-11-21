@@ -7,7 +7,7 @@ export var header linksection(".gbaheader") = gba.initHeader("FIRST", "AFSE", "0
 pub fn main() void {
     gba.display.ctrl.* = .{
         .mode = .mode3,
-        .show = .{ .bg2 = true },
+        .bg2 = .enable,
     };
 
     Mode3.setPixel(120, 80, Color.rgb(31, 0, 0));

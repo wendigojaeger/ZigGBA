@@ -15,9 +15,10 @@ fn loadImageData() void {
 }
 
 pub fn main() void {
-    display.ctrl.* = .{};
-    display.ctrl.mode = .mode4;
-    display.ctrl.show.bg2 = true;
+    display.ctrl.* = .{
+        .mode = .mode4,
+        .bg2 = .enable,
+    };
 
     loadImageData();
 

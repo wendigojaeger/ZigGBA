@@ -4,6 +4,8 @@ pub const Mode3 = Bitmap(gba.Color, 240, 160);
 pub const Mode4 = Bitmap(u8, 240, 160);
 pub const Mode5 = Bitmap(gba.Color, 160, 128);
 
+const Point = [2]u8;
+
 fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) type {
     return struct {
         /// Page size of this bitmap type in bytes
@@ -28,21 +30,21 @@ fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) type {
             }
         };
 
-        fn fullHalfwordColor(color: Color) HalfWordColor {
+        fn halfWordColor(color: Color) HalfWordColor {
             return if (@sizeOf(Color) == 2) color else .{ .lo = color, .hi = color };
         }
 
         const FullWordColor = packed struct(u32) {
             a: HalfWordColor,
             b: HalfWordColor,
-
-            fn init(color: Color) @This() {
-                return .{
-                    .a = fullHalfwordColor(color),
-                    .b = fullHalfwordColor(color),
-                };
-            }
         };
+
+        fn fullWordColor(color: Color) FullWordColor {
+            return .{
+                .a = halfWordColor(color),
+                .b = halfWordColor(color),
+            };
+        }
 
         const real_width = @divExact(width, 2) * @sizeOf(Color);
 
@@ -71,7 +73,7 @@ fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) type {
                 const r = x2 >> 1;
                 const first = &screen()[y][l];
                 const last = &screen()[y][r];
-                const full: HalfWordColor = .{ .lo = color, .hi = color };
+                const full = halfWordColor(color);
                 // Even = fill both, odd: only high byte
                 first.* = if (x1 & 1 == 0) full else first.withHi(color);
                 // Fill all the middle registers 2 at a time
@@ -81,7 +83,7 @@ fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) type {
             }
         }
 
-        pub fn line(start: [2]u8, end: [2]u8, color: Color) void {
+        pub fn line(start: Point, end: Point, color: Color) void {
             // y always moves down
             const p1, const p2 = if (start[1] < end[1])
                 .{ start, end }
@@ -119,13 +121,13 @@ fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) type {
             }
         }
 
-        pub fn rect(top_left: [2]u8, bottom_right: [2]u8, color: Color) void {
+        pub fn rect(top_left: Point, bottom_right: Point, color: Color) void {
             for (top_left[1]..bottom_right[1] + 1) |y| {
                 lineHorizontal(top_left[0], bottom_right[0], @truncate(y), color);
             }
         }
 
-        pub fn frame(top_left: [2]u8, bottom_right: [2]u8, color: Color) void {
+        pub fn frame(top_left: Point, bottom_right: Point, color: Color) void {
             const left, const top = top_left;
             const right, const bottom = bottom_right;
             lineHorizontal(left, right, top, color);
@@ -136,7 +138,7 @@ fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) type {
 
         pub fn fill(color: Color) void {
             // TODO: clean this up when zig allows @ptrCast on slices changing length
-            gba.bios.cpuFastSet(@ptrCast(&FullWordColor.init(color)), @as(*volatile [page_size / 4]u32, @ptrCast(@alignCast(gba.display.currentPage()))));
+            gba.bios.cpuFastSet(@ptrCast(&fullWordColor(color)), @as(*volatile [page_size / 4]u32, @ptrCast(@alignCast(gba.display.currentPage()))));
         }
     };
 }

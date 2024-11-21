@@ -1,42 +1,52 @@
 //! Module for memory related functions and accesses
 
 const isAligned = @import("std").mem.isAligned;
+const gba = @import("gba.zig");
+const Enable = gba.Enable;
 
 // TODO: Maybe make these volatile pointers to u8?
-/// Access to base addresses for memory regions. Intended mostly for internal use.
-///
-/// If you find yourself reaching for these often, consider filing an issue with your use case.
-pub const region = struct {
-    pub const ewram = 0x02000000;
-    pub const iwram = 0x03000000;
-    pub const io = 0x4000000;
-    pub const palette = 0x05000000;
-    pub const vram = 0x06000000;
-    pub const oam = 0x07000000;
-};
+// Access to base addresses for memory regions. Intended mostly for internal use.
+//
+// If you find yourself reaching for these often, consider filing an issue with your use case.
+/// Base address for external work RAM
+pub const ewram = 0x02000000;
+/// Base address for internal work RAM
+pub const iwram = 0x03000000;
+/// Base address for MMIO registers
+pub const io = 0x04000000;
+/// Base address for palette data
+pub const palette = 0x05000000;
+/// Base address for video RAM
+pub const vram = 0x06000000;
+/// Base address for object attribute data
+pub const oam = 0x07000000;
+/// Base address for gamepak ROM
+pub const rom = 0x08000000;
+/// Base address for save RAM
+pub const sram = 0x0E000000;
 
 /// Source and destination addresses only use the least significant
 /// 27 bits (for internal memory) or 28 bits (for any memory)
 pub const Dma = packed struct {
-    const DestAddrControl = enum(u2) {
+    pub const DestAddrControl = enum(u2) {
         increment = 0,
         decrement = 1,
         fixed = 2,
         inc_reload = 3,
     };
 
-    const SourceAddrControl = enum(u2) {
+    pub const SourceAddrControl = enum(u2) {
         increment = 0,
         decrement = 1,
         fixed = 2,
     };
 
-    const TransferType = enum(u1) {
+    pub const TransferType = enum(u1) {
         half_word,
         word,
     };
 
-    const StartTiming = enum(u2) {
+    pub const StartTiming = enum(u2) {
         immediate = 0,
         vblank = 1,
         hblank = 2,
@@ -48,7 +58,7 @@ pub const Dma = packed struct {
         special = 3,
     };
 
-    const Control = packed struct(u32) {
+    pub const Control = packed struct(u32) {
         /// For DMA0-2, only 14 bits are used
         count: u16 = 0,
         _: u5 = 0,
@@ -58,10 +68,10 @@ pub const Dma = packed struct {
         dma_repeat: bool = false,
         transfer_type: TransferType = .half_word,
         /// DMA3 only
-        gamepak_drq: bool = false,
+        gamepak_drq: Enable = .disable,
         start_timing: StartTiming = .immediate,
-        irq_at_end: bool = false,
-        enable: bool = false,
+        irq_at_end: Enable = .disable,
+        enabled: Enable = .disable,
     };
 
     /// For DMA 0, can only be internal memory
@@ -72,7 +82,7 @@ pub const Dma = packed struct {
 };
 
 /// Direct Memory Access
-pub const dma: *[4]Dma = @ptrFromInt(region.io + 0xB0);
+pub const dma: *[4]Dma = @ptrFromInt(gba.mem.io + 0xB0);
 
 // TODO: maybe put this in IWRAM ?
 pub fn memcpy32(noalias dest: anytype, noalias source: anytype, count: usize) void {

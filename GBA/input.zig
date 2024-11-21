@@ -4,6 +4,7 @@
 //! Keys are active low, which doesn't play well intuitively
 //! with checking them. These functions abstract that conversion
 const std = @import("std");
+const gba = @import("gba.zig");
 
 // TODO: Maybe create an enumset that is "active low"
 // or just wrap this one
@@ -12,7 +13,7 @@ pub const Keys = std.EnumSet(Key);
 var prev_input: Keys = .{};
 var curr_input: Keys = .{};
 
-const reg_keyinput: *align(2) const volatile u10 = @ptrFromInt(0x4000130);
+const reg_keyinput: *align(2) const volatile u10 = @ptrFromInt(gba.mem.io + 0x130);
 
 pub const Key = enum {
     A,

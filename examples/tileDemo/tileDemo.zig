@@ -10,7 +10,7 @@ fn loadData() void {
     const map_ram: [*]volatile u16 = @ptrFromInt(@intFromPtr(display.vram) + (30 * 2048));
 
     gba.mem.memcpy32(bg.palette, &brin.pal, brin.pal.len * 2);
-    gba.mem.memcpy32(bg.tile_memory, &brin.tiles, brin.tiles.len * 2);
+    gba.mem.memcpy32(bg.tile_ram, &brin.tiles, brin.tiles.len * 2);
     gba.mem.memcpy32(map_ram, &brin.map, brin.map.len * 2);
 }
 
@@ -22,7 +22,7 @@ pub fn main() void {
     };
 
     display.ctrl.* = .{
-        .show = .{ .bg0 = true },
+        .bg0 = .enable,
     };
 
     var x: i10 = 192;

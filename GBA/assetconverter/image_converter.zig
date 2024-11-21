@@ -8,7 +8,7 @@ const std = @import("std");
 
 pub const ImageConverterError = error{InvalidPixelData};
 
-const GBAColor = @import("../Palette.zig").Color;
+const GBAColor = @import("../color.zig").Color;
 
 pub const ImageSourceTarget = struct {
     source: []const u8,
@@ -89,7 +89,7 @@ pub const ImageConverter = struct {
     }
 
     fn openWriteFile(path: []const u8) !fs.File {
-        return try fs.cwd().createFile(path, .{});
+        return fs.cwd().createFile(path, .{});
     }
 
     fn colorToGBAColor(color: zigimg.color.Rgba32) GBAColor {

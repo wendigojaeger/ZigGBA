@@ -2,7 +2,7 @@ const std = @import("std");
 const gba = @import("gba.zig");
 const interrupt = @This();
 
-pub const ctrl: *volatile interrupt.Control = @ptrCast(gba.mem.region.io + 0x200);
+pub const ctrl: *volatile interrupt.Control = @ptrFromInt(gba.mem.io + 0x200);
 
 pub const Flag = enum {
     vblank,
@@ -28,23 +28,23 @@ pub const WaitReturn = enum(u32) {
 };
 
 pub const Control = extern struct {
-    /// When `master_enable` is true, the events specified by these
+    /// When `master` is enabled, the events specified by these
     /// flags will trigger an interrupt.
     ///
     /// Since interrupts can trigger at any point, `master_enable`
     /// should be disabled while clearing flags from this register
     /// to avoid spurious interrupts.
-    enable: Flags align(2),
+    triggers: Flags align(2),
     /// Active interrupt requests can be read from this register.
     ///
     /// To clear an interrupt, write ONLY that flag to this register.
     /// the `acknowledge` method exists for this purpose.
     irq_ack: Flags align(2),
-    /// Must be true for interrupts specified in `enable` to trigger.
-    master_enable: bool align(4),
+    /// Must be enabled for interrupts specified in `triggers` to activate.
+    master: gba.Enable align(4),
 
     /// Acknowledges only the given interrupt, without ignoring others.
-    fn acknowledge(self: *Control, flag: Flag) void {
+    pub fn acknowledge(self: *Control, flag: Flag) void {
         self.irq_ack = Flags.initOne(flag);
     }
 };
