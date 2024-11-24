@@ -1,5 +1,6 @@
 const std = @import("std");
 const gba = @import("gba.zig");
+const Enable = gba.utils.Enable;
 const interrupt = @This();
 
 pub const ctrl: *volatile interrupt.Control = @ptrFromInt(gba.mem.io + 0x200);
@@ -41,7 +42,7 @@ pub const Control = extern struct {
     /// the `acknowledge` method exists for this purpose.
     irq_ack: Flags align(2),
     /// Must be enabled for interrupts specified in `triggers` to activate.
-    master: gba.Enable align(4),
+    master: Enable align(4),
 
     /// Acknowledges only the given interrupt, without ignoring others.
     pub fn acknowledge(self: *Control, flag: Flag) void {

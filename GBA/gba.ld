@@ -25,7 +25,7 @@ SECTIONS
     .text :
     {
         KEEP(*(.gbaheader))
-        KEEP(*(.gbamain))
+        KEEP(*(._start))
         *(EXCLUDE_FILE (*.iwram*) .text*)
         . ALIGN(4);
     } >rom = 0xff

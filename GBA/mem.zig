@@ -2,7 +2,7 @@
 
 const isAligned = @import("std").mem.isAligned;
 const gba = @import("gba.zig");
-const Enable = gba.Enable;
+const Enable = gba.utils.Enable;
 
 // TODO: Maybe make these volatile pointers to u8?
 // Access to base addresses for memory regions. Intended mostly for internal use.

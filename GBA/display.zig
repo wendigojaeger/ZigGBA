@@ -1,8 +1,9 @@
+const std = @import("std");
 const gba = @import("gba.zig");
 pub const window = @import("window.zig");
 const Color = gba.Color;
 const display = @This();
-const Enable = gba.Enable;
+const Enable = gba.utils.Enable;
 const U1_4 = gba.math.FixedPoint(.unsigned, 1, 4);
 
 var current_page_addr: u32 = gba.mem.vram;
@@ -188,12 +189,12 @@ pub const Blend = packed struct {
 
 /// Controls for alpha blending
 ///
-/// `eva`, `evb`, and `evy` are 1.4 fixed point numbers, bounded by hardware at 0 and 1,
+/// `ev_a`, `ev_b`, and `ev_fade` are 1.4 fixed point numbers, bounded by hardware at 0 and 1,
 /// so any value with an integral bit of `1` is the same.
 ///
 /// In other words, the fractional bits only matter if the integral bit is `0`.
 ///
-/// (`REG_BLDMOD`, `REG_)
+/// (`REG_BLDMOD`, `BLD_EVA`, `BLD_EVB`, `BLD_EVY`)
 pub const blend: *volatile Blend = @ptrFromInt(gba.mem.io + 0x50);
 
 /// 4bpp/8bpp 8x8 tiles, "indexed" by letter coordinates (`tile.a.b`)
@@ -204,10 +205,16 @@ pub fn Tile(comptime mode: Color.Mode) type {
 
         pub const Block = [@divExact(0x4000, @sizeOf(Self))]Self;
 
-        /// Color index for this tile's palette
+        /// Color index type for this tile's palette
         pub const Pixel = switch (mode) {
             .color_16 => u4,
             .color_256 => u8,
+        };
+
+        /// Big-endian integer type for initializing a row in hexadecimal format.
+        const IntRow = switch (mode) {
+            .color_16 => u32,
+            .color_256 => u64,
         };
 
         pub const Row = packed struct {
@@ -232,6 +239,86 @@ pub fn Tile(comptime mode: Color.Mode) type {
 
         pub fn ram() *volatile [6]Block {
             return @ptrFromInt(gba.mem.vram);
+        }
+
+        /// Initialize with an 8x8 2D pixel array:
+        ///
+        /// ```
+        /// // 4bpp
+        /// Tile(.color_16).initInt(.{
+        ///     .{ 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7 },
+        ///     .{ 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf },
+        ///     .{ 0x0, 0x1, 0x2, 0x3, 0x3, 0x2, 0x1, 0x0 },
+        ///     .{ 0x0, 0xb, 0xa, 0xd, 0xf, 0x0, 0x0, 0xd },
+        ///     .{ 0x9, 0x0, 0x0, 0xd, 0xf, 0xo, 0xo, 0xd },
+        ///     .{ 0xd, 0xe, 0xa, 0xd, 0xb, 0xe, 0xe, 0xf },
+        ///     .{ 0xc, 0xa, 0xf, 0xe, 0xb, 0xa, 0xb, 0xe },
+        ///     .{ 0x1, 0x3, 0x3, 0x7, 0xc, 0x0, 0xd, 0xe },
+        /// });
+        ///
+        /// // 8bpp
+        /// Tile(.color_256).initInt(.{
+        ///     .{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef },
+        ///     .{ 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10 },
+        ///     .{ 0x01, 0x23, 0x32, 0x10, 0x12, 0x34, 0x43, 0x21 },
+        ///     .{ 0x90, 0x0d, 0xf0, 0x0d, 0x0b, 0xad, 0xf0, 0x0d },
+        ///     .{ 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 },
+        ///     .{ 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff },
+        ///     .{ 0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe },
+        ///     .{ 0x69, 0x04, 0x20, 0x13, 0x37, 0xc0, 0xde, 0x69 },
+        /// });
+        /// ```
+        pub fn init(comptime pixels: [8][8]Pixel) Self {
+            return .{
+                .a = comptime @bitCast(pixels[0]),
+                .b = comptime @bitCast(pixels[1]),
+                .c = comptime @bitCast(pixels[2]),
+                .d = comptime @bitCast(pixels[3]),
+                .e = comptime @bitCast(pixels[4]),
+                .f = comptime @bitCast(pixels[5]),
+                .g = comptime @bitCast(pixels[6]),
+                .h = comptime @bitCast(pixels[7]),
+            };
+        }
+
+        /// Initialize with 8 big-endian hexadecimal integers:
+        ///
+        /// ```
+        /// // 4bpp
+        /// Tile(.color_16).initInt(.{
+        ///     0x01234567,
+        ///     0x89abcdef,
+        ///     0x01233210,
+        ///     0x0badf00d,
+        ///     0x900dfood,
+        ///     0xdeadbeef,
+        ///     0xcafebabe,
+        ///     0x1337c0de,
+        /// });
+        ///
+        /// // 8bpp
+        /// Tile(.color_256).initInt(.{
+        ///     0x01_23_45_67_89_ab_cd_ef,
+        ///     0xfe_dc_ba_98_76_54_32_10,
+        ///     0x01_23_32_10_12_34_43_21,
+        ///     0x90_0d_f0_0d_0b_ad_f0_0d,
+        ///     0x00_11_22_33_44_55_66_77,
+        ///     0x88_99_aa_bb_cc_dd_ee_ff,
+        ///     0xde_ad_be_ef_ca_fe_ba_be,
+        ///     0x69_04_20_13_37_c0_de_69,
+        /// });
+        /// ```
+        pub fn initInt(comptime rows: [8]IntRow) Self {
+            return .{
+                .a = comptime @bitCast(@byteSwap(rows[0])),
+                .b = comptime @bitCast(@byteSwap(rows[1])),
+                .c = comptime @bitCast(@byteSwap(rows[2])),
+                .d = comptime @bitCast(@byteSwap(rows[3])),
+                .e = comptime @bitCast(@byteSwap(rows[4])),
+                .f = comptime @bitCast(@byteSwap(rows[5])),
+                .g = comptime @bitCast(@byteSwap(rows[6])),
+                .h = comptime @bitCast(@byteSwap(rows[7])),
+            };
         }
     };
 }

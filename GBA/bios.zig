@@ -1,7 +1,7 @@
 const std = @import("std");
 const bufPrint = std.fmt.bufPrint;
 const gba = @import("gba.zig");
-const Enable = gba.Enable;
+const Enable = gba.utils.Enable;
 const interrupt = gba.interrupt;
 const math = gba.math;
 const I8_8 = math.I8_8;
@@ -89,7 +89,7 @@ pub const SWI = enum(u8) {
 
     agb_print = 0xFA,
 
-    // TODO: add a way to
+    // TODO: add a way to use ARM versions rather than just thumb
     fn getAsm(comptime code: SWI) []const u8 {
         var buffer: [16]u8 = undefined;
         return bufPrint(&buffer, "swi 0x{X}", .{@intFromEnum(code)}) catch unreachable;

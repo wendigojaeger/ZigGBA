@@ -29,6 +29,7 @@ pub fn main() void {
 
     var x: i9 = 96;
     var y: i8 = 32;
+    const scale_factor: i4 = 2;
     var tile_index: i10 = 0;
 
     while (true) {
@@ -36,10 +37,10 @@ pub fn main() void {
 
         _ = input.poll();
 
-        x +%= input.getAxis(.horizontal) * 2;
-        y +%= input.getAxis(.vertical) * 2;
+        x +%= input.getAxis(.horizontal).scale(scale_factor);
+        y +%= input.getAxis(.vertical).scale(scale_factor);
 
-        tile_index +%= input.getAxis(.shoulders);
+        tile_index +%= input.getAxis(.shoulders).toInt();
 
         if (input.isKeyJustPressed(.A)) {
             metroid.flipH();

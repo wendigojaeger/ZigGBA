@@ -67,8 +67,8 @@ pub fn main() void {
 
         _ = input.poll();
 
-        x +%= input.getAxis(.horizontal);
-        y +%= input.getAxis(.vertical);
+        x +%= input.getAxis(.horizontal).toInt();
+        y +%= input.getAxis(.vertical).toInt();
 
         tx = @truncate((@as(u10, @bitCast(x)) >> 3) + cross_tx);
         ty = @truncate((@as(u10, @bitCast(y)) >> 3) + cross_ty);

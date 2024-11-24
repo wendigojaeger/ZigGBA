@@ -33,8 +33,8 @@ pub fn main() void {
 
         _ = input.poll();
 
-        x +%= input.getAxis(.horizontal);
-        y +%= input.getAxis(.vertical);
+        x +%= input.getAxis(.horizontal).toInt();
+        y +%= input.getAxis(.vertical).toInt();
 
         bg.scroll[0].set(x, y);
     }

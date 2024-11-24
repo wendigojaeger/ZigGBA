@@ -105,7 +105,7 @@ fn Bitmap(comptime Color: type, comptime width: u8, comptime height: u8) type {
                 const dx, const x_step: u8 = if (x1 < x2)
                     .{ x2 - x1, 1 }
                 else
-                    .{ x1 - x2, @bitCast(-1) };
+                    .{ x1 - x2, @bitCast(@as(i8, @intCast(-1))) };
                 const dy = y2 - y1;
                 while (true) {
                     setPixel(x, y, color);

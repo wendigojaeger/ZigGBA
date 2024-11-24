@@ -5,6 +5,7 @@
 //! with checking them. These functions abstract that conversion
 const std = @import("std");
 const gba = @import("gba.zig");
+const TriState = gba.utils.TriState;
 
 // TODO: Maybe create an enumset that is "active low"
 // or just wrap this one
@@ -58,21 +59,25 @@ pub const Axis = enum {
     shoulders,
 };
 
-fn pressedInt(input: Keys, key: Key) i4 {
-    return @intFromBool(input.contains(key));
-}
-
 /// Get the current value of this axis. Returns 0 if both buttons
 /// or neither are pressed.
-pub fn getAxis(axis: Axis) i4 {
+pub fn getAxis(axis: Axis) TriState {
     return switch (axis) {
-        .horizontal => triState(curr_input, .left, .right),
-        .vertical => triState(curr_input, .up, .down),
-        .shoulders => triState(curr_input, .L, .R),
+        .horizontal => TriState.get(isKeyPressed(.left), isKeyPressed(.right)),
+        .vertical => TriState.get(isKeyPressed(.up), isKeyPressed(.down)),
+        .shoulders => TriState.get(isKeyPressed(.L), isKeyPressed(.R)),
     };
 }
 
-/// The keypad should always be read through this function, never directly.
+pub fn getAxisJustChanged(axis: Axis) TriState {
+    return switch (axis) {
+        .horizontal => TriState.get(isKeyJustPressed(.left), isKeyJustPressed(.right)),
+        .vertical => TriState.get(isKeyJustPressed(.up), isKeyJustPressed(.down)),
+        .shoulders => TriState.get(isKeyJustPressed(.L), isKeyJustPressed(.R)),
+    };
+}
+
+/// Update cached input with current values.
 pub fn poll() Keys {
     prev_input = curr_input;
     curr_input = .{ .bits = .{ .mask = ~reg_keyinput.* } };
@@ -113,10 +118,6 @@ pub fn isKeyJustPressed(key: Key) bool {
 
 pub fn isKeyJustReleased(key: Key) bool {
     return prev_input.differenceWith(curr_input).contains(key);
-}
-
-pub fn triState(input: Keys, minus: Key, plus: Key) i4 {
-    return pressedInt(input, plus) - pressedInt(input, minus);
 }
 
 test "Test Axis.get()" {

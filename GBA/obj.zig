@@ -2,7 +2,7 @@
 const std = @import("std");
 const gba = @import("gba.zig");
 const Color = gba.Color;
-const Enable = gba.Enable;
+const Enable = gba.utils.Enable;
 const I8_8 = gba.math.I8_8;
 const display = gba.display;
 const Priority = display.Priority;
@@ -62,6 +62,12 @@ pub const Obj = packed struct {
         obj_window,
     };
 
+    pub const Shape = enum(u2) {
+        square,
+        wide,
+        tall,
+    };
+
     /// WIDTHxHEIGHT
     pub const Size = enum(u4) {
         // Square
@@ -102,12 +108,6 @@ pub const Obj = packed struct {
         affine_double,
     };
 
-    pub const Shape = enum(u2) {
-        square,
-        wide,
-        tall,
-    };
-
     /// Used to set transformation effects on an object
     const Transformation = packed union {
         flip: packed struct(u5) {
@@ -120,7 +120,7 @@ pub const Obj = packed struct {
 
     /// Many docs treat this as a single 10 bit number, but the most significant bit
     /// corresponds to which of the last two charblocks the index is into.
-    /// 
+    ///
     /// It can still be assigned to with a u10 via `@bitCast`
     pub const TileInfo = packed struct(u10) {
         /// The index into tile memory in VRAM. Indexing is always based on 4bpp tiles
@@ -185,6 +185,18 @@ pub const Obj = packed struct {
     pub fn flipV(self: *Obj) void {
         switch (self.affine_mode) {
             .normal => self.transform.flip.v = !self.transform.flip.v,
+            // TODO: implement affine flips
+            .affine, .affine_double => {},
+            else => {},
+        }
+    }
+
+    pub fn rotate180(self: *Obj) void {
+        switch (self.affine_mode) {
+            .normal => self.transform.flip = .{
+                .h = !self.transform.flip.h,
+                .v = !self.transform.flip.v,
+            },
             // TODO: implement affine flips
             .affine, .affine_double => {},
             else => {},
