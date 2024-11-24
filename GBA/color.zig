@@ -21,10 +21,10 @@ pub const Color = packed struct(u16) {
         };
     }
 
-    /// A palette of 16 colors. The color at `bank[0]` is always transparent.
-    pub const Bank = [16]Color;
-
     pub const Palette = union {
+        /// A palette of 16 colors. The color at `bank[0]` is always transparent.
+        pub const Bank = [16]Color;
+
         banks: [16]Bank,
         full: [256]Color,
     };

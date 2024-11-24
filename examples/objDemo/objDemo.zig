@@ -24,8 +24,6 @@ pub fn main() void {
     metroid.* = .{
         .x_pos = 100,
         .y_pos = 150,
-        .palette = 0,
-        .tile_index = 0,
     };
     metroid.setSize(.@"64x64");
 
@@ -55,7 +53,7 @@ pub fn main() void {
         display.ctrl.obj_mapping = if (input.isKeyPressed(.start)) .two_dimensions else .one_dimension;
 
         metroid.setPosition(@bitCast(x), @bitCast(y));
-        metroid.tile_index = @bitCast(tile_index);
+        metroid.tile = @bitCast(tile_index);
 
         obj.update(1);
     }

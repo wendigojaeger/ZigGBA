@@ -21,20 +21,21 @@ pub fn main() void {
     gba.mem.memcpy32(obj.palette, &metr.pal, metr.pal.len * 4);
 
     const metroid = obj.allocate();
-    metroid.transform.affine_index = 0;
+    metroid.* = .{
+        .affine_mode = .affine,
+        .transform = .{ .affine_index = 0 },
+    };
     metroid.setSize(.@"64x64");
-    metroid.affine_mode = .affine;
-    metroid.palette = 0;
-    metroid.tile_index = 0;
     metroid.setPosition(96, 32);
     metroid.getAffine().setIdentity();
 
     const shadow_metroid = obj.allocate();
-    shadow_metroid.transform.affine_index = 31;
+    shadow_metroid.* = .{
+        .affine_mode = .affine,
+        .transform = .{ .affine_index = 31 },
+        .palette = 1,
+    };
     shadow_metroid.setSize(.@"64x64");
-    shadow_metroid.affine_mode = .affine;
-    shadow_metroid.palette = 1;
-    shadow_metroid.tile_index = 0;
     shadow_metroid.setPosition(96, 32);
     shadow_metroid.getAffine().setIdentity();
 

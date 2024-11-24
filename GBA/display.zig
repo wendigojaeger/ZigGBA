@@ -1,7 +1,9 @@
 const gba = @import("gba.zig");
 pub const window = @import("window.zig");
+const Color = gba.Color;
 const display = @This();
 const Enable = gba.Enable;
+const U1_4 = gba.math.FixedPoint(.unsigned, 1, 4);
 
 var current_page_addr: u32 = gba.mem.vram;
 
@@ -156,7 +158,7 @@ pub const Mosaic = packed struct(u16) {
 /// (`REG_MOSAIC`)
 pub const mosaic: *volatile Mosaic = @ptrFromInt(gba.mem.io + 0x4C);
 
-pub const Blend = packed struct(u16) {
+pub const Blend = packed struct {
     pub const Layers = packed struct(u6) {
         bg0: Enable = .disable,
         bg1: Enable = .disable,
@@ -168,17 +170,68 @@ pub const Blend = packed struct(u16) {
 
     pub const Mode = enum(u2) {
         none,
-        blend_alpha,
+        blend,
         fade_white,
         fade_black,
     };
 
-    source: Blend.Layers,
+    a: Blend.Layers,
     mode: Blend.Mode,
-    target: Blend.Layers,
+    b: Blend.Layers,
+    ev_a: U1_4,
+    _0: u3,
+    ev_b: U1_4,
+    _1: u3,
+    /// Write-only
+    ev_fade: U1_4,
 };
 
-/// Controls blend mode and which layers are blended
+/// Controls for alpha blending
 ///
-/// (`REG_BLDMOD`)
+/// `eva`, `evb`, and `evy` are 1.4 fixed point numbers, bounded by hardware at 0 and 1,
+/// so any value with an integral bit of `1` is the same.
+///
+/// In other words, the fractional bits only matter if the integral bit is `0`.
+///
+/// (`REG_BLDMOD`, `REG_)
 pub const blend: *volatile Blend = @ptrFromInt(gba.mem.io + 0x50);
+
+/// 4bpp/8bpp 8x8 tiles, "indexed" by letter coordinates (`tile.a.b`)
+// TODO: if zig ever gets packed arrays, use them instead.
+pub fn Tile(comptime mode: Color.Mode) type {
+    return packed struct {
+        const Self = @This();
+
+        pub const Block = [@divExact(0x4000, @sizeOf(Self))]Self;
+
+        /// Color index for this tile's palette
+        pub const Pixel = switch (mode) {
+            .color_16 => u4,
+            .color_256 => u8,
+        };
+
+        pub const Row = packed struct {
+            a: Pixel,
+            b: Pixel,
+            c: Pixel,
+            d: Pixel,
+            e: Pixel,
+            f: Pixel,
+            g: Pixel,
+            h: Pixel,
+        };
+
+        a: Row,
+        b: Row,
+        c: Row,
+        d: Row,
+        e: Row,
+        f: Row,
+        g: Row,
+        h: Row,
+
+        pub fn ram() *volatile [6]Block {
+            return @ptrFromInt(gba.mem.vram);
+        }
+    };
+}

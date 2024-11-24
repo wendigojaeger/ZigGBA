@@ -1,25 +1,32 @@
 //! Module for operations related to Object/Sprite memory
+const std = @import("std");
 const gba = @import("gba.zig");
 const Color = gba.Color;
 const Enable = gba.Enable;
 const I8_8 = gba.math.I8_8;
 const display = gba.display;
 const Priority = display.Priority;
+const Tile = display.Tile;
 
 /// Tile data for objects
-pub const tile_ram: [*]align(2) volatile u16 = @ptrFromInt(gba.mem.vram + 0x10000);
+pub const tile_ram: *volatile [2][512]Tile(.color_16) = @ptrFromInt(gba.mem.vram + 0x10000);
+
+/// Obj and `Affine` data is interleaved but starts at the same place in memory.
+const ObjAffineData = packed union {
+    obj: *[128]Obj align(4),
+    affine: *[32]Affine align(4),
+};
 
 /// The actual location of objects in VRAM
-pub const obj_attributes: *[128]Attributes = @ptrFromInt(gba.mem.oam);
+///
+/// Should only be updated during VBlank, to avoid graphical glitches.
+pub const oam: ObjAffineData = .{ .obj = @ptrFromInt(gba.mem.oam) };
+
+var buffer_inner: [128]Obj align(8) = @splat(.{});
 
 /// A buffer that can be updated at any time, then copied
 /// to OAM during VBlank
-pub var obj_attr_buffer: [128]Attributes = @splat(.{});
-
-/// Corresponding affine entries interleaved with the attribute buffer
-///
-/// Will be copied alongside objects
-pub var affine_buffer: *[32]Affine align(4) = @ptrCast(&obj_attr_buffer);
+pub var obj_affine_buffer: ObjAffineData = .{ .obj = &buffer_inner };
 
 var sort_keys: [128]u32 = @splat(0);
 
@@ -48,7 +55,7 @@ pub const palette: *Color.Palette = @ptrFromInt(gba.mem.palette + 0x200);
 
 var current_attr: usize = 0;
 
-pub const Attributes = packed struct {
+pub const Obj = packed struct {
     pub const GfxMode = enum(u2) {
         normal,
         alpha_blend,
@@ -56,19 +63,31 @@ pub const Attributes = packed struct {
     };
 
     /// WIDTHxHEIGHT
-    pub const Size = enum {
+    pub const Size = enum(u4) {
+        // Square
         @"8x8",
-        @"16x8",
-        @"8x16",
         @"16x16",
-        @"32x8",
-        @"8x32",
         @"32x32",
-        @"32x16",
-        @"16x32",
         @"64x64",
+        // Wide
+        @"16x8",
+        @"32x8",
+        @"32x16",
         @"64x32",
+        // Tall
+        @"8x16",
+        @"8x32",
+        @"16x32",
         @"32x64",
+
+        const Parts = packed struct(u4) {
+            size: u2,
+            shape: Shape,
+        };
+
+        fn parts(self: Size) Parts {
+            return @bitCast(@intFromEnum(self));
+        }
     };
 
     const AffineMode = enum(u2) {
@@ -85,17 +104,33 @@ pub const Attributes = packed struct {
 
     pub const Shape = enum(u2) {
         square,
-        horizontal,
-        vertical,
+        wide,
+        tall,
     };
 
     /// Used to set transformation effects on an object
     const Transformation = packed union {
-        normal: packed struct(u5) {
+        flip: packed struct(u5) {
             _: u3 = 0,
-            flip: display.Flip = .{},
+            h: bool = false,
+            v: bool = false,
         },
         affine_index: u5,
+    };
+
+    /// Many docs treat this as a single 10 bit number, but the most significant bit
+    /// corresponds to which of the last two charblocks the index is into.
+    /// 
+    /// It can still be assigned to with a u10 via `@bitCast`
+    pub const TileInfo = packed struct(u10) {
+        /// The index into tile memory in VRAM. Indexing is always based on 4bpp tiles
+        ///
+        /// (for 8bpp tiles, only even indices are used, so `logical_index << 1` works)
+        index: u9 = 0,
+        /// Selects between the low and high block of obj VRAM
+        ///
+        /// In bitmap modes, this must be 1, since the lower block is occupied by the bitmap.
+        block: u1 = 0,
     };
 
     /// For normal sprites, the top; for affine sprites, the center
@@ -112,92 +147,46 @@ pub const Attributes = packed struct {
     /// For normal sprites: whether to flip horizontally and/or vertically
     ///
     /// For affine sprites: the 5 bit index into the affine data
-    transform: Transformation = .{ .normal = .{} },
+    transform: Transformation = .{ .flip = .{} },
     /// Used in combination with shape, see `setSize`
     size: u2 = 0,
-    /// In bitmap modes, this must be 512 or higher
-    tile_index: u10 = 0,
+    tile: TileInfo = .{},
     priority: Priority = .highest,
     palette: u4 = 0,
     // This field is used to store the Affine data.
     // TODO: should maybe be undefined or left out?
-    //_: I8_8 = ,
+    // _: I8_8 = undefined,
 
     /// Sets size and shape to the appropriate values for the given object size.
-    pub fn setSize(self: *Attributes, size: Size) void {
-        switch (size) {
-            .@"8x8" => {
-                self.shape = .square;
-                self.size = 0;
-            },
-            .@"16x8" => {
-                self.shape = .horizontal;
-                self.size = 0;
-            },
-            .@"8x16" => {
-                self.shape = .vertical;
-                self.size = 0;
-            },
-            .@"16x16" => {
-                self.shape = .square;
-                self.size = 1;
-            },
-            .@"32x8" => {
-                self.shape = .horizontal;
-                self.size = 1;
-            },
-            .@"8x32" => {
-                self.shape = .vertical;
-                self.size = 1;
-            },
-            .@"32x32" => {
-                self.shape = .square;
-                self.size = 2;
-            },
-            .@"32x16" => {
-                self.shape = .horizontal;
-                self.size = 2;
-            },
-            .@"16x32" => {
-                self.shape = .vertical;
-                self.size = 2;
-            },
-            .@"64x64" => {
-                self.shape = .square;
-                self.size = 3;
-            },
-            .@"64x32" => {
-                self.shape = .horizontal;
-                self.size = 3;
-            },
-            .@"32x64" => {
-                self.shape = .vertical;
-                self.size = 3;
-            },
-        }
+    pub fn setSize(self: *Obj, size: Size) void {
+        const parts = size.parts();
+        self.size = parts.size;
+        self.shape = parts.shape;
     }
 
-    pub fn setPosition(self: *Attributes, x: u9, y: u8) void {
+    pub fn setPosition(self: *Obj, x: u9, y: u8) void {
         self.x_pos = x;
         self.y_pos = y;
     }
 
-    pub fn getAffine(self: Attributes) *Affine {
-        return &affine_buffer[self.transform.affine_index];
+    pub fn getAffine(self: Obj) *Affine {
+        return &obj_affine_buffer.affine[self.transform.affine_index];
     }
 
-    pub fn flipH(self: *Attributes) void {
+    pub fn flipH(self: *Obj) void {
         switch (self.affine_mode) {
-            .normal => self.transform.normal.flip.h = !self.transform.normal.flip.h,
-            .affine, .affine_double => {}, // TODO: implement affine flips"
+            .normal => self.transform.flip.h = !self.transform.flip.h,
+            // TODO: implement affine flips
+            .affine, .affine_double => {},
             else => {},
         }
     }
 
-    pub fn flipV(self: *Attributes) void {
+    pub fn flipV(self: *Obj) void {
         switch (self.affine_mode) {
-            .normal => self.transform.normal.flip.v = !self.transform.normal.flip.v,
-            .affine, .affine_double => {}, // TODO: implement affine flips"
+            .normal => self.transform.flip.v = !self.transform.flip.v,
+            // TODO: implement affine flips
+            .affine, .affine_double => {},
             else => {},
         }
     }
@@ -226,8 +215,8 @@ pub const Affine = packed struct {
 };
 
 // TODO: Better abstraction for this, maybe even using the `std.Allocator` API
-pub fn allocate() *Attributes {
-    const result = &obj_attr_buffer[current_attr];
+pub fn allocate() *Obj {
+    const result = &obj_affine_buffer.obj[current_attr];
     current_attr += 1;
     return result;
 }
@@ -236,7 +225,7 @@ pub fn allocate() *Attributes {
 ///
 /// Should only be done during VBlank
 pub fn update(count: usize) void {
-    for (obj_attr_buffer[0..count], obj_attributes[0..count]) |buf_entry, *oam_entry| {
+    for (obj_affine_buffer.obj[0..count], oam.obj[0..count]) |buf_entry, *oam_entry| {
         oam_entry.* = buf_entry;
     }
     current_attr = 0;

@@ -6,6 +6,7 @@ const Priority = display.Priority;
 const math = gba.math;
 const I8_8 = math.I8_8;
 const I20_8 = math.I20_8;
+const Tile = display.Tile;
 
 const bg = @This();
 
@@ -92,12 +93,6 @@ pub const AffineScreenEntry = u8;
 pub const TextScreenBlock = [1024]TextScreenEntry;
 pub const screen_block_ram: [*]volatile TextScreenBlock = @ptrCast(display.vram);
 
-pub const Tile = extern struct { data: [8]u32 align(1) };
 
-pub const CharacterBlock = [512]Tile;
-pub const tile_ram: [*]volatile CharacterBlock = @ptrCast(display.vram);
-
-pub const Tile8 = extern struct { data: [16]u32 align(1) };
-
-pub const CharacterBlock8 = [256]Tile8;
-pub const tile_8_ram: [*]volatile CharacterBlock8 = @ptrCast(display.vram);
+pub const tile_ram = Tile(.color_16).ram();
+pub const tile_8_ram = Tile(.color_256).ram();

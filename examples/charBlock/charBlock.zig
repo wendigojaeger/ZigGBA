@@ -1,6 +1,7 @@
 const gba = @import("gba");
 const input = gba.input;
 const display = gba.display;
+const Tile = display.Tile;
 const bg = gba.bg;
 
 const cbb_ids = @import("cbb_ids.zig");
@@ -14,8 +15,8 @@ const screen_block_8 = 4;
 export var header linksection(".gbaheader") = gba.initHeader("CHARBLOCK", "ASBE", "00", 0);
 
 fn loadTiles() void {
-    const tl4: [*]align(4) const bg.Tile = @ptrCast(&cbb_ids.ids_4_tiles);
-    const tl8: [*]align(4) const bg.Tile8 = @ptrCast(&cbb_ids.ids_8_tiles);
+    const tl4: [*]align(4) const Tile(.color_16) = @ptrCast(&cbb_ids.ids_4_tiles);
+    const tl8: [*]align(4) const Tile(.color_256) = @ptrCast(&cbb_ids.ids_8_tiles);
 
     // Loading tiles. 4-bit tiles to blocks 0 and 1
     bg.tile_ram[0][1] = tl4[1];
