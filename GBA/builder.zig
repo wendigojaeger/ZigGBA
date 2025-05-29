@@ -37,7 +37,7 @@ pub fn addGBAStaticLibrary(b: *std.Build, lib_name: []const u8, source_file: []c
         .optimize = if (debug) .Debug else .ReleaseFast,
     });
 
-    lib.setLinkerScriptPath(.{ .src_path = .{ .owner = b, .sub_path = gba_linker_script } });
+    lib.setLinkerScript(.{ .src_path = .{ .owner = b, .sub_path = gba_linker_script } });
 
     return lib;
 }
@@ -66,7 +66,7 @@ pub fn addGBAExecutable(b: *std.Build, rom_name: []const u8, source_file: []cons
         .optimize = if (debug) .Debug else .ReleaseFast,
     });
 
-    exe.setLinkerScriptPath(.{ .src_path = .{ .owner = b, .sub_path = gba_linker_script } });
+    exe.setLinkerScript(.{ .src_path = .{ .owner = b, .sub_path = gba_linker_script } });
     if (use_gdb) {
         b.installArtifact(exe);
     } else {
@@ -74,7 +74,7 @@ pub fn addGBAExecutable(b: *std.Build, rom_name: []const u8, source_file: []cons
             .format = .bin,
         });
 
-        const install_bin_step = b.addInstallBinFile(objcopy_step.getOutputSource(), b.fmt("{s}.gba", .{rom_name}));
+        const install_bin_step = b.addInstallBinFile(objcopy_step.getOutput(), b.fmt("{s}.gba", .{rom_name}));
         install_bin_step.step.dependOn(&objcopy_step.step);
 
         b.default_step.dependOn(&install_bin_step.step);
