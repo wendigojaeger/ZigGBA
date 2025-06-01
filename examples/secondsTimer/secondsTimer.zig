@@ -84,7 +84,7 @@ pub fn main() void {
     // which is the same as once per second.
     // When it oveflows, Timer 2 will be incremented by 1 due
     // to its "cascade" flag.
-    timer[1].data = @truncate(-0x4000);
+    timer[1].counter = @truncate(-0x4000);
     timer[1].ctrl = .{
         .freq = .cycles_1024,
         .enable = .enable,
@@ -101,7 +101,7 @@ pub fn main() void {
         display.naiveVSync();
         
         // Convert elapsed seconds to a 2-digit display
-        const digits = bios.div(timer[2].data, 10);
+        const digits = bios.div(timer[2].counter, 10);
         bg0_map[33].tile_index = @intCast(digits.division);
         bg0_map[34].tile_index = @intCast(digits.remainder);
     }

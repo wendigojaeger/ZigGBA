@@ -43,7 +43,7 @@ pub const Timer = packed struct(u32) {
     /// Reading this register gives a timer's current elapsed intervals.
     /// Writing to this register does NOT set the current timer value.
     /// It sets the INITIAL timer value for the next timer run.
-    data: u16,
+    counter: u16,
     
     /// Corresponds to tonc REG_TMxCNT.
     ctrl: Timer.Control,
