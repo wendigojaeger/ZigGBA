@@ -2,8 +2,6 @@
 
 This is a work in progress SDK for creating Game Boy Advance games using the [Zig](https://ziglang.org/) programming language. Once Zig has a proper package manager, I hope that it would as easy as import the ZigGBA package. Inspired by [TONC GBA tutorial](https://gbadev.net/tonc/)
 
-**This project is up for adoption for a new maintainer!**
-
 ## Setup
 
 This project uses submodules, so post clone, you will need to run:
