@@ -84,15 +84,20 @@ pub fn main() void {
     // which is the same as once per second.
     // When it oveflows, Timer 2 will be incremented by 1 due
     // to its "cascade" flag.
-    timer[1].counter = @truncate(-0x4000);
-    timer[1].ctrl = .{
-        .freq = .cycles_1024,
-        .enable = .enable,
+    timer[1] = .{
+        .counter = @truncate(-0x4000),
+        .ctrl = .{
+            .freq = .cycles_1024,
+            .enable = .enable,
+        },
     };
-    timer[2].ctrl = .{
-        .freq = .cycles_1024,
-        .cascade = .enable,
-        .enable = .enable,
+    timer[2] = .{
+        .counter = 0,
+        .ctrl = .{
+            .freq = .cycles_1024,
+            .cascade = .enable,
+            .enable = .enable,
+        },
     };
     
     const bg0_map: [*]volatile bg.TextScreenEntry = @ptrCast(&bg.screen_block_ram[28]);
