@@ -22,7 +22,7 @@ pub const Timer = packed struct(u32) {
     };
 
     /// Represents the data of a REG_TMxCNT timer control register.
-    pub const Control = packed struct(u16) {
+    pub const Control = packed struct(u8) {
         /// Timer frequency.
         /// One second is equivalent to 1024 * 0x4000 clock cycles.
         freq: Timer.Frequency = .cycles_1,
@@ -30,23 +30,24 @@ pub const Timer = packed struct(u32) {
         /// when the previous timer overflows. (The timer must also be enabled.)
         cascade: Enable = .disable,
         /// Unused bits.
-        _1: u3 = 0,
+        _: u3 = 0,
         /// Raise an interrupt upon overflow.
         interrupt: Enable = .disable,
         /// Enable the timer.
         enable: Enable = .disable,
-        /// Unused bits.
-        _2: u8 = 0,
     };
     
     /// Corresponds to tonc REG_TMxD.
     /// Reading this register gives a timer's current elapsed intervals.
     /// Writing to this register does NOT set the current timer value.
     /// It sets the INITIAL timer value for the next timer run.
-    counter: u16,
+    counter: u16 = 0,
     
     /// Corresponds to tonc REG_TMxCNT.
-    ctrl: Timer.Control,
+    ctrl: Timer.Control = .{},
+    
+    /// Unused high bits of REG_TMxCNT.
+    _: u8 = 0,
 };
 
 pub const timer: *volatile [4]Timer align(4) = @ptrFromInt(gba.mem.io + 0x100);
