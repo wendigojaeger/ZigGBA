@@ -4,7 +4,7 @@ const bg = gba.bg;
 const timer = gba.timer;
 const bios = gba.bios;
 
-export var gameHeader linksection(".gbaheader") = gba.initHeader("SECSTIMER", "ASBE", "00", 0);
+export const gameHeader linksection(".gbaheader") = gba.initHeader("SECSTIMER", "ASBE", "00", 0);
 
 fn initMap() void {
     // Init background
@@ -84,12 +84,12 @@ pub fn main() void {
     // which is the same as once per second.
     // When it oveflows, Timer 2 will be incremented by 1 due
     // to its "cascade" flag.
-    timer.data_1.* = @truncate(-0x4000);
-    timer.ctrl_1.* = .{
+    timer[1].data = @truncate(-0x4000);
+    timer[1].ctrl = .{
         .freq = .cycles_1024,
         .enable = .enable,
     };
-    timer.ctrl_2.* = .{
+    timer[2].ctrl = .{
         .freq = .cycles_1024,
         .cascade = .enable,
         .enable = .enable,
@@ -101,7 +101,7 @@ pub fn main() void {
         display.naiveVSync();
         
         // Convert elapsed seconds to a 2-digit display
-        const digits = bios.div(timer.data_2.*, 10);
+        const digits = bios.div(timer[2].data, 10);
         bg0_map[33].tile_index = @intCast(digits.division);
         bg0_map[34].tile_index = @intCast(digits.remainder);
     }
