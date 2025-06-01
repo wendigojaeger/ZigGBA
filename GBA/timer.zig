@@ -30,13 +30,13 @@ pub const Timer = packed struct(u32) {
         /// when the previous timer overflows. (The timer must also be enabled.)
         cascade: Enable = .disable,
         /// Unused bits.
-        unused_1: u3 = 0,
+        _1: u3 = 0,
         /// Raise an interrupt upon overflow.
         interrupt: Enable = .disable,
         /// Enable the timer.
         enable: Enable = .disable,
         /// Unused bits.
-        unused_2: u8 = 0,
+        _2: u8 = 0,
     };
     
     /// Corresponds to tonc REG_TMxD.
