@@ -449,10 +449,9 @@ fn call2Return3(comptime swi: SWI, r0: i32, r1: i32) DivResult {
     asm volatile (assembly
         : [quo] "={r0}" (quo),
           [rem] "={r1}" (rem),
-          [abs] "={r2}" (abs),
+          [abs] "={r3}" (abs),
         : [r0] "{r0}" (r0),
           [r1] "{r1}" (r1),
-        : "r0", "r1", "r2"
     );
 
     return .{
