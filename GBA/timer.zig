@@ -65,4 +65,4 @@ pub const Timer = packed struct(u32) {
     _: u8 = 0,
 };
 
-pub const timer: *volatile [4]Timer align(4) = @ptrFromInt(gba.mem.io + 0x100);
+pub const timers: *volatile [4]Timer align(4) = @ptrFromInt(gba.mem.io + 0x100);

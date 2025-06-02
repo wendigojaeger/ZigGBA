@@ -13,7 +13,7 @@ pub const interrupt = @import("interrupt.zig");
 pub const math = @import("math.zig");
 pub const mem = @import("mem.zig");
 pub const obj = @import("obj.zig");
-pub const timer = @import("timer.zig").timer;
+pub const timer = @import("timer.zig");
 pub const utils = @import("utils.zig");
 
 pub const ewram: *volatile [0x20000]u16 = @ptrFromInt(gba.mem.ewram);
