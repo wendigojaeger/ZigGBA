@@ -5,10 +5,21 @@ const Enable = gba.utils.Enable;
 /// Encapsulates access to REG_TMxD and REG_TMxCNT registers
 /// for controlling and reading one of the GBA's four timers.
 pub const Timer = packed struct(u32) {
+    /// Enumeration of possible counting modes for a timer.
+    pub const Mode = enum(u1) {
+        /// The timer counter advances once per N cycles, where N
+        /// is decided by the timer control register's frequency setting.
+        freq,
+        /// The timer counter advances when the previous, lower-numbered
+        /// timer counter overflows.
+        cascade,
+    };
+    
     /// Enumeration of recognized timer tick frequencies.
     pub const Frequency = enum(u2) {
         /// One timer tick per clock cycle.
-        /// Equivalent to 1/16777216th second, or approximately 0.06 microseconds.
+        /// Equivalent to 1/16777216th second, or approximately 0.06
+        /// microseconds.
         cycles_1 = 0,
         /// One timer tick per 64 clock cycles.
         /// Equivalent to 1/262144th second, or approximately 3.8 microseconds.
@@ -25,10 +36,14 @@ pub const Timer = packed struct(u32) {
     pub const Control = packed struct(u8) {
         /// Timer frequency.
         /// One second is equivalent to 1024 * 0x4000 clock cycles.
+        /// This field is only used when the mode is not "cascade".
         freq: Timer.Frequency = .cycles_1,
-        /// Cascade mode. When this bit is set, this timer will be incremented
-        /// when the previous timer overflows. (The timer must also be enabled.)
-        cascade: Enable = .disable,
+        /// Indicate under what circumstances the timer counter should
+        /// increment.
+        /// In cascade mode, the freq field is ignored, and the timer
+        /// is incremented as the previous timer overflows.
+        /// (The timer must also be enabled for this to happen.)
+        mode: Timer.Mode = .freq,
         /// Unused bits.
         _: u3 = 0,
         /// Raise an interrupt upon overflow.

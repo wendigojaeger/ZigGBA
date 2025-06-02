@@ -94,8 +94,7 @@ pub fn main() void {
     timer[2] = .{
         .counter = 0,
         .ctrl = .{
-            .freq = .cycles_1024,
-            .cascade = .enable,
+            .mode = .cascade,
             .enable = .enable,
         },
     };
