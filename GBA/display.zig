@@ -322,3 +322,16 @@ pub fn Tile(comptime mode: Color.Mode) type {
         }
     };
 }
+
+/// Copy memory into a charblock, containing tile data.
+/// There are only 6 charblocks. The lower 4 are for background tiles
+/// and the higher 2 are for sprites/objects.
+/// Don't pass a block number higher than 5.
+/// Note that screenblocks and charblocks share the same VRAM.
+pub fn memcpyCharBlock(block: u3, data: []const u8) void {
+    gba.mem.memcpy32(
+        vram + (@as(u32, block) * 0x4000),
+        @as([*]align(2) const u8, @ptrCast(@alignCast(data))),
+        data.len
+    );
+}

@@ -15,16 +15,24 @@ pub const palette: *Color.Palette = @ptrFromInt(gba.mem.palette);
 /// Background size in 8x8 tiles
 pub const Size = packed union {
     pub const Normal = enum(u2) {
+        /// Uses one screenblock.
         @"32x32",
+        /// Uses two screenblocks.
         @"64x32",
+        /// Uses two screenblocks.
         @"32x64",
+        /// Uses four screenblocks.
         @"64x64",
     };
 
     pub const Affine = enum(u2) {
+        /// Uses 256 bytes of one screenblock.
         @"16x16",
+        /// Uses 1024 bytes of one screenblock.
         @"32x32",
+        /// Uses two screenblocks.
         @"64x64",
+        /// Uses eight screenblocks.
         @"128x128",
     };
 
@@ -32,22 +40,42 @@ pub const Size = packed union {
     affine: Size.Affine,
 };
 
+/// Represents the contents of REG_BGxCNT background control registers.
 pub const Control = packed struct(u16) {
+    /// Determines drawing order of the four backgrounds.
     priority: Priority = .highest,
+    /// Sets the charblock that serves as the base for tile indexing.
+    /// Only the first four of six charblocks may be used for backgrounds
+    /// in this way.
     /// Actual address = VRAM_BASE_ADDR + (tile_addr * 0x4000)
     tile_base_block: u2 = 0,
+    /// Unused bits.
     _: u2 = undefined,
+    /// Enables mosaic effect. (Makes things appear blocky.)
     mosaic: Enable = .disable,
+    /// Which format to expect charblock tile data to be in, whether
+    /// 4bpp or 8bpp paletted.
+    /// Affine backgrounds always use 8bpp.
     palette_mode: Color.Mode = .color_16,
+    /// The screenblock that serves as the base for screen-entry/map indexing.
+    /// Beware that screenblock memory is shared with charblock memory.
+    /// Screenblocks 0-7 occupy the same memory as charblock 0,
+    /// screenblocks 8-15 as charblock 1,
+    /// screenblocks 16-23 as charblock 2, and
+    /// screenblocks 24-31 as charblock 3.
+    /// Each screenblock holds 1024 (32x32) tiles.
     /// Actual address = VRAM_BASE_ADDR + (obj_addr * 0x800)
     screen_base_block: u5 = 0,
-    /// Whether affine backgrounds should wrap. Has no effect on normal backgrounds.
+    /// Whether affine backgrounds should wrap.
+    /// Has no effect on normal backgrounds.
     affine_wrap: Enable = .disable,
     /// Sizes differ depending on whether the background is affine.
+    /// Larger sizes use more screenblocks.
     tile_map_size: Size = .{ .normal = .@"32x32" },
 };
 
-/// Background control registers for tile modes
+/// Background control registers for tile modes.
+/// Corresponds to REG_BGxCNT.
 ///
 /// Mode 0 - Normal: 0, 1, 2, 3
 ///
@@ -93,6 +121,19 @@ pub const AffineScreenEntry = u8;
 pub const TextScreenBlock = [1024]TextScreenEntry;
 pub const screen_block_ram: [*]volatile TextScreenBlock = @ptrCast(display.vram);
 
+pub fn screenBlockMap(block: u5) [*]volatile bg.TextScreenEntry {
+    return @ptrCast(&screen_block_ram[block]);
+}
+
+/// Copy memory into a screenblock, containing background layer data.
+/// Note that screenblocks and charblocks share the same VRAM.
+pub fn memcpyScreenBlock(block: u5, data: []const u8) void {
+    gba.mem.memcpy32(
+        display.vram + (@as(u32, block) * 0x800),
+        @as([*]align(2) const u8, @ptrCast(@alignCast(data))),
+        data.len
+    );
+}
 
 pub const tile_ram = Tile(.color_16).ram();
 pub const tile_8_ram = Tile(.color_256).ram();
