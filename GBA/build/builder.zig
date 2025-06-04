@@ -1,5 +1,5 @@
 const std = @import("std");
-const ImageConverter = @import("assetconverter/image_converter.zig").ImageConverter;
+const ImageConverter = @import("image_converter.zig").ImageConverter;
 const ArrayList = std.ArrayList;
 const FixedBufferAllocator = std.heap.FixedBufferAllocator;
 const Step = std.Build.Step;
@@ -7,10 +7,12 @@ const builtin = std.builtin;
 const fmt = std.fmt;
 const fs = std.fs;
 
-pub const ImageSourceTarget = @import("assetconverter/image_converter.zig").ImageSourceTarget;
+pub const GBAColor = @import("../color.zig").Color;
+pub const tiles = @import("tiles.zig");
+pub const ImageSourceTarget = @import("image_converter.zig").ImageSourceTarget;
 
-const gba_linker_script = libRoot() ++ "/gba.ld";
-const gba_lib_file = libRoot() ++ "/gba.zig";
+const gba_linker_script = libRoot() ++ "/../gba.ld";
+const gba_lib_file = libRoot() ++ "/../gba.zig";
 
 var is_debug: ?bool = null;
 var use_gdb_option: ?bool = null;
@@ -87,6 +89,12 @@ pub fn addGBAExecutable(b: *std.Build, rom_name: []const u8, source_file: []cons
     b.default_step.dependOn(&exe.step);
 
     return exe;
+}
+
+pub fn saveFile(file_path: []const u8, file_contents: []const u8) !void {
+    var file = try fs.cwd().createFile(file_path, .{});
+    defer file.close();
+    try file.writeAll(file_contents);
 }
 
 const Mode4ConvertStep = struct {
