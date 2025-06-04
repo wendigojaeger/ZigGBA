@@ -168,20 +168,31 @@ pub const NoiseChannelFrequency = packed struct(u16) {
     reset: Enable = .disable,
 };
 
+/// Represents the contents of the REG_SNDDMGCNT sound control register.
 pub const Dmg = packed struct(u16) {
+    /// Master volume for left speaker.
     volume_left: u3 = 0,
     /// Unused bits.
     _1: u1 = 0,
+    /// Master volume for right speaker.
     volume_right: u3 = 0,
     /// Unused bits.
     _2: u1 = 0,
+    /// Enable pulse 1 channel for left speaker.
     left_pulse_1: Enable = .disable,
+    /// Enable pulse 2 channel for left speaker.
     left_pulse_2: Enable = .disable,
+    /// Enable wave channel for left speaker.
     left_wave: Enable = .disable,
+    /// Enable noise channel for left speaker.
     left_noise: Enable = .disable,
+    /// Enable pulse 1 channel for right speaker.
     right_pulse_1: Enable = .disable,
+    /// Enable pulse 2 channel for right speaker.
     right_pulse_2: Enable = .disable,
+    /// Enable wave channel for right speaker.
     right_wave: Enable = .disable,
+    /// Enable noise channel for right speaker.
     right_noise: Enable = .disable,
 };
 
