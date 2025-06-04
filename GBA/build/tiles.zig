@@ -358,15 +358,16 @@ fn getImagePixelRgba8888(image: zigimg.Image, index: usize) ColorRgba8888 {
         .indexed8 => |px| px.palette[px.indices[index]],
         .indexed16 => |px| px.palette[px.indices[index]],
         .grayscale1 => |px| {
-            const i = px[index].value;
+            const i: u8 = if(px[index].value == 0) 0 else 0xff;
             return .{ .r = i, .g = i, .b = i };
         },
         .grayscale2 => |px| {
-            const i = px[index].value;
+            const i_table = [4]u8 { 0x00, 0x55, 0xaa, 0xff };
+            const i = i_table[px[index].value];
             return .{ .r = i, .g = i, .b = i };
         },
         .grayscale4 => |px| {
-            const i = px[index].value;
+            const i = (@as(u8, px[index].value) << 4) | px[index].value;
             return .{ .r = i, .g = i, .b = i };
         },
         .grayscale8 => |px| {
