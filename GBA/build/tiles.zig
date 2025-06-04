@@ -325,10 +325,6 @@ pub fn convertImage(
                     else {
                         pal_index_prev = pal_index;
                     }
-                    // std.debug.print(
-                    //     "({d}, {d}) -> {d}\n",
-                    //     .{ image_x, image_y, pal_index }
-                    // );
                 }
                 else {
                     try data.append(pal_index);
