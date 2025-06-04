@@ -328,6 +328,8 @@ pub fn Tile(comptime mode: Color.Mode) type {
 /// and the higher 2 are for sprites/objects.
 /// Don't pass a block number higher than 5.
 /// Note that screenblocks and charblocks share the same VRAM.
+/// WARNING: This will not copy memory correctly if the input
+/// data is not aligned on a 16-bit word boundary.
 pub fn memcpyCharBlock(block: u3, data: []const u8) void {
     gba.mem.memcpy32(
         vram + (@as(u32, block) * 0x4000),

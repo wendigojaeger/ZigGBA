@@ -127,6 +127,8 @@ pub fn screenBlockMap(block: u5) [*]volatile bg.TextScreenEntry {
 
 /// Copy memory into a screenblock, containing background layer data.
 /// Note that screenblocks and charblocks share the same VRAM.
+/// WARNING: This will not copy memory correctly if the input
+/// data is not aligned on a 16-bit word boundary.
 pub fn memcpyScreenBlock(block: u5, data: []const u8) void {
     gba.mem.memcpy32(
         display.vram + (@as(u32, block) * 0x800),
