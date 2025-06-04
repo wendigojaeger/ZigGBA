@@ -33,9 +33,9 @@ pub const SweepDirection = enum(u1) {
 
 pub const WaveDimension = enum(u1) {
     /// One bank (32 digits)
-    single,
+    single = 0,
     /// Two banks (64 digits)
-    double,
+    double = 1,
 };
 
 pub const WaveVolume = enum(u2) {
