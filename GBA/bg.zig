@@ -56,7 +56,7 @@ pub const Control = packed struct(u16) {
     /// Which format to expect charblock tile data to be in, whether
     /// 4bpp or 8bpp paletted.
     /// Affine backgrounds always use 8bpp.
-    palette_mode: Color.Mode = .color_16,
+    palette_mode: Color.Bits = .bpp_4,
     /// The screenblock that serves as the base for screen-entry/map indexing.
     /// Beware that screenblock memory is shared with charblock memory.
     /// Screenblocks 0-7 occupy the same memory as charblock 0,
@@ -137,5 +137,5 @@ pub fn memcpyScreenBlock(block: u5, data: []const u8) void {
     );
 }
 
-pub const tile_ram = Tile(.color_16).ram();
-pub const tile_8_ram = Tile(.color_256).ram();
+pub const tile_ram = Tile(.bpp_4).ram();
+pub const tile_8_ram = Tile(.bpp_8).ram();
