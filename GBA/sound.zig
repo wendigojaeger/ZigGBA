@@ -56,7 +56,7 @@ pub const NoiseMode = enum(u1) {
     bits_7 = 1,
 };
 
-pub const NoiseDivisor = enum(u4) {
+pub const NoiseDivisor = enum(u3) {
     div_8 = 0,
     div_16 = 1,
     div_32 = 2,
@@ -147,17 +147,20 @@ pub const WaveChannelFrequency = PulseChannelFrequency;
 /// Duty is ignored.
 pub const NoiseChannelControl = PulseChannelControl;
 
+/// Actual sample rate of the LFSR random bits is
+/// 262114 / (divisor << shift).
 pub const NoiseChannelFrequency = packed struct(u16) {
-    /// Frequency timer period is set by the divisor shifted left
-    /// by this many bits.
-    shift: u3 = 0,
+    /// Dividing ratio of frequencies.
+    /// Affects frequency timer period.
+    divisor: NoiseDivisor = .div_8,
     /// Determines whether the linear feedback shift register (LSFR)
     /// used to generate noise has an effective width of 15 or 7 bits.
     /// This determines the length of period before the noise waveform
     /// is repeated.
     mode: NoiseMode = .bits_15,
-    /// Affects frequency timer period.
-    divisor: NoiseDivisor = .div_8,
+    /// Frequency timer period is set by the divisor shifted left
+    /// by this many bits.
+    shift: u4 = 0,
     /// Unused bits.
     _: u6 = 0,
     /// Timed flag. If set, the sound plays for a duration determined
