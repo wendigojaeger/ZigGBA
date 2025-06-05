@@ -238,11 +238,11 @@ const track_tempo: u8 = 0x18;
 
 /// Track bytecode for channel 1.
 const track_data_pulse_1 = .{
-    op_volume, 0xf,
-    op_decay, 0x4,
+    op_volume,       0xf,
+    op_decay,        0x4,
     op_transpose_up, 0,
-    op_tempo, track_tempo,
-    op_duty, 1,
+    op_tempo,        track_tempo,
+    op_duty,         1,
     op_note, pitch_B_3, op_hold, 1, // 00
     op_note, pitch_G_3, op_hold, 1,
     op_note, pitch_A_3, op_hold, 1,
@@ -367,11 +367,11 @@ const track_data_pulse_1 = .{
 
 /// Track bytecode for channel 2.
 const track_data_pulse_2 = .{
-    op_volume, 0xa,
-    op_decay, 0x7,
+    op_volume,         0xa,
+    op_decay,          0x7,
     op_transpose_down, 0,
-    op_tempo, track_tempo,
-    op_hold, 2,
+    op_tempo,          track_tempo,
+    op_hold,           2,
     op_note, pitch_D_2, op_hold, 1, // 02
     op_note, pitch_G_2, op_hold, 6, // 03
     op_note, pitch_G_2, op_hold, 5, // 09
@@ -391,11 +391,11 @@ const track_data_pulse_2 = .{
     op_note, pitch_C_2, op_hold, 3, // 36
     op_note, pitch_G_2, op_hold, 3, // 39
     op_note, pitch_D_2, op_hold, 3, // 3c
-    op_note, pitch_G_2, op_hold, 5, // 3f
+    op_note,   pitch_G_2, op_hold, 5, // 3f
     op_volume, 0xb,
     op_note, pitch_D_3, op_hold, 1, // 44
     op_note, pitch_B_3, op_hold, 1, // 45
-    op_note, pitch_G_4, op_hold, 2, // 46
+    op_note,   pitch_G_4, op_hold, 2, // 46
     op_volume, 0xf,
     op_note, pitch_B_4, op_hold, 6, // 48
     op_note, pitch_C_5, op_hold, 3, // 4e
@@ -403,7 +403,7 @@ const track_data_pulse_2 = .{
     op_note, pitch_D_5, op_hold, 3, // 57
     op_note, pitch_C_5, op_hold, 6, // 5a
     op_note, pitch_B_4, op_hold, 3, // 60
-    op_note, pitch_A_4, op_hold, 6, // 63
+    op_note,   pitch_A_4, op_hold, 6, // 63
     op_volume, 0xa,
     op_note, pitch_Fs2, op_hold, 6, // 69
     op_note, pitch_D_2, op_hold, 6, // 6f
@@ -421,12 +421,12 @@ const track_data_pulse_2 = .{
 /// Track bytecode for channel 3.
 const track_data_noise = .{
     op_volume, 0x2,
-    op_decay, 0x2,
-    op_tempo, track_tempo,
-    op_note, 0x00, op_hold, 6, // 00
-    op_volume, 0x5,
-    op_note, 0x00, op_hold, 3,
-    op_note, 0x00, op_hold, 3,
+    op_decay,  0x2,
+    op_tempo,  track_tempo,
+    op_note,   0x00, op_hold, 6, // 00
+    op_volume, 0x5,  op_note, 0x00,
+    op_hold,   3,    op_note, 0x00,
+    op_hold,   3,
     op_note, 0x00, op_hold, 6, // 0c
     op_note, 0x00, op_hold, 3,
     op_note, 0x00, op_hold, 3,
@@ -503,7 +503,7 @@ const Track = struct {
     output: ChannelOutput,
     /// Current volume envelope decay step for notes. Set by op_decay.
     decay: u3 = 0,
-    
+
     /// Reset playback state.
     pub fn reset(self: *Track) void {
         self.position = 0;
@@ -517,32 +517,30 @@ const Track = struct {
         self.duty = .cycle_1_2;
         self.decay = 0;
     }
-    
+
     /// This function is called by the Tracker once per frame.
     pub fn update(self: *Track) void {
         var reset_note: Enable = .disable;
-        if(self.hold_time != 0) {
+        if (self.hold_time != 0) {
             self.hold_time -= 1;
         }
-        while(self.hold_time == 0) {
+        while (self.hold_time == 0) {
             const pos = self.position;
             const opcode = self.data[pos];
             const operand = self.data[pos + 1];
             self.position += 2;
-            if(self.position >= self.data.len) {
+            if (self.position >= self.data.len) {
                 self.position = 0;
             }
-            switch(opcode) {
+            switch (opcode) {
                 op_hold => {
                     self.hold_time = operand;
                     self.hold_time *= self.tempo;
                 },
                 op_note => {
-                    const pitch = (
-                        operand +
+                    const pitch = (operand +
                         self.transpose_up -
-                        self.transpose_down
-                    );
+                        self.transpose_down);
                     self.rate = pitch_rate[pitch];
                     self.last_note_position = pos;
                     reset_note = .enable;
@@ -572,39 +570,39 @@ const Track = struct {
                 else => {},
             }
         }
-        switch(self.output) {
+        switch (self.output) {
             .pulse_1 => {
-                gba.sound.ch1_ctrl.* = gba.sound.PulseChannelControl {
+                gba.sound.ch1_ctrl.* = gba.sound.PulseChannelControl{
                     .len = 0x3f,
                     .duty = self.duty,
                     .step = self.decay,
                     .volume = self.volume,
                 };
-                gba.sound.ch1_freq.* = gba.sound.PulseChannelFrequency {
+                gba.sound.ch1_freq.* = gba.sound.PulseChannelFrequency{
                     .rate = @intCast(self.rate),
                     .reset = reset_note,
                 };
             },
             .pulse_2 => {
-                gba.sound.ch2_ctrl.* = gba.sound.PulseChannelControl {
+                gba.sound.ch2_ctrl.* = gba.sound.PulseChannelControl{
                     .len = 0x3f,
                     .duty = self.duty,
                     .step = self.decay,
                     .volume = self.volume,
                 };
-                gba.sound.ch2_freq.* = gba.sound.PulseChannelFrequency {
+                gba.sound.ch2_freq.* = gba.sound.PulseChannelFrequency{
                     .rate = @intCast(self.rate),
                     .reset = reset_note,
                 };
             },
             .wave => {},
             .noise => {
-                gba.sound.ch4_ctrl.* = gba.sound.NoiseChannelControl {
+                gba.sound.ch4_ctrl.* = gba.sound.NoiseChannelControl{
                     .len = 0x3f,
                     .step = self.decay,
                     .volume = self.volume,
                 };
-                gba.sound.ch4_freq.* = gba.sound.NoiseChannelFrequency {
+                gba.sound.ch4_freq.* = gba.sound.NoiseChannelFrequency{
                     .shift = 0x1,
                     .divisor = .div_16,
                     .reset = reset_note,
@@ -619,14 +617,14 @@ const Tracker = struct {
     pulse_1: Track,
     pulse_2: Track,
     noise: Track,
-    
+
     /// Reset playback for all tracks.
     pub fn reset(self: *Tracker) void {
         self.pulse_1.reset();
         self.pulse_2.reset();
         self.noise.reset();
     }
-    
+
     /// Call this function once per frame in the main loop.
     pub fn update(self: *Tracker) void {
         self.pulse_1.update();
@@ -636,63 +634,61 @@ const Tracker = struct {
 };
 
 fn drawBlank(len: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEntry) void {
-    const blank_entry = gba.bg.TextScreenEntry {
+    const blank_entry = gba.bg.TextScreenEntry{
         .tile_index = 0x7f,
         .palette_index = pal_index,
     };
-    for(0..len) |i| {
+    for (0..len) |i| {
         target[i] = blank_entry;
     }
 }
 
 fn drawHex(value: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEntry) void {
-    target[0] = gba.bg.TextScreenEntry {
+    target[0] = gba.bg.TextScreenEntry{
         .tile_index = hex_digits[value >> 4],
         .palette_index = pal_index,
     };
-    target[1] = gba.bg.TextScreenEntry {
+    target[1] = gba.bg.TextScreenEntry{
         .tile_index = hex_digits[value & 0xf],
         .palette_index = pal_index,
     };
 }
 
 fn drawDecimal(value: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEntry) void {
-    const blank_entry = gba.bg.TextScreenEntry {
+    const blank_entry = gba.bg.TextScreenEntry{
         .tile_index = 0x7f,
         .palette_index = pal_index,
     };
-    if(value < 10) {
+    if (value < 10) {
         target[0] = blank_entry;
         target[1] = blank_entry;
-        target[2] = gba.bg.TextScreenEntry {
+        target[2] = gba.bg.TextScreenEntry{
             .tile_index = '0' + value,
             .palette_index = pal_index,
         };
-    }
-    else if(value < 100) {
+    } else if (value < 100) {
         const div10 = gba.bios.div(value, 10);
         target[0] = blank_entry;
-        target[1] = gba.bg.TextScreenEntry {
+        target[1] = gba.bg.TextScreenEntry{
             .tile_index = @intCast('0' + div10.division),
             .palette_index = pal_index,
         };
-        target[2] = gba.bg.TextScreenEntry {
+        target[2] = gba.bg.TextScreenEntry{
             .tile_index = @intCast('0' + div10.remainder),
             .palette_index = pal_index,
         };
-    }
-    else {
+    } else {
         const div100 = gba.bios.div(value, 100);
         const div10 = gba.bios.div(div100.remainder, 10);
-        target[0] = gba.bg.TextScreenEntry {
+        target[0] = gba.bg.TextScreenEntry{
             .tile_index = @intCast('0' + div100.division),
             .palette_index = pal_index,
         };
-        target[1] = gba.bg.TextScreenEntry {
+        target[1] = gba.bg.TextScreenEntry{
             .tile_index = @intCast('0' + div10.division),
             .palette_index = pal_index,
         };
-        target[2] = gba.bg.TextScreenEntry {
+        target[2] = gba.bg.TextScreenEntry{
             .tile_index = @intCast('0' + div10.remainder),
             .palette_index = pal_index,
         };
@@ -700,16 +696,15 @@ fn drawDecimal(value: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEn
 }
 
 fn drawPitch(pitch: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEntry) void {
-    if(pitch > pitch_names.len) {
-        target[0] = gba.bg.TextScreenEntry {
+    if (pitch > pitch_names.len) {
+        target[0] = gba.bg.TextScreenEntry{
             .tile_index = 'x',
             .palette_index = pal_index,
         };
         drawHex(pitch, pal_index, target + 1);
-    }
-    else {
-        for(0..3) |i| {
-            target[i] = gba.bg.TextScreenEntry {
+    } else {
+        for (0..3) |i| {
+            target[i] = gba.bg.TextScreenEntry{
                 .tile_index = pitch_names[pitch][i],
                 .palette_index = pal_index,
             };
@@ -719,8 +714,8 @@ fn drawPitch(pitch: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEntr
 
 fn drawText(text: []const u8, pal_index: u4, bg_x: u8, bg_y: u8) void {
     const map = gba.bg.screenBlockMap(24);
-    for(0..text.len) |text_i| {
-        map[bg_x + (@as(u16, bg_y) << 5) + text_i] = gba.bg.TextScreenEntry {
+    for (0..text.len) |text_i| {
+        map[bg_x + (@as(u16, bg_y) << 5) + text_i] = gba.bg.TextScreenEntry{
             .tile_index = text[text_i],
             .palette_index = pal_index,
         };
@@ -731,17 +726,17 @@ fn updateDisplay(bg_x: u8, track: *Track) void {
     // Format: [2:address hex] [1:opcode icon] [3:operand]
     const map = gba.bg.screenBlockMap(24);
     const offset_y: u16 = 7;
-    for(0..16) |row_i| {
+    for (0..16) |row_i| {
         const bg_y = row_i + 2;
         const map_i = bg_x + (bg_y << 5);
         const track_pos_row = track.last_note_position >> 1;
-        if(track_pos_row + row_i < offset_y) {
+        if (track_pos_row + row_i < offset_y) {
             drawBlank(6, 1, map + map_i);
             continue;
         }
         const track_row = track_pos_row + row_i - offset_y;
         const track_i = track_row << 1;
-        if(track_i + 1 >= track.data.len) {
+        if (track_i + 1 >= track.data.len) {
             drawBlank(6, 1, map + map_i);
             continue;
         }
@@ -751,13 +746,13 @@ fn updateDisplay(bg_x: u8, track: *Track) void {
         // Address (hex)
         drawHex(@truncate(track_row), 1, map + map_i);
         // Opcode (icon)
-        map[map_i + 2] = gba.bg.TextScreenEntry {
+        map[map_i + 2] = gba.bg.TextScreenEntry{
             .tile_index = 0x10 + opcode,
-            .palette_index = if(active) 2 else 0,
+            .palette_index = if (active) 2 else 0,
         };
         // Operand (varies)
-        const operand_pal_index: u4 = if(active) 2 else 0;
-        switch(opcode) {
+        const operand_pal_index: u4 = if (active) 2 else 0;
+        switch (opcode) {
             op_note => {
                 drawPitch(operand, operand_pal_index, map + map_i + 3);
             },
@@ -774,7 +769,7 @@ fn updateDisplay(bg_x: u8, track: *Track) void {
 
 pub fn main() void {
     // Initialize sound engine data.
-    var tracker = Tracker {
+    var tracker = Tracker{
         .pulse_1 = .{
             .data = &track_data_pulse_1,
             .output = .pulse_1,
@@ -788,15 +783,15 @@ pub fn main() void {
             .output = .noise,
         },
     };
-    
+
     // Initialize sound registers to allow playback.
-    gba.sound.stat.* = gba.sound.Stat {
+    gba.sound.stat.* = gba.sound.Stat{
         .pulse_1 = .enable,
         .pulse_2 = .enable,
         .noise = .enable,
         .master = .enable,
     };
-    gba.sound.dmg.* = gba.sound.Dmg {
+    gba.sound.dmg.* = gba.sound.Dmg{
         .volume_left = 0x7,
         .volume_right = 0x7,
         .left_pulse_1 = .enable,
@@ -806,12 +801,12 @@ pub fn main() void {
         .right_pulse_2 = .enable,
         .right_noise = .enable,
     };
-    gba.sound.bias.* = gba.sound.Bias {
+    gba.sound.bias.* = gba.sound.Bias{
         .cycle = .bits_6,
     };
-    
+
     // Initialize graphics.
-    gba.bg.ctrl[0] = gba.bg.Control {
+    gba.bg.ctrl[0] = gba.bg.Control{
         .screen_base_block = 24,
         .tile_map_size = .{ .normal = .@"32x32" },
     };
@@ -823,41 +818,40 @@ pub fn main() void {
     gba.bg.palette.banks[2][1] = .rgb(1, 0, 25);
     gba.bg.palette.banks[2][2] = .rgb(31, 31, 31);
     gba.display.memcpyCharBlock(0, &charset_data);
-    gba.display.ctrl.* = gba.display.Control {
+    gba.display.ctrl.* = gba.display.Control{
         .bg0 = .enable,
     };
-    
+
     var playing: bool = false;
     var frame: u8 = 0;
-    
+
     drawText("Pulse1", 2, 4, 0);
     drawText("Pulse2", 2, 12, 0);
     drawText("Noise ", 2, 20, 0);
     drawText("A\x0e    B\x0c    R\x0f", 1, 8, 19);
-    
+
     // Main loop. Update the Tracker once per frame.
     while (true) {
         gba.display.naiveVSync();
         _ = gba.input.poll();
         // Toggle paused/playing upon pressing A.
-        if(gba.input.isKeyJustPressed(.A)) {
+        if (gba.input.isKeyJustPressed(.A)) {
             playing = !playing;
         }
         // Stop playback upon pressing B.
-        if(gba.input.isKeyJustPressed(.B)) {
+        if (gba.input.isKeyJustPressed(.B)) {
             playing = false;
             tracker.reset();
         }
         // Fast-forward when holding R.
         const fast_forward = gba.input.isKeyPressed(.R);
         // Play music, and flash the A button prompt if paused.
-        if(playing) {
+        if (playing) {
             tracker.update();
-            if(fast_forward) tracker.update();
+            if (fast_forward) tracker.update();
             drawText("A\x0d", 1, 8, 19);
-        }
-        else {
-            drawText("A\x0e", if((frame & 0x7f) < 0x40) 2 else 0, 8, 19);
+        } else {
+            drawText("A\x0e", if ((frame & 0x7f) < 0x40) 2 else 0, 8, 19);
         }
         // Draw tracker state.
         updateDisplay(4, &tracker.pulse_1);
