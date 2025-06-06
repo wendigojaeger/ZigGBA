@@ -2,7 +2,7 @@
     .name = "ziggba",
     .version = "0.0.0",
     .fingerprint = 0x94ed0cc5e826ab7, // Changing this has security and trust implications.
-    .minimum_zig_version = "2024.10.0-mach",
+    .minimum_zig_version = "0.14.0-dev.1911+3bf89f55c",
     .paths = .{
         "build.zig",
         "build.zig.zon",
