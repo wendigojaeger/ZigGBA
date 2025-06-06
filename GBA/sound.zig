@@ -32,9 +32,11 @@ pub const SweepDirection = enum(u1) {
 };
 
 pub const WaveDimension = enum(u1) {
-    /// One bank (32 digits)
+    /// Use one 32-sample bank for the wave channel.
     single = 0,
-    /// Two banks (64 digits)
+    /// Use both banks for the wave channel, for a total of 64 samples.
+    /// Note that while both banks are in use in this way, it is unsafe
+    /// to write to the REG_WAVE_RAMx registers at all during playback.
     double = 1,
 };
 
@@ -56,7 +58,9 @@ pub const NoiseMode = enum(u1) {
     bits_7 = 1,
 };
 
-pub const NoiseDivisor = enum(u4) {
+/// Enumeration of divisor values used to determine the sample rate
+/// of the noise channel's LSFR PRNG.
+pub const NoiseDivisor = enum(u3) {
     div_8 = 0,
     div_16 = 1,
     div_32 = 2,
@@ -67,6 +71,7 @@ pub const NoiseDivisor = enum(u4) {
     div_112 = 7,
 };
 
+/// Represents the contents of the REG_SND1SWEEP register.
 pub const PulseChannelSweep = packed struct(u16) {
     /// The higher the shift, the slower the sweep.
     /// At each step, the new rate becomes rate ± rate/2^shift.
@@ -82,6 +87,7 @@ pub const PulseChannelSweep = packed struct(u16) {
     _: u9 = 0,
 };
 
+/// Represents the contents of REG_SNDxCNT registers.
 pub const PulseChannelControl = packed struct(u16) {
     /// Sound length. This is a write-only field and only works
     /// if the channel is timed.
@@ -101,6 +107,7 @@ pub const PulseChannelControl = packed struct(u16) {
     volume: u4 = 0,
 };
 
+/// Represents the contents of REG_SNDxFREQ registers.
 pub const PulseChannelFrequency = packed struct(u16) {
     /// Initial sound rate. Write-only. Frequency is 2^17/(2048-rate).
     /// See the Pitch enum for rates corresponding to musical notes.
@@ -115,12 +122,17 @@ pub const PulseChannelFrequency = packed struct(u16) {
     reset: Enable = .disable,
 };
 
+/// Represents the contents of the REG_SND3SEL register.
 pub const WaveChannelSelect = packed struct(u16) {
     /// Unused bits.
     _1: u4 = 0,
-    /// Wave RAM dimension.
+    /// Wave RAM dimension. Determines whether to play a single 32-sample
+    /// waveform from the selected bank, or whether to combine both banks
+    /// into a double-long 64-sample waveform.
     dimension: WaveDimension = .single,
-    /// Wave RAM bank number.
+    /// Selected wave RAM bank number.
+    /// Whichever bank is not selected here is the one that can be written
+    /// to via the REG_WAVE_RAMx registers.
     bank: u1 = 0,
     /// Whether the channel is stopped or playing.
     playback: Enable = .disable,
@@ -128,6 +140,7 @@ pub const WaveChannelSelect = packed struct(u16) {
     _2: u8 = 0,
 };
 
+/// Represents the contents of the REG_SND3CNT register.
 pub const WaveChannelControl = packed struct(u16) {
     /// Length is equal to (256-len)/256 seconds.
     len: u8 = 0,
@@ -140,6 +153,7 @@ pub const WaveChannelControl = packed struct(u16) {
     force_volume_75: Enable = .disable,
 };
 
+/// Represents the contents of the REG_SND3FREQ register.
 /// The rate value determines sample rate, measured in sample
 /// digits per second.
 pub const WaveChannelFrequency = PulseChannelFrequency;
@@ -147,17 +161,20 @@ pub const WaveChannelFrequency = PulseChannelFrequency;
 /// Duty is ignored.
 pub const NoiseChannelControl = PulseChannelControl;
 
+/// Actual sample rate of the LFSR random bits is
+/// 262114 / (divisor << shift).
 pub const NoiseChannelFrequency = packed struct(u16) {
-    /// Frequency timer period is set by the divisor shifted left
-    /// by this many bits.
-    shift: u3 = 0,
+    /// Dividing ratio of frequencies.
+    /// Affects frequency timer period.
+    divisor: NoiseDivisor = .div_8,
     /// Determines whether the linear feedback shift register (LSFR)
     /// used to generate noise has an effective width of 15 or 7 bits.
     /// This determines the length of period before the noise waveform
     /// is repeated.
     mode: NoiseMode = .bits_15,
-    /// Affects frequency timer period.
-    divisor: NoiseDivisor = .div_8,
+    /// Frequency timer period is set by the divisor shifted left
+    /// by this many bits.
+    shift: u4 = 0,
     /// Unused bits.
     _: u6 = 0,
     /// Timed flag. If set, the sound plays for a duration determined
@@ -329,17 +346,8 @@ pub const stat: *volatile Stat = @ptrFromInt(gba.mem.io + 0x84);
 /// Corresponds to tonc REG_SNDBIAS.
 pub const bias: *volatile Bias = @ptrFromInt(gba.mem.io + 0x88);
 
-/// Corresponds to tonc REG_WAVE_RAM0.
-pub const wave_ram_0: *volatile u32 = @ptrFromInt(gba.mem.io + 0x90);
-
-/// Corresponds to tonc REG_WAVE_RAM1.
-pub const wave_ram_1: *volatile u32 = @ptrFromInt(gba.mem.io + 0x94);
-
-/// Corresponds to tonc REG_WAVE_RAM2.
-pub const wave_ram_2: *volatile u32 = @ptrFromInt(gba.mem.io + 0x98);
-
-/// Corresponds to tonc REG_WAVE_RAM3.
-pub const wave_ram_3: *volatile u32 = @ptrFromInt(gba.mem.io + 0x9c);
+/// Corresponds to tonc REG_WAVE_RAMx.
+pub const wave_ram: *volatile [4]u32 = @ptrFromInt(gba.mem.io + 0x90);
 
 /// Corresponds to tonc REG_FIFO_A.
 pub const fifo_a: *volatile u32 = @ptrFromInt(gba.mem.io + 0xa0);
