@@ -17,22 +17,22 @@ pub const ConvertFit = enum(u3) {
     /// Allow any number of tiles, up to 65,535.
     unlimited = 0,
     /// The number of tiles should fit within one block.
-    /// This limit is 128 tiles with 4bpp, or 64 tiles with 8bpp.
+    /// This limit is 512 tiles with 4bpp, or 256 tiles with 8bpp.
     within_block = 1,
     /// The number of tiles should fit within two blocks, i.e. within
     /// the total space for sprite tile data.
-    /// This limit is 256 tiles with 4bpp, or 128 tiles with 8bpp.
+    /// This limit is 1024 tiles with 4bpp, or 512 tiles with 8bpp.
     within_2_blocks = 2,
     /// The number of tiles should fit within three blocks.
     within_3_blocks = 3,
     /// The number of tiles should fit within four blocks, i.e. within
     /// the total space for bg tile data.
-    /// This limit is 1024 tiles with 4bpp, or 512 tiles with 8bpp.
+    /// This limit is 2048 tiles with 4bpp, or 1024 tiles with 8bpp.
     within_4_blocks = 4,
     /// The number of tiles should fit within five blocks.
     within_5_blocks = 5,
     /// The number of tiles should fit within all six blocks.
-    /// This limit is 768 tiles with 4bpp, or 384 tiles with 8bpp.
+    /// This limit is 3072 tiles with 4bpp, or 1536 tiles with 8bpp.
     within_6_blocks = 6,
 };
 
@@ -275,7 +275,7 @@ pub fn convertImage(
     }
     const bpp_shift: u4 = if(opt.bpp == .bpp_4) 0 else 1;
     const tile_count = image_tiles_x * image_tiles_y;
-    const tile_limit = (128 * @as(u16, @intFromEnum(opt.fit))) >> bpp_shift;
+    const tile_limit = (512 * @as(u16, @intFromEnum(opt.fit))) >> bpp_shift;
     if(opt.fit == .unlimited) {
         if(tile_count >= 0xffff) {
             return ConvertError.TooManyTiles;
