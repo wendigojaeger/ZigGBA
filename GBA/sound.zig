@@ -9,7 +9,7 @@ const Enable = gba.utils.Enable;
 // https://www.gamedev.net/articles/programming/general-and-gameplay-programming/audio-programming-on-the-gameboy-advance-part-1-r1823/
 // https://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware
 
-pub const ChangeDirection = enum(u1) {
+pub const EnvelopeDirection = enum(u1) {
     decrease = 0,
     increase = 1,
 };
@@ -40,7 +40,7 @@ pub const PulseControl = packed struct(u16) {
     /// step/64 seconds.
     step: u3 = 0,
     /// Whether the envelope increases or decreases with each step.
-    dir: ChangeDirection = .decrease,
+    dir: EnvelopeDirection = .decrease,
     /// Envelope initial volume.
     /// 0 means silent and 15 means full volume.
     volume: u4 = 0,
@@ -63,11 +63,17 @@ pub const ChannelFrequency = packed struct(u16) {
 
 pub const Pulse1 = packed struct(u48) {
     pub const Sweep = packed struct(u16) {
+        pub const Direction = enum(u1) {
+                /// Rate, and therefore also pitch/frequency, increases over time.
+        increases = 0,
+        /// Rate, and therefore also pitch/frequency, decreases over time.
+        decreases = 1,
+        };
         /// The higher the shift, the slower the sweep.
         /// At each step, the new rate becomes rate ± rate/2^shift.
         shift: u3 = 0,
         /// Whether the rate, and therefore also pitch/frequency, increases or decreases over time.
-        dir: ChangeDirection = .increase,
+        dir: Sweep.Direction = .increase,
         /// Sweep step-time. The time between sweeps is measured
         /// in increments of 128 Hz. Time is step/128 milliseconds.
         /// Range of [7.8, 54.7] milliseconds.
@@ -178,7 +184,7 @@ pub const Noise = packed struct(u48) {
         /// step/64 seconds.
         step: u3 = 0,
         /// Whether the envelope increases or decreases with each step.
-        dir: ChangeDirection = .decrease,
+        dir: EnvelopeDirection = .decrease,
         /// Envelope initial volume.
         /// 0 means silent and 15 means full volume.
         volume: u4 = 0,
