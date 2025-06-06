@@ -1,4 +1,4 @@
-[submodule "GBA/assetconverter/zigimg"]
-	path = GBA/assetconverter/zigimg
+[submodule "GBA/build/zigimg"]
+	path = GBA/build/zigimg
 	url = git@github.com:zigimg/zigimg.git
 	branch = master

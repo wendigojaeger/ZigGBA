@@ -56,7 +56,7 @@ pub const Control = packed struct(u16) {
     /// Which format to expect charblock tile data to be in, whether
     /// 4bpp or 8bpp paletted.
     /// Affine backgrounds always use 8bpp.
-    palette_mode: Color.Bits = .bpp_4,
+    palette_mode: Color.Bpp = .bpp_4,
     /// The screenblock that serves as the base for screen-entry/map indexing.
     /// Beware that screenblock memory is shared with charblock memory.
     /// Screenblocks 0-7 occupy the same memory as charblock 0,
@@ -130,11 +130,7 @@ pub fn screenBlockMap(block: u5) [*]volatile bg.TextScreenEntry {
 /// WARNING: This will not copy memory correctly if the input
 /// data is not aligned on a 16-bit word boundary.
 pub fn memcpyScreenBlock(block: u5, data: []const u8) void {
-    gba.mem.memcpy32(
-        display.vram + (@as(u32, block) * 0x800),
-        @as([*]align(2) const u8, @ptrCast(@alignCast(data))),
-        data.len
-    );
+    gba.mem.memcpy32(display.vram + (@as(u32, block) * 0x800), @as([*]align(2) const u8, @ptrCast(@alignCast(data))), data.len);
 }
 
 pub const tile_ram = Tile(.bpp_4).ram();

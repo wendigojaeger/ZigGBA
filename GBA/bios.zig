@@ -118,7 +118,7 @@ pub const RamResetFlags = std.EnumSet(enum {
     reset_other_registers,
 });
 
-pub const DivResult = packed struct { division: i32, remainder: i32, absolute_div: u32 };
+pub const DivResult = struct { quotient: i32, remainder: i32, absolute_quotient: u32 };
 
 /// Whether the write pointer should move with the read pointer
 /// or fill the destination space with the value at src[0]
@@ -455,9 +455,9 @@ fn call2Return3(comptime swi: SWI, r0: i32, r1: i32) DivResult {
     );
 
     return .{
-        .division = quo,
+        .quotient = quo,
         .remainder = rem,
-        .absolute_div = abs,
+        .absolute_quotient = abs,
     };
 }
 

@@ -199,7 +199,7 @@ pub const blend: *volatile Blend = @ptrFromInt(gba.mem.io + 0x50);
 
 /// 4bpp/8bpp 8x8 tiles, "indexed" by letter coordinates (`tile.a.b`)
 // TODO: if zig ever gets packed arrays, use them instead.
-pub fn Tile(comptime mode: Color.Bits) type {
+pub fn Tile(comptime mode: Color.Bpp) type {
     return packed struct {
         const Self = @This();
 
@@ -331,9 +331,5 @@ pub fn Tile(comptime mode: Color.Bits) type {
 /// WARNING: This will not copy memory correctly if the input
 /// data is not aligned on a 16-bit word boundary.
 pub fn memcpyCharBlock(block: u3, data: []const u8) void {
-    gba.mem.memcpy32(
-        vram + (@as(u32, block) * 0x4000),
-        @as([*]align(2) const u8, @ptrCast(@alignCast(data))),
-        data.len
-    );
+    gba.mem.memcpy32(vram + (@as(u32, block) * 0x4000), @as([*]align(2) const u8, @ptrCast(@alignCast(data))), data.len);
 }

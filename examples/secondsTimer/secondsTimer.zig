@@ -106,7 +106,7 @@ pub fn main() void {
         
         // Convert elapsed seconds to a 2-digit display
         const digits = bios.div(timers[2].counter, 10);
-        bg0_map[33].tile_index = @intCast(digits.division);
+        bg0_map[33].tile_index = @intCast(digits.quotient);
         bg0_map[34].tile_index = @intCast(digits.remainder);
     }
 }
