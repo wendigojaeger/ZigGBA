@@ -99,6 +99,7 @@ pub const PulseChannelControl = packed struct(u16) {
     duty: PulseDuty = .cycle_1_8,
     /// Envelope step-time. Time between envelope changes is
     /// step/64 seconds.
+    /// Set to zero to disable changing volume over time.
     step: u3 = 0,
     /// Whether the envelope increases or decreases with each step.
     dir: EnvelopeDirection = .decreases,
