@@ -5,7 +5,7 @@ const Timer = gba.timer.Timer;
 const timers = gba.timer.timers;
 const bios = gba.bios;
 
-export const gameHeader linksection(".gbaheader") = gba.initHeader("SECSTIMER", "ASBE", "00", 0);
+export const gameHeader linksection(".gbaheader") = gba.initHeader("SECSTIMER", "ASTE", "00", 0);
 
 fn initMap() void {
     // Init background
@@ -77,7 +77,6 @@ pub fn main() void {
     initMap();
     display.ctrl.* = display.Control {
         .bg0 = .enable,
-        .obj = .enable,
     };
     
     // Based on the example here: https://gbadev.net/tonc/timers.html
