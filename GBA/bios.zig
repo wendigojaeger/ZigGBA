@@ -229,6 +229,13 @@ pub const BitUnpackArgs = packed struct {
     zero_data: bool,
 };
 
+/// Resets the GBA and runs the code at address 0x02000000 or 0x08000000,
+/// depending on the contents of 0x03007ffa.
+/// (0 means 0x08000000 and anything else means 0x02000000.)
+pub fn softReset() void {
+    call0Return0(.register_soft_reset);
+}
+
 // TODO: These could be made into non-tuples
 pub fn resetRamRegisters(flags: RamResetFlags) void {
     call1Return0(.register_ram_reset, flags);
