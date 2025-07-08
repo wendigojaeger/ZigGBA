@@ -822,7 +822,7 @@ pub fn main() void {
     gba.bg.palette.banks[1][2] = .rgb(19, 19, 19);
     gba.bg.palette.banks[2][1] = .rgb(1, 0, 25);
     gba.bg.palette.banks[2][2] = .rgb(31, 31, 31);
-    gba.display.memcpyCharBlock(0, &charset_data);
+    gba.display.memcpyCharBlock(0, 0, &charset_data);
     gba.display.ctrl.* = gba.display.Control {
         .bg0 = .enable,
     };
