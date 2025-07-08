@@ -121,7 +121,7 @@ pub const AffineScreenEntry = u8;
 pub const TextScreenBlock = [1024]TextScreenEntry;
 pub const screen_block_ram: [*]volatile TextScreenBlock = @ptrCast(display.vram);
 
-pub fn screenBlockMap(block: u5) [*]volatile bg.TextScreenEntry {
+pub inline fn screenBlockMap(block: u5) [*]volatile bg.TextScreenEntry {
     return @ptrCast(&screen_block_ram[block]);
 }
 

@@ -126,7 +126,7 @@ pub const PulseChannelFrequency = packed struct(u16) {
 /// Represents the contents of the REG_SND3SEL register.
 pub const WaveChannelSelect = packed struct(u16) {
     /// Unused bits.
-    _1: u4 = 0,
+    _1: u5 = 0,
     /// Wave RAM dimension. Determines whether to play a single 32-sample
     /// waveform from the selected bank, or whether to combine both banks
     /// into a double-long 64-sample waveform.
@@ -214,7 +214,7 @@ pub const Dmg = packed struct(u16) {
     right_noise: Enable = .disable,
 };
 
-pub const DmgVolumeRatio = enum(u2) {
+pub const DmgVolume = enum(u2) {
     /// 25% DMG volume ratio
     pc_25 = 0b00,
     /// 50% DMG volume ratio
@@ -223,7 +223,7 @@ pub const DmgVolumeRatio = enum(u2) {
     pc_100 = 0b10,
 };
 
-pub const DSoundVolumeRatio = enum(u2) {
+pub const DSoundVolume = enum(u1) {
     /// 50% DSound A/B volume ratio
     pc_50 = 0,
     /// 100% DSound A/B volume ratio
@@ -232,11 +232,11 @@ pub const DSoundVolumeRatio = enum(u2) {
 
 pub const DSound = packed struct(u16) {
     /// Relative volume of DMG channels.
-    dmg_volume_ratio: DmgVolumeRatio,
+    dmg_volume: DmgVolume = .pc_25,
     /// Relative volume of DSound A.
-    dsound_volume_ratio_a: DSoundVolumeRatio,
+    dsound_volume_a: DSoundVolume = .pc_50,
     /// Relative volume of DSound B.
-    dsound_volume_ratio_b: DSoundVolumeRatio,
+    dsound_volume_b: DSoundVolume = .pc_50,
     /// Unused bits.
     _: u4 = 0,
     /// Enable DSound A on left speaker.
@@ -321,7 +321,7 @@ pub const ch2_freq: *volatile PulseChannelFrequency = @ptrFromInt(gba.mem.io + 0
 
 /// Waveform select for channel 3 (Wave).
 /// Corresponds to REG_SND3SEL.
-pub const ch3_mode: *volatile WaveChannelSelect = @ptrFromInt(gba.mem.io + 0x70);
+pub const ch3_select: *volatile WaveChannelSelect = @ptrFromInt(gba.mem.io + 0x70);
 
 /// Corresponds to tonc REG_SND3CNT.
 pub const ch3_ctrl: *volatile WaveChannelControl = @ptrFromInt(gba.mem.io + 0x72);
