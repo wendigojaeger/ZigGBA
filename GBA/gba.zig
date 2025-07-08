@@ -124,12 +124,18 @@ export fn _start() noreturn {
         \\
         \\mov r0, #0x12
         \\msr cpsr, r0
-        \\ldr sp, =__sp_irq
+        \\ldr sp, _start_sp_irq_word
         \\mov r0, #0x1f
         \\msr cpsr, r0
-        \\ldr sp, =__sp_usr
-        \\add r0, pc, #1
+        \\ldr sp, _start_sp_usr_word
+        \\adr r0, #1 + _start_zig
         \\bx r0
+        // Ensure _sq_irq and _sq_usr are defined near enough
+        // to the entry point to be referenced with `ldr` above.
+        \\  .align 4
+        \\_start_sp_irq_word: .word __sp_irq
+        \\_start_sp_usr_word: .word __sp_usr
+        \\_start_zig:
     );
 
     // Use BIOS function to clear all data
