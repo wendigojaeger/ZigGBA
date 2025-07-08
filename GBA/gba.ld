@@ -5,10 +5,9 @@ MEMORY {
     ewram	: ORIGIN = 0x02000000, LENGTH = 256K
 }
 
-ENTRY(__text_start)
-
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
+ENTRY(__text_start)
 
 __text_start = ORIGIN(rom);
 __eheap_end = ORIGIN(ewram) + LENGTH(ewram);
@@ -25,7 +24,7 @@ SECTIONS
     .text :
     {
         KEEP(*(.gbaheader))
-        KEEP(*(._start))
+        KEEP(*(.gba_crt0))
         *(EXCLUDE_FILE (*.iwram*) .text*)
         . ALIGN(4);
     } >rom = 0xff
