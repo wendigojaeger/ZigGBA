@@ -390,12 +390,11 @@ fn getImagePixelRgba8888(image: zigimg.Image, index: usize) ColorRgba8888 {
             .b = px[index].b,
         },
         .rgba32 => |px| px[index],
-        // Present in the current version of zigimg
-        // .rgb332 => |px| .{
-        //     .r = px[index].r,
-        //     .g = px[index].g,
-        //     .b = px[index].b,
-        // },
+        .rgb332 => |px| .{
+            .r = px[index].r,
+            .g = px[index].g,
+            .b = px[index].b,
+        },
         .rgb565 => |px| .{
             .r = px[index].r,
             .g = px[index].g,
