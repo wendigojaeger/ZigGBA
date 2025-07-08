@@ -45,7 +45,7 @@ fn initMap() void {
     }
 }
 
-pub fn main() void {
+pub export fn main() void {
     initMap();
     display.ctrl.* = .{
         .bg0 = .enable,

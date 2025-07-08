@@ -73,7 +73,7 @@ fn initMap() void {
     }
 }
 
-pub fn main() void {
+pub export fn main() void {
     initMap();
     display.ctrl.* = display.Control {
         .bg0 = .enable,

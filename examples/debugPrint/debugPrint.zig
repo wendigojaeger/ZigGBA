@@ -4,7 +4,7 @@ const display = gba.display;
 
 export var header linksection(".gbaheader") = gba.initHeader("DEBUGPRINT", "ADPE", "00", 0);
 
-pub fn main() void {
+pub export fn main() void {
     display.ctrl.* = .{
         .mode = .mode3,
         .bg2 = .enable,

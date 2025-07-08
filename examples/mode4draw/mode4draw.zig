@@ -27,7 +27,7 @@ const palette: [26]Color = [_]Color{
     break :blk pink ++ teal;
 };
 
-pub fn main() void {
+pub export fn main() void {
     gba.mem.memcpy32(gba.bg.palette, &palette, 256);
 
     display.ctrl.* = .{

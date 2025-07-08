@@ -71,7 +71,7 @@ fn initMaps() void {
     screen_entry_8[0x61].tile_index = 0x0301;
 }
 
-pub fn main() void {
+pub export fn main() void {
     loadTiles();
 
     initMaps();

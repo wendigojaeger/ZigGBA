@@ -14,7 +14,7 @@ fn loadData() void {
     gba.mem.memcpy32(map_ram, &brin.map, brin.map.len * 2);
 }
 
-pub fn main() void {
+pub export fn main() void {
     loadData();
     bg.ctrl[0] = .{
         .screen_base_block = 30,

@@ -772,7 +772,7 @@ fn updateDisplay(bg_x: u8, track: *Track) void {
     }
 }
 
-pub fn main() void {
+pub export fn main() void {
     // Initialize sound engine data.
     var tracker = Tracker {
         .pulse_1 = .{
