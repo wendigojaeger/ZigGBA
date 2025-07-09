@@ -673,7 +673,7 @@ fn drawDecimal(value: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEn
         const div10 = gba.bios.div(value, 10);
         target[0] = blank_entry;
         target[1] = gba.bg.TextScreenEntry {
-            .tile_index = @intCast('0' + div10.division),
+            .tile_index = @intCast('0' + div10.quotient),
             .palette_index = pal_index,
         };
         target[2] = gba.bg.TextScreenEntry {
@@ -685,11 +685,11 @@ fn drawDecimal(value: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEn
         const div100 = gba.bios.div(value, 100);
         const div10 = gba.bios.div(div100.remainder, 10);
         target[0] = gba.bg.TextScreenEntry {
-            .tile_index = @intCast('0' + div100.division),
+            .tile_index = @intCast('0' + div100.quotient),
             .palette_index = pal_index,
         };
         target[1] = gba.bg.TextScreenEntry {
-            .tile_index = @intCast('0' + div10.division),
+            .tile_index = @intCast('0' + div10.quotient),
             .palette_index = pal_index,
         };
         target[2] = gba.bg.TextScreenEntry {
