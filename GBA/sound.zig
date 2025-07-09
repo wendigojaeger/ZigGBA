@@ -231,11 +231,11 @@ pub const NoiseChannelFrequency = packed struct(u16) {
 /// Represents the contents of the REG_SNDDMGCNT sound control register.
 pub const Dmg = packed struct(u16) {
     /// Master volume for left speaker.
-    volume_left: u3 = 0,
+    left_volume: u3 = 0,
     /// Unused bits.
     _1: u1 = 0,
     /// Master volume for right speaker.
-    volume_right: u3 = 0,
+    right_volume: u3 = 0,
     /// Unused bits.
     _2: u1 = 0,
     /// Enable pulse 1 channel for left speaker.

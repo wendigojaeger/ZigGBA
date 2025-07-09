@@ -797,8 +797,8 @@ pub export fn main() void {
         .master = .enable,
     };
     gba.sound.dmg.* = gba.sound.Dmg{
-        .volume_left = 0x7,
-        .volume_right = 0x7,
+        .left_volume = 0x7,
+        .right_volume = 0x7,
         .left_pulse_1 = .enable,
         .left_pulse_2 = .enable,
         .left_noise = .enable,
