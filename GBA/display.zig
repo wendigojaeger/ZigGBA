@@ -334,6 +334,6 @@ pub fn memcpyCharBlock(block: u3, offset: u32, data: []const u8) void {
     gba.mem.memcpy32(
         vram + offset + (@as(u32, block) * 0x4000),
         @as([*]align(2) const u8, @ptrCast(@alignCast(data))),
-        data.len
+        data.len,
     );
 }

@@ -133,7 +133,7 @@ pub fn memcpyScreenBlock(block: u5, data: []const u8) void {
     gba.mem.memcpy32(
         display.vram + (@as(u32, block) * 0x800),
         @as([*]align(2) const u8, @ptrCast(@alignCast(data))),
-        data.len
+        data.len,
     );
 }
 
