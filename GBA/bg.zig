@@ -56,7 +56,7 @@ pub const Control = packed struct(u16) {
     /// Which format to expect charblock tile data to be in, whether
     /// 4bpp or 8bpp paletted.
     /// Affine backgrounds always use 8bpp.
-    palette_mode: Color.Bits = .bpp_4,
+    palette_mode: Color.Bpp = .bpp_4,
     /// The screenblock that serves as the base for screen-entry/map indexing.
     /// Beware that screenblock memory is shared with charblock memory.
     /// Screenblocks 0-7 occupy the same memory as charblock 0,

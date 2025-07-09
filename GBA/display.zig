@@ -199,7 +199,7 @@ pub const blend: *volatile Blend = @ptrFromInt(gba.mem.io + 0x50);
 
 /// 4bpp/8bpp 8x8 tiles, "indexed" by letter coordinates (`tile.a.b`)
 // TODO: if zig ever gets packed arrays, use them instead.
-pub fn Tile(comptime mode: Color.Bits) type {
+pub fn Tile(comptime mode: Color.Bpp) type {
     return packed struct {
         const Self = @This();
 

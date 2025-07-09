@@ -139,7 +139,7 @@ pub const Obj = packed struct {
     mode: GfxMode = .normal,
     /// Enables mosaic effects on this object
     mosaic: Enable = .disable,
-    palette_mode: Color.Bits = .bpp_4,
+    palette_mode: Color.Bpp = .bpp_4,
     /// Used in combination with size, see `setSize`
     shape: Shape = .square,
     /// For normal sprites, the left side; for affine sprites, the center

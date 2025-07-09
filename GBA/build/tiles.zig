@@ -9,7 +9,7 @@ pub const ColorRgb888 = zigimg.color.Rgb24;
 pub const ColorRgba8888 = zigimg.color.Rgba32;
 
 /// Enumeration of possible bit depths for GBA tile data. (Bits per pixel.)
-pub const Bits = @import("../color.zig").Color.Bits;
+pub const Bpp = @import("../color.zig").Color.Bpp;
 
 /// Enumeration of options for how many blocks converted tile image data
 /// is intended to fit within.
@@ -42,7 +42,7 @@ pub fn ConvertOptions(comptime PaletteCtxT: type) type {
         /// Allocator for intermediate memory allocations.
         allocator: std.mem.Allocator,
         /// Given a pixel location and color, get a palette index.
-        palette_fn: *const fn(x: u16, y: u16, color: ColorRgba8888, bpp: Bits, ctx: PaletteCtxT) u8,
+        palette_fn: *const fn(x: u16, y: u16, color: ColorRgba8888, bpp: Bpp, ctx: PaletteCtxT) u8,
         /// Context object shared between invocations of the palette callback.
         palette_ctx: PaletteCtxT,
         /// Value to use for padding behavior with pad_fit and
@@ -52,7 +52,7 @@ pub fn ConvertOptions(comptime PaletteCtxT: type) type {
         /// the given constraint.
         fit: ConvertFit = .within_block,
         /// Whether to write 4 or 8 bits per pixel.
-        bpp: Bits,
+        bpp: Bpp,
         /// If the amount of tile data is smaller than indicated by fit,
         /// then pad the rest. (Does not apply when fit is unlimited.)
         pad_fit: bool = false,
@@ -117,7 +117,7 @@ pub fn getNearestPaletteColor(
     _: u16, // x
     _: u16, // y
     color: ColorRgba8888,
-    bpp: Bits,
+    bpp: Bpp,
     pal: []const ColorRgb888,
 ) u8 {
     if(color.a < 0xff) {
@@ -161,7 +161,7 @@ pub fn getNearestGbaPaletteColor(
     _: u16, // x
     _: u16, // y
     color: ColorRgba8888,
-    bpp: Bits,
+    bpp: Bpp,
     pal: []const GBAColor,
 ) u8 {
     if(color.a < 0xff) {

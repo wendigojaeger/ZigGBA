@@ -38,7 +38,7 @@ pub const Color = packed struct(u16) {
     /// or a single palette of 256 colors (8bpp).
     /// Naturally, 8bpp image data consumes twice as much memory as 4bpp
     /// image data.
-    pub const Bits = enum(u1) {
+    pub const Bpp = enum(u1) {
         /// Palettes are stored in 16 banks of 16 colors, 4 bits per pixel.
         bpp_4 = 0,
         /// Single palette of 256 colors, 8 bits per pixel.
