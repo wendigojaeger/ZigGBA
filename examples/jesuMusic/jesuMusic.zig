@@ -503,7 +503,7 @@ const Track = struct {
     output: ChannelOutput,
     /// Current volume envelope decay step for notes. Set by op_decay.
     decay: u3 = 0,
-    
+
     /// Reset playback state.
     pub fn reset(self: *Track) void {
         self.position = 0;
@@ -517,22 +517,22 @@ const Track = struct {
         self.duty = .hi_1_lo_1;
         self.decay = 0;
     }
-    
+
     /// This function is called by the Tracker once per frame.
     pub fn update(self: *Track) void {
         var reset_note: bool = false;
-        if(self.hold_time != 0) {
+        if (self.hold_time != 0) {
             self.hold_time -= 1;
         }
-        while(self.hold_time == 0) {
+        while (self.hold_time == 0) {
             const pos = self.position;
             const opcode = self.data[pos];
             const operand = self.data[pos + 1];
             self.position += 2;
-            if(self.position >= self.data.len) {
+            if (self.position >= self.data.len) {
                 self.position = 0;
             }
-            switch(opcode) {
+            switch (opcode) {
                 op_hold => {
                     self.hold_time = operand;
                     self.hold_time *= self.tempo;
@@ -572,39 +572,39 @@ const Track = struct {
                 else => {},
             }
         }
-        switch(self.output) {
+        switch (self.output) {
             .pulse_1 => {
-                gba.sound.pulse_1_ctrl.* = gba.sound.PulseChannelControl {
+                gba.sound.pulse_1_ctrl.* = gba.sound.PulseChannelControl{
                     .len = 0x3f,
                     .duty = self.duty,
                     .step = self.decay,
                     .volume = self.volume,
                 };
-                gba.sound.pulse_1_freq.* = gba.sound.PulseChannelFrequency {
+                gba.sound.pulse_1_freq.* = gba.sound.PulseChannelFrequency{
                     .rate = @intCast(self.rate),
                     .reset = reset_note,
                 };
             },
             .pulse_2 => {
-                gba.sound.pulse_2_ctrl.* = gba.sound.PulseChannelControl {
+                gba.sound.pulse_2_ctrl.* = gba.sound.PulseChannelControl{
                     .len = 0x3f,
                     .duty = self.duty,
                     .step = self.decay,
                     .volume = self.volume,
                 };
-                gba.sound.pulse_2_freq.* = gba.sound.PulseChannelFrequency {
+                gba.sound.pulse_2_freq.* = gba.sound.PulseChannelFrequency{
                     .rate = @intCast(self.rate),
                     .reset = reset_note,
                 };
             },
             .wave => {},
             .noise => {
-                gba.sound.noise_ctrl.* = gba.sound.NoiseChannelControl {
+                gba.sound.noise_ctrl.* = gba.sound.NoiseChannelControl{
                     .len = 0x3f,
                     .step = self.decay,
                     .volume = self.volume,
                 };
-                gba.sound.noise_freq.* = gba.sound.NoiseChannelFrequency {
+                gba.sound.noise_freq.* = gba.sound.NoiseChannelFrequency{
                     .shift = 0x1,
                     .divisor = .div_16,
                     .reset = reset_note,
@@ -619,14 +619,14 @@ const Tracker = struct {
     pulse_1: Track,
     pulse_2: Track,
     noise: Track,
-    
+
     /// Reset playback for all tracks.
     pub fn reset(self: *Tracker) void {
         self.pulse_1.reset();
         self.pulse_2.reset();
         self.noise.reset();
     }
-    
+
     /// Call this function once per frame in the main loop.
     pub fn update(self: *Tracker) void {
         self.pulse_1.update();
@@ -636,47 +636,47 @@ const Tracker = struct {
 };
 
 fn drawBlank(len: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEntry) void {
-    const blank_entry = gba.bg.TextScreenEntry {
+    const blank_entry = gba.bg.TextScreenEntry{
         .tile_index = 0x7f,
         .palette_index = pal_index,
     };
-    for(0..len) |i| {
+    for (0..len) |i| {
         target[i] = blank_entry;
     }
 }
 
 fn drawHex(value: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEntry) void {
-    target[0] = gba.bg.TextScreenEntry {
+    target[0] = gba.bg.TextScreenEntry{
         .tile_index = hex_digits[value >> 4],
         .palette_index = pal_index,
     };
-    target[1] = gba.bg.TextScreenEntry {
+    target[1] = gba.bg.TextScreenEntry{
         .tile_index = hex_digits[value & 0xf],
         .palette_index = pal_index,
     };
 }
 
 fn drawDecimal(value: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEntry) void {
-    const blank_entry = gba.bg.TextScreenEntry {
+    const blank_entry = gba.bg.TextScreenEntry{
         .tile_index = 0x7f,
         .palette_index = pal_index,
     };
-    if(value < 10) {
+    if (value < 10) {
         target[0] = blank_entry;
         target[1] = blank_entry;
-        target[2] = gba.bg.TextScreenEntry {
+        target[2] = gba.bg.TextScreenEntry{
             .tile_index = '0' + value,
             .palette_index = pal_index,
         };
     }
-    else if(value < 100) {
+    else if (value < 100) {
         const div10 = gba.bios.div(value, 10);
         target[0] = blank_entry;
-        target[1] = gba.bg.TextScreenEntry {
+        target[1] = gba.bg.TextScreenEntry{
             .tile_index = @intCast('0' + div10.quotient),
             .palette_index = pal_index,
         };
-        target[2] = gba.bg.TextScreenEntry {
+        target[2] = gba.bg.TextScreenEntry{
             .tile_index = @intCast('0' + div10.remainder),
             .palette_index = pal_index,
         };
@@ -684,15 +684,15 @@ fn drawDecimal(value: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEn
     else {
         const div100 = gba.bios.div(value, 100);
         const div10 = gba.bios.div(div100.remainder, 10);
-        target[0] = gba.bg.TextScreenEntry {
+        target[0] = gba.bg.TextScreenEntry{
             .tile_index = @intCast('0' + div100.quotient),
             .palette_index = pal_index,
         };
-        target[1] = gba.bg.TextScreenEntry {
+        target[1] = gba.bg.TextScreenEntry{
             .tile_index = @intCast('0' + div10.quotient),
             .palette_index = pal_index,
         };
-        target[2] = gba.bg.TextScreenEntry {
+        target[2] = gba.bg.TextScreenEntry{
             .tile_index = @intCast('0' + div10.remainder),
             .palette_index = pal_index,
         };
@@ -700,16 +700,16 @@ fn drawDecimal(value: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEn
 }
 
 fn drawPitch(pitch: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEntry) void {
-    if(pitch > pitch_names.len) {
-        target[0] = gba.bg.TextScreenEntry {
+    if (pitch > pitch_names.len) {
+        target[0] = gba.bg.TextScreenEntry{
             .tile_index = 'x',
             .palette_index = pal_index,
         };
         drawHex(pitch, pal_index, target + 1);
     }
     else {
-        for(0..3) |i| {
-            target[i] = gba.bg.TextScreenEntry {
+        for (0..3) |i| {
+            target[i] = gba.bg.TextScreenEntry{
                 .tile_index = pitch_names[pitch][i],
                 .palette_index = pal_index,
             };
@@ -719,8 +719,8 @@ fn drawPitch(pitch: u8, pal_index: u4, target: [*]volatile gba.bg.TextScreenEntr
 
 fn drawText(text: []const u8, pal_index: u4, bg_x: u8, bg_y: u8) void {
     const map = gba.bg.screenBlockMap(24);
-    for(0..text.len) |text_i| {
-        map[bg_x + (@as(u16, bg_y) << 5) + text_i] = gba.bg.TextScreenEntry {
+    for (0..text.len) |text_i| {
+        map[bg_x + (@as(u16, bg_y) << 5) + text_i] = gba.bg.TextScreenEntry{
             .tile_index = text[text_i],
             .palette_index = pal_index,
         };
@@ -731,17 +731,17 @@ fn updateDisplay(track: *Track, bg_x: u8) void {
     // Format: [2:address hex] [1:opcode icon] [3:operand]
     const map = gba.bg.screenBlockMap(24);
     const offset_y: u16 = 7;
-    for(0..16) |row_i| {
+    for (0..16) |row_i| {
         const bg_y = row_i + 2;
         const map_i = bg_x + (bg_y << 5);
         const track_pos_row = track.last_note_position >> 1;
-        if(track_pos_row + row_i < offset_y) {
+        if (track_pos_row + row_i < offset_y) {
             drawBlank(6, 1, map + map_i);
             continue;
         }
         const track_row = track_pos_row + row_i - offset_y;
         const track_i = track_row << 1;
-        if(track_i + 1 >= track.data.len) {
+        if (track_i + 1 >= track.data.len) {
             drawBlank(6, 1, map + map_i);
             continue;
         }
@@ -751,13 +751,13 @@ fn updateDisplay(track: *Track, bg_x: u8) void {
         // Address (hex)
         drawHex(@truncate(track_row), 1, map + map_i);
         // Opcode (icon)
-        map[map_i + 2] = gba.bg.TextScreenEntry {
+        map[map_i + 2] = gba.bg.TextScreenEntry{
             .tile_index = 0x10 + opcode,
-            .palette_index = if(active) 2 else 0,
+            .palette_index = if (active) 2 else 0,
         };
         // Operand (varies)
-        const operand_pal_index: u4 = if(active) 2 else 0;
-        switch(opcode) {
+        const operand_pal_index: u4 = if (active) 2 else 0;
+        switch (opcode) {
             op_note => {
                 drawPitch(operand, operand_pal_index, map + map_i + 3);
             },
@@ -774,7 +774,7 @@ fn updateDisplay(track: *Track, bg_x: u8) void {
 
 pub export fn main() void {
     // Initialize sound engine data.
-    var tracker = Tracker {
+    var tracker = Tracker{
         .pulse_1 = .{
             .data = &track_data_pulse_1,
             .output = .pulse_1,
@@ -788,15 +788,15 @@ pub export fn main() void {
             .output = .noise,
         },
     };
-    
+
     // Initialize sound registers to allow playback.
-    gba.sound.status.* = gba.sound.Status {
+    gba.sound.status.* = gba.sound.Status{
         .pulse_1 = .enable,
         .pulse_2 = .enable,
         .noise = .enable,
         .master = .enable,
     };
-    gba.sound.dmg.* = gba.sound.Dmg {
+    gba.sound.dmg.* = gba.sound.Dmg{
         .volume_left = 0x7,
         .volume_right = 0x7,
         .left_pulse_1 = .enable,
@@ -806,12 +806,12 @@ pub export fn main() void {
         .right_pulse_2 = .enable,
         .right_noise = .enable,
     };
-    gba.sound.bias.* = gba.sound.Bias {
+    gba.sound.bias.* = gba.sound.Bias{
         .cycle = .bits_6,
     };
-    
+
     // Initialize graphics.
-    gba.bg.ctrl[0] = gba.bg.Control {
+    gba.bg.ctrl[0] = gba.bg.Control{
         .screen_base_block = 24,
         .tile_map_size = .{ .normal = .@"32x32" },
     };
@@ -823,41 +823,41 @@ pub export fn main() void {
     gba.bg.palette.banks[2][1] = .rgb(1, 0, 25);
     gba.bg.palette.banks[2][2] = .rgb(31, 31, 31);
     gba.display.memcpyCharBlock(0, 0, &charset_data);
-    gba.display.ctrl.* = gba.display.Control {
+    gba.display.ctrl.* = gba.display.Control{
         .bg0 = .enable,
     };
-    
+
     var playing: bool = false;
     var frame: u8 = 0;
-    
+
     drawText("Pulse1", 2, 4, 0);
     drawText("Pulse2", 2, 12, 0);
     drawText("Noise ", 2, 20, 0);
     drawText("A\x0e    B\x0c    R\x0f", 1, 8, 19);
-    
+
     // Main loop. Update the Tracker once per frame.
-    while(true) : (frame +%= 1) {
+    while (true) : (frame +%= 1) {
         gba.display.naiveVSync();
         _ = gba.input.poll();
         // Toggle paused/playing upon pressing A.
-        if(gba.input.isKeyJustPressed(.A)) {
+        if (gba.input.isKeyJustPressed(.A)) {
             playing = !playing;
         }
         // Stop playback upon pressing B.
-        if(gba.input.isKeyJustPressed(.B)) {
+        if (gba.input.isKeyJustPressed(.B)) {
             playing = false;
             tracker.reset();
         }
         // Fast-forward when holding R.
         const fast_forward = gba.input.isKeyPressed(.R);
         // Play music, and flash the A button prompt if paused.
-        if(playing) {
+        if (playing) {
             tracker.update();
-            if(fast_forward) tracker.update();
+            if (fast_forward) tracker.update();
             drawText("A\x0d", 1, 8, 19);
         }
         else {
-            drawText("A\x0e", if((frame & 0x7f) < 0x40) 2 else 0, 8, 19);
+            drawText("A\x0e", if ((frame & 0x7f) < 0x40) 2 else 0, 8, 19);
         }
         // Draw tracker state.
         updateDisplay(&tracker.pulse_1, 4);

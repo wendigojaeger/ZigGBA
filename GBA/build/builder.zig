@@ -79,7 +79,7 @@ pub fn addGBAExecutable(b: *std.Build, rom_name: []const u8, source_file: []cons
         .target = b.resolveTargetQuery(gba_thumb_target_query),
         .optimize = if (debug) .Debug else .ReleaseFast,
     });
-    
+
     const exe = b.addExecutable(.{
         .name = rom_name,
         .root_source_file = .{

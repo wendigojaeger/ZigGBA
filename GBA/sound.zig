@@ -59,7 +59,7 @@ pub const PulseChannelControl = packed struct(u16) {
         /// Sounds the same as hi_1_lo_3.
         hi_3_lo_1 = 3,
     };
-    
+
     /// Sound length. This is a write-only field and only works
     /// if the channel is timed.
     /// Length is equal to (64-len)/256 seconds, for a range of
@@ -111,7 +111,7 @@ pub const WaveChannelSelect = packed struct(u16) {
         /// to write to the REG_WAVE_RAMx registers at all during playback.
         double = 1,
     };
-    
+
     /// Unused bits.
     _1: u5 = 0,
     /// Wave RAM dimension. Determines whether to play a single 32-sample
@@ -142,7 +142,7 @@ pub const WaveChannelControl = packed struct(u16) {
         /// Volume at 25% (Quarter)
         percent_25 = 3,
     };
-    
+
     /// Length is equal to (256-len)/256 seconds.
     len: u8 = 0,
     /// Unused bits.
@@ -197,7 +197,7 @@ pub const NoiseChannelFrequency = packed struct(u16) {
         div_96 = 6,
         div_112 = 7,
     };
-    
+
     /// Enumeration of possible modes for the LSFR PRNG for noise generation.
     pub const Mode = enum(u1) {
         /// Noise LSFR repeats over a longer interval. Noise sounds smoother.
@@ -267,7 +267,7 @@ pub const DirectSound = packed struct(u16) {
         /// 100% DMG volume ratio
         percent_100 = 0b10,
     };
-    
+
     /// Enumeration of volume options for DirectSound channels.
     pub const DirectSoundVolume = enum(u1) {
         /// 50% DirectSound A/B volume ratio
@@ -333,7 +333,7 @@ pub const Bias = packed struct(u16) {
         /// 262.144 kHz. (Best for PSG channels 1-4.)
         bits_6 = 3,
     };
-    
+
     /// Unused bits.
     _1: u1 = 0,
     /// Bias level, converting signed samples into unsigned.

@@ -9,7 +9,7 @@ export const gameHeader linksection(".gbaheader") = gba.initHeader("SECSTIMER", 
 
 fn initMap() void {
     // Init background
-    bg.ctrl[0] = bg.Control {
+    bg.ctrl[0] = bg.Control{
         .screen_base_block = 28,
         .tile_map_size = .{ .normal = .@"32x32" },
     };
@@ -64,10 +64,10 @@ fn initMap() void {
     // Initialize a palette
     const bg_palette = &bg.palette.banks;
     bg_palette[0][1] = gba.Color.rgb(31, 31, 31);
-    
+
     // Initialize the map to all blank tiles
     const bg0_map: [*]volatile bg.TextScreenEntry = @ptrCast(&bg.screen_block_ram[28]);
-    for (0..32*32) |map_index| {
+    for (0..32 * 32) |map_index| {
         bg0_map[map_index].palette_index = 0;
         bg0_map[map_index].tile_index = 10;
     }
@@ -75,35 +75,35 @@ fn initMap() void {
 
 pub export fn main() void {
     initMap();
-    display.ctrl.* = display.Control {
+    display.ctrl.* = display.Control{
         .bg0 = .enable,
     };
-    
+
     // Based on the example here: https://gbadev.net/tonc/timers.html
     // Timer 1 will overflow every 0x4000 * 1024 clock cycles,
     // which is the same as once per second.
     // When it oveflows, Timer 2 will be incremented by 1 due
     // to its "cascade" flag.
-    timers[1] = Timer {
+    timers[1] = Timer{
         .counter = @truncate(-0x4000),
         .ctrl = .{
             .freq = .cycles_1024,
             .enable = .enable,
         },
     };
-    timers[2] = Timer {
+    timers[2] = Timer{
         .counter = 0,
         .ctrl = .{
             .mode = .cascade,
             .enable = .enable,
         },
     };
-    
+
     const bg0_map: [*]volatile bg.TextScreenEntry = @ptrCast(&bg.screen_block_ram[28]);
-    
+
     while (true) {
         display.naiveVSync();
-        
+
         // Convert elapsed seconds to a 2-digit display
         const digits = bios.div(timers[2].counter, 10);
         bg0_map[33].tile_index = @intCast(digits.quotient);
