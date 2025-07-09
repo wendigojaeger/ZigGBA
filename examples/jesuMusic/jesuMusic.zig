@@ -498,7 +498,7 @@ const Track = struct {
     /// Current initial volume of notes. Set by op_volume.
     volume: u4 = 0,
     /// Current duty setting for pulse channels. Set by op_duty.
-    duty: gba.sound.PulseDuty = .cycle_1_2,
+    duty: gba.sound.PulseChannelControl.Duty = .hi_1_lo_1,
     /// Identify to which hardware channel this object writes its output.
     output: ChannelOutput,
     /// Current volume envelope decay step for notes. Set by op_decay.
@@ -514,13 +514,13 @@ const Track = struct {
         self.transpose_down = 0;
         self.tempo = 0;
         self.volume = 0;
-        self.duty = .cycle_1_2;
+        self.duty = .hi_1_lo_1;
         self.decay = 0;
     }
     
     /// This function is called by the Tracker once per frame.
     pub fn update(self: *Track) void {
-        var reset_note: Enable = .disable;
+        var reset_note: bool = false;
         if(self.hold_time != 0) {
             self.hold_time -= 1;
         }
@@ -545,7 +545,7 @@ const Track = struct {
                     );
                     self.rate = pitch_rate[pitch];
                     self.last_note_position = pos;
-                    reset_note = .enable;
+                    reset_note = true;
                 },
                 op_volume => {
                     self.volume = @intCast(operand);
@@ -574,37 +574,37 @@ const Track = struct {
         }
         switch(self.output) {
             .pulse_1 => {
-                gba.sound.ch1_ctrl.* = gba.sound.PulseChannelControl {
+                gba.sound.pulse_1_ctrl.* = gba.sound.PulseChannelControl {
                     .len = 0x3f,
                     .duty = self.duty,
                     .step = self.decay,
                     .volume = self.volume,
                 };
-                gba.sound.ch1_freq.* = gba.sound.PulseChannelFrequency {
+                gba.sound.pulse_1_freq.* = gba.sound.PulseChannelFrequency {
                     .rate = @intCast(self.rate),
                     .reset = reset_note,
                 };
             },
             .pulse_2 => {
-                gba.sound.ch2_ctrl.* = gba.sound.PulseChannelControl {
+                gba.sound.pulse_2_ctrl.* = gba.sound.PulseChannelControl {
                     .len = 0x3f,
                     .duty = self.duty,
                     .step = self.decay,
                     .volume = self.volume,
                 };
-                gba.sound.ch2_freq.* = gba.sound.PulseChannelFrequency {
+                gba.sound.pulse_2_freq.* = gba.sound.PulseChannelFrequency {
                     .rate = @intCast(self.rate),
                     .reset = reset_note,
                 };
             },
             .wave => {},
             .noise => {
-                gba.sound.ch4_ctrl.* = gba.sound.NoiseChannelControl {
+                gba.sound.noise_ctrl.* = gba.sound.NoiseChannelControl {
                     .len = 0x3f,
                     .step = self.decay,
                     .volume = self.volume,
                 };
-                gba.sound.ch4_freq.* = gba.sound.NoiseChannelFrequency {
+                gba.sound.noise_freq.* = gba.sound.NoiseChannelFrequency {
                     .shift = 0x1,
                     .divisor = .div_16,
                     .reset = reset_note,
@@ -727,7 +727,7 @@ fn drawText(text: []const u8, pal_index: u4, bg_x: u8, bg_y: u8) void {
     }
 }
 
-fn updateDisplay(bg_x: u8, track: *Track) void {
+fn updateDisplay(track: *Track, bg_x: u8) void {
     // Format: [2:address hex] [1:opcode icon] [3:operand]
     const map = gba.bg.screenBlockMap(24);
     const offset_y: u16 = 7;
@@ -790,7 +790,7 @@ pub export fn main() void {
     };
     
     // Initialize sound registers to allow playback.
-    gba.sound.stat.* = gba.sound.Stat {
+    gba.sound.status.* = gba.sound.Status {
         .pulse_1 = .enable,
         .pulse_2 = .enable,
         .noise = .enable,
@@ -836,7 +836,7 @@ pub export fn main() void {
     drawText("A\x0e    B\x0c    R\x0f", 1, 8, 19);
     
     // Main loop. Update the Tracker once per frame.
-    while (true) {
+    while(true) : (frame +%= 1) {
         gba.display.naiveVSync();
         _ = gba.input.poll();
         // Toggle paused/playing upon pressing A.
@@ -860,9 +860,8 @@ pub export fn main() void {
             drawText("A\x0e", if((frame & 0x7f) < 0x40) 2 else 0, 8, 19);
         }
         // Draw tracker state.
-        updateDisplay(4, &tracker.pulse_1);
-        updateDisplay(12, &tracker.pulse_2);
-        updateDisplay(20, &tracker.noise);
-        frame += 1;
+        updateDisplay(&tracker.pulse_1, 4);
+        updateDisplay(&tracker.pulse_2, 12);
+        updateDisplay(&tracker.noise, 20);
     }
 }
