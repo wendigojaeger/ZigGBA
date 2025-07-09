@@ -12,9 +12,9 @@ pub const tiles = @import("tiles.zig");
 pub const ImageSourceTarget = @import("image_converter.zig").ImageSourceTarget;
 
 const gba_linker_script = libRoot() ++ "/../gba.ld";
-const gba_rt0_asm = libRoot() ++ "/../gba_crt0.s";
-const gba_lib_file = libRoot() ++ "/../gba.zig";
+const gba_crt0_asm = libRoot() ++ "/../gba_crt0.s";
 const gba_start_zig_file = libRoot() ++ "/../gba_start.zig";
+const gba_lib_file = libRoot() ++ "/../gba.zig";
 
 var is_debug: ?bool = null;
 var use_gdb_option: ?bool = null;
@@ -102,7 +102,7 @@ pub fn addGBAExecutable(b: *std.Build, rom_name: []const u8, source_file: []cons
     exe.addAssemblyFile(.{
         .src_path = .{
             .owner = b,
-            .sub_path = gba_rt0_asm,
+            .sub_path = gba_crt0_asm,
         },
     });
     if (use_gdb) {
