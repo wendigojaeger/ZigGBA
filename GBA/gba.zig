@@ -1,5 +1,4 @@
 const std = @import("std");
-const root = @import("root");
 const gba = @This();
 
 pub const bg = @import("bg.zig");
@@ -13,6 +12,7 @@ pub const interrupt = @import("interrupt.zig");
 pub const math = @import("math.zig");
 pub const mem = @import("mem.zig");
 pub const obj = @import("obj.zig");
+pub const sound = @import("sound.zig");
 pub const timer = @import("timer.zig");
 pub const utils = @import("utils.zig");
 
@@ -23,6 +23,9 @@ pub const screen_width = 240;
 pub const screen_height = 160;
 
 const Header = extern struct {
+    /// Encodes a relative jump past the end of the header in ARM.
+    /// EA 00 is an unconditional jump without linking.
+    /// 00 2E is an offset. Jump ahead `(0x2E << 2) + 8`, past end of header.
     rom_entry_point: u32 align(1) = 0xEA00002E,
     /// Game will not boot if these values are changed.
     nintendo_logo: [156]u8 align(1) = .{
@@ -42,13 +45,16 @@ const Header = extern struct {
     game_name: [12]u8 align(1) = @splat(0),
     game_code: [4]u8 align(1) = @splat(0),
     maker_code: [2]u8 align(1) = @splat(0),
-    /// Cannot be changed
+    /// Cannot be changed.
     fixed_value: u8 align(1) = 0x96,
     main_unit_code: u8 align(1) = 0x00,
     device_type: u8 align(1) = 0x00,
-    _: [7]u8 align(1) = @splat(0),
+    /// Reserved area.
+    _1: [7]u8 align(1) = @splat(0),
     software_version: u8 align(1) = 0x00,
     complement_check: u8 align(1) = 0x00,
+    /// Reserved area.
+    _2: [2]u8 align(1) = @splat(0),
 };
 
 pub fn initHeader(comptime game_name: []const u8, comptime game_code: []const u8, comptime maker_code: ?[]const u8, comptime software_version: ?u8) Header {
@@ -104,50 +110,4 @@ pub fn initHeader(comptime game_name: []const u8, comptime game_code: []const u8
         header.complement_check = @bitCast(@as(i8, @truncate(temp_check)));
         return header;
     }
-}
-
-extern var __bss_lma: u8;
-extern var __bss_start__: u8;
-extern var __bss_end__: u8;
-extern var __data_lma: u8;
-extern var __data_start__: u8;
-extern var __data_end__: u8;
-
-export fn _start() noreturn {
-    // Assembly init code
-    asm volatile (
-        \\.arm
-        \\.cpu arm7tdmi
-        \\mov r0, #0x4000000
-        \\str r0, [r0, #0x208]
-        \\
-        \\mov r0, #0x12
-        \\msr cpsr, r0
-        \\ldr sp, _start_sp_irq_word
-        \\mov r0, #0x1f
-        \\msr cpsr, r0
-        \\ldr sp, _start_sp_usr_word
-        \\adr r0, #1 + _start_zig
-        \\bx r0
-        // Ensure _sq_irq and _sq_usr are defined near enough
-        // to the entry point to be referenced with `ldr` above.
-        \\  .align 4
-        \\_start_sp_irq_word: .word __sp_irq
-        \\_start_sp_usr_word: .word __sp_usr
-        \\_start_zig:
-    );
-
-    // Use BIOS function to clear all data
-    bios.resetRamRegisters(bios.RamResetFlags.initFull());
-    // Clear .bss
-    mem.memset32(&__bss_start__, 0, @intFromPtr(&__bss_end__) - @intFromPtr(&__bss_start__));
-
-    // Copy .data section to EWRAM
-    mem.memcpy32(&__data_start__, &__data_lma, @intFromPtr(&__data_end__) - @intFromPtr(&__data_start__));
-
-    // call user's main
-    if (@hasDecl(root, "main")) {
-        root.main();
-    }
-    while (true) {}
 }

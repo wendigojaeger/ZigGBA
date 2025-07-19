@@ -1,5 +1,5 @@
 const std = @import("std");
-const ImageConverter = @import("assetconverter/image_converter.zig").ImageConverter;
+const ImageConverter = @import("image_converter.zig").ImageConverter;
 const ArrayList = std.ArrayList;
 const FixedBufferAllocator = std.heap.FixedBufferAllocator;
 const Step = std.Build.Step;
@@ -7,10 +7,14 @@ const builtin = std.builtin;
 const fmt = std.fmt;
 const fs = std.fs;
 
-pub const ImageSourceTarget = @import("assetconverter/image_converter.zig").ImageSourceTarget;
+pub const GBAColor = @import("../color.zig").Color;
+pub const tiles = @import("tiles.zig");
+pub const ImageSourceTarget = @import("image_converter.zig").ImageSourceTarget;
 
-const gba_linker_script = libRoot() ++ "/gba.ld";
-const gba_lib_file = libRoot() ++ "/gba.zig";
+const gba_linker_script = libRoot() ++ "/../gba.ld";
+const gba_crt0_asm = libRoot() ++ "/../gba_crt0.s";
+const gba_start_zig_file = libRoot() ++ "/../gba_start.zig";
+const gba_lib_file = libRoot() ++ "/../gba.zig";
 
 var is_debug: ?bool = null;
 var use_gdb_option: ?bool = null;
@@ -37,7 +41,12 @@ pub fn addGBAStaticLibrary(b: *std.Build, lib_name: []const u8, source_file: []c
         .optimize = if (debug) .Debug else .ReleaseFast,
     });
 
-    lib.setLinkerScript(.{ .src_path = .{ .owner = b, .sub_path = gba_linker_script } });
+    lib.setLinkerScript(.{
+        .src_path = .{
+            .owner = b,
+            .sub_path = gba_linker_script,
+        },
+    });
 
     return lib;
 }
@@ -59,14 +68,43 @@ pub fn addGBAExecutable(b: *std.Build, rom_name: []const u8, source_file: []cons
         break :blk gdb;
     };
 
-    const exe = b.addExecutable(.{
-        .name = rom_name,
-        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = source_file } },
+    const start_zig_obj = b.addObject(.{
+        .name = "gba_start",
+        .root_source_file = .{
+            .src_path = .{
+                .owner = b,
+                .sub_path = gba_start_zig_file,
+            },
+        },
         .target = b.resolveTargetQuery(gba_thumb_target_query),
         .optimize = if (debug) .Debug else .ReleaseFast,
     });
 
-    exe.setLinkerScript(.{ .src_path = .{ .owner = b, .sub_path = gba_linker_script } });
+    const exe = b.addExecutable(.{
+        .name = rom_name,
+        .root_source_file = .{
+            .src_path = .{
+                .owner = b,
+                .sub_path = source_file,
+            },
+        },
+        .target = b.resolveTargetQuery(gba_thumb_target_query),
+        .optimize = if (debug) .Debug else .ReleaseFast,
+    });
+
+    exe.addObject(start_zig_obj);
+    exe.setLinkerScript(.{
+        .src_path = .{
+            .owner = b,
+            .sub_path = gba_linker_script,
+        },
+    });
+    exe.addAssemblyFile(.{
+        .src_path = .{
+            .owner = b,
+            .sub_path = gba_crt0_asm,
+        },
+    });
     if (use_gdb) {
         b.installArtifact(exe);
     } else {
@@ -81,12 +119,25 @@ pub fn addGBAExecutable(b: *std.Build, rom_name: []const u8, source_file: []cons
     }
 
     const gba_lib = createGBALib(b, debug);
-    exe.root_module.addAnonymousImport("gba", .{ .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = gba_lib_file } } });
+    exe.root_module.addAnonymousImport("gba", .{
+        .root_source_file = .{
+            .src_path = .{
+                .owner = b,
+                .sub_path = gba_lib_file,
+            },
+        },
+    });
     exe.linkLibrary(gba_lib);
 
     b.default_step.dependOn(&exe.step);
 
     return exe;
+}
+
+pub fn saveFile(file_path: []const u8, file_contents: []const u8) !void {
+    var file = try fs.cwd().createFile(file_path, .{});
+    defer file.close();
+    try file.writeAll(file_contents);
 }
 
 const Mode4ConvertStep = struct {

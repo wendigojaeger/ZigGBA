@@ -12,16 +12,17 @@ git submodule update --init
 
 ## Build
 
-This library uses zig nominated [2024.10.0-mach](https://machengine.org/about/nominated-zig/). To install using [`zigup`](https://github.com/marler8997/zigup):
+This library currently uses Zig 0.14.1.
 
-```sh
-zigup 0.14.0-dev.1911+3bf89f55c
-```
+The tool [`anyzig`](https://github.com/marler8997/anyzig) is recommended for managing Zig installations.
 
-To build, simply use Zig's integrated build system
+To build the examples with `anyzig` installed, clone this repository and use Zig's integrated build system like so in the root ZigGBA directory:
+
 ```bash
 zig build
 ```
+
+This will write output ROMs to `zig-out/bin/`. These are files with a `*.gba` extension which can be written to a GBA cartridge or which can run in emulators such as [mGBA](https://github.com/mgba-emu/mgba), [Mesen](https://github.com/SourMesen/Mesen2/), and [NanoBoyAdvance](https://github.com/nba-emu/NanoBoyAdvance).
 
 ## First example running in a emulator
 

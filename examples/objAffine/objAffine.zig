@@ -8,7 +8,7 @@ const metr = @import("metr.zig");
 
 export var header linksection(".gbaheader") = gba.initHeader("OBJAFFINE", "AODE", "00", 0);
 
-pub fn main() void {
+pub export fn main() void {
     display.ctrl.* = .{
         .obj_mapping = .one_dimension,
         .bg0 = .enable,

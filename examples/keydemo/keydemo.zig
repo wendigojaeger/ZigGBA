@@ -11,7 +11,7 @@ fn loadImageData() void {
     gba.mem.memcpy32(gba.bg.palette, &gba_pic.pal, gba_pic.pal.len * 4);
 }
 
-pub fn main() void {
+pub export fn main() void {
     display.ctrl.* = .{
         .mode = .mode4,
         .bg2 = .enable,

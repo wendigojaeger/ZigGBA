@@ -4,7 +4,7 @@ const Mode3 = gba.bitmap.Mode3;
 
 export var header linksection(".gbaheader") = gba.initHeader("FIRST", "AFSE", "00", 0);
 
-pub fn main() void {
+pub export fn main() void {
     gba.display.ctrl.* = .{
         .mode = .mode3,
         .bg2 = .enable,

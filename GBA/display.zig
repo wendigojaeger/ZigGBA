@@ -199,7 +199,7 @@ pub const blend: *volatile Blend = @ptrFromInt(gba.mem.io + 0x50);
 
 /// 4bpp/8bpp 8x8 tiles, "indexed" by letter coordinates (`tile.a.b`)
 // TODO: if zig ever gets packed arrays, use them instead.
-pub fn Tile(comptime mode: Color.Mode) type {
+pub fn Tile(comptime mode: Color.Bpp) type {
     return packed struct {
         const Self = @This();
 
@@ -207,14 +207,14 @@ pub fn Tile(comptime mode: Color.Mode) type {
 
         /// Color index type for this tile's palette
         pub const Pixel = switch (mode) {
-            .color_16 => u4,
-            .color_256 => u8,
+            .bpp_4 => u4,
+            .bpp_8 => u8,
         };
 
         /// Big-endian integer type for initializing a row in hexadecimal format.
         const IntRow = switch (mode) {
-            .color_16 => u32,
-            .color_256 => u64,
+            .bpp_4 => u32,
+            .bpp_8 => u64,
         };
 
         pub const Row = packed struct {
@@ -245,7 +245,7 @@ pub fn Tile(comptime mode: Color.Mode) type {
         ///
         /// ```
         /// // 4bpp
-        /// Tile(.color_16).initInt(.{
+        /// Tile(.bpp_4).initInt(.{
         ///     .{ 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7 },
         ///     .{ 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf },
         ///     .{ 0x0, 0x1, 0x2, 0x3, 0x3, 0x2, 0x1, 0x0 },
@@ -257,7 +257,7 @@ pub fn Tile(comptime mode: Color.Mode) type {
         /// });
         ///
         /// // 8bpp
-        /// Tile(.color_256).initInt(.{
+        /// Tile(.bpp_8).initInt(.{
         ///     .{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef },
         ///     .{ 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10 },
         ///     .{ 0x01, 0x23, 0x32, 0x10, 0x12, 0x34, 0x43, 0x21 },
@@ -285,7 +285,7 @@ pub fn Tile(comptime mode: Color.Mode) type {
         ///
         /// ```
         /// // 4bpp
-        /// Tile(.color_16).initInt(.{
+        /// Tile(.bpp_4).initInt(.{
         ///     0x01234567,
         ///     0x89abcdef,
         ///     0x01233210,
@@ -297,7 +297,7 @@ pub fn Tile(comptime mode: Color.Mode) type {
         /// });
         ///
         /// // 8bpp
-        /// Tile(.color_256).initInt(.{
+        /// Tile(.bpp_8).initInt(.{
         ///     0x01_23_45_67_89_ab_cd_ef,
         ///     0xfe_dc_ba_98_76_54_32_10,
         ///     0x01_23_32_10_12_34_43_21,
@@ -321,4 +321,19 @@ pub fn Tile(comptime mode: Color.Mode) type {
             };
         }
     };
+}
+
+/// Copy memory into a charblock, containing tile data.
+/// There are only 6 charblocks. The lower 4 are for background tiles
+/// and the higher 2 are for sprites/objects.
+/// Don't pass a block number higher than 5.
+/// Note that screenblocks and charblocks share the same VRAM.
+/// WARNING: This will not copy memory correctly if the input
+/// data is not aligned on a 16-bit word boundary.
+pub fn memcpyCharBlock(block: u3, offset: u32, data: []const u8) void {
+    gba.mem.memcpy32(
+        vram + offset + (@as(u32, block) * 0x4000),
+        @as([*]align(2) const u8, @ptrCast(@alignCast(data))),
+        data.len,
+    );
 }

@@ -12,7 +12,7 @@ fn loadSpriteData() void {
     gba.mem.memcpy32(obj.palette, &metr.pal, metr.pal.len * 4);
 }
 
-pub fn main() void {
+pub export fn main() void {
     display.ctrl.* = .{
         .obj_mapping = .one_dimension,
         .obj = .enable,

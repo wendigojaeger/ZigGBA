@@ -3,5 +3,6 @@ zig-cache
 /refs
 *.agi
 *.agp
+*.bin
 *.log
 /zig-out

@@ -4,11 +4,11 @@ const gba = @import("gba.zig");
 pub const Rom = [0x02000000]u8;
 
 /// Gamepak ROM is mirrored 3 times, using different access timings as controlled by `access_timings`:
-/// 
+///
 /// Wait state 0: `0x08000000..0x0A000000`
-/// 
+///
 /// Wait state 1: `0x0A000000..0x0C000000`
-/// 
+///
 /// Wait state 2: `0x0C000000..0x0E000000`
 pub const rom: *const volatile [3]Rom = @ptrFromInt(gba.mem.rom);
 

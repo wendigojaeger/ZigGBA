@@ -13,6 +13,9 @@ pub const Color = packed struct(u16) {
     b: u5 = 0,
     _: u1 = 0,
 
+    /// Initialize a color with red, green, and blue values.
+    /// A value of 0 represents the darkest color in a channel,
+    /// and a value of 31 represents the brighest.
     pub fn rgb(r: u5, g: u5, b: u5) Color {
         return .{
             .r = r,
@@ -22,19 +25,23 @@ pub const Color = packed struct(u16) {
     }
 
     pub const Palette = union {
-        /// A palette of 16 colors. The color at `bank[0]` is always transparent.
+        /// A palette of 16 colors.
+        /// The color at `bank[0]` is always transparent.
         pub const Bank = [16]Color;
 
         banks: [16]Bank,
         full: [256]Color,
     };
 
-    /// Determines whether palettes are accessed via banks of 16 colors
-    /// or a single palette of 256 colors
-    pub const Mode = enum(u1) {
-        /// Palettes are stored in 16 banks of 16 colors, 4bpp
-        color_16,
-        /// Single palette of 256 colors, 8bpp
-        color_256,
+    /// Enumeration of tile bits per pixel values.
+    /// Determines whether palettes are accessed via banks of 16 colors (4bpp)
+    /// or a single palette of 256 colors (8bpp).
+    /// Naturally, 8bpp image data consumes twice as much memory as 4bpp
+    /// image data.
+    pub const Bpp = enum(u1) {
+        /// Palettes are stored in 16 banks of 16 colors, 4 bits per pixel.
+        bpp_4 = 0,
+        /// Single palette of 256 colors, 8 bits per pixel.
+        bpp_8 = 1,
     };
 };

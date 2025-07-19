@@ -33,7 +33,7 @@ pub const ImageConverter = struct {
             var color_it = image.iterator();
 
             while (color_it.next()) |pixel| {
-                try quantizer.addColor(pixel.toPremultipliedAlpha().toRgba32());
+                try quantizer.addColor(pixel.to.premultipliedAlpha());
             }
 
             try image_convert_list.append(.{
@@ -76,7 +76,7 @@ pub const ImageConverter = struct {
             var color_it = convert.image.iterator();
 
             while (color_it.next()) |pixel| : (pixel_count += 1) {
-                const raw_palette_index: usize = try quantizer.getPaletteIndex(pixel.toPremultipliedAlpha().toRgba32());
+                const raw_palette_index: usize = try quantizer.getPaletteIndex(pixel.to.premultipliedAlpha());
                 const palette_index: u8 = @as(u8, @intCast(raw_palette_index));
                 try image_out_stream.writeInt(u8, palette_index, .little);
             }

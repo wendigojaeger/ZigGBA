@@ -9,7 +9,7 @@ const Priority = display.Priority;
 const Tile = display.Tile;
 
 /// Tile data for objects
-pub const tile_ram: *volatile [2][512]Tile(.color_16) = @ptrFromInt(gba.mem.vram + 0x10000);
+pub const tile_ram: *volatile [2][512]Tile(.bpp_4) = @ptrFromInt(gba.mem.vram + 0x10000);
 
 /// Obj and `Affine` data is interleaved but starts at the same place in memory.
 const ObjAffineData = packed union {
@@ -139,7 +139,7 @@ pub const Obj = packed struct {
     mode: GfxMode = .normal,
     /// Enables mosaic effects on this object
     mosaic: Enable = .disable,
-    palette_mode: Color.Mode = .color_16,
+    palette_mode: Color.Bpp = .bpp_4,
     /// Used in combination with size, see `setSize`
     shape: Shape = .square,
     /// For normal sprites, the left side; for affine sprites, the center

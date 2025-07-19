@@ -118,7 +118,11 @@ pub const RamResetFlags = std.EnumSet(enum {
     reset_other_registers,
 });
 
-pub const DivResult = packed struct { division: i32, remainder: i32, absolute_div: u32 };
+pub const DivResult = packed struct {
+    quotient: i32,
+    remainder: i32,
+    absolute_quotient: u32,
+};
 
 /// Whether the write pointer should move with the read pointer
 /// or fill the destination space with the value at src[0]
@@ -228,6 +232,13 @@ pub const BitUnpackArgs = packed struct {
     data_offset: u31,
     zero_data: bool,
 };
+
+/// Resets the GBA and runs the code at address 0x02000000 or 0x08000000,
+/// depending on the contents of 0x03007ffa.
+/// (0 means 0x08000000 and anything else means 0x02000000.)
+pub fn softReset() void {
+    call0Return0(.register_soft_reset);
+}
 
 // TODO: These could be made into non-tuples
 pub fn resetRamRegisters(flags: RamResetFlags) void {
@@ -455,9 +466,9 @@ fn call2Return3(comptime swi: SWI, r0: i32, r1: i32) DivResult {
     );
 
     return .{
-        .division = quo,
+        .quotient = quo,
         .remainder = rem,
-        .absolute_div = abs,
+        .absolute_quotient = abs,
     };
 }
 

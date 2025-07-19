@@ -14,7 +14,7 @@ pub const Timer = packed struct(u32) {
         /// timer counter overflows.
         cascade,
     };
-    
+
     /// Enumeration of recognized timer tick frequencies.
     pub const Frequency = enum(u2) {
         /// One timer tick per clock cycle.
@@ -51,16 +51,16 @@ pub const Timer = packed struct(u32) {
         /// Enable the timer.
         enable: Enable = .disable,
     };
-    
+
     /// Corresponds to tonc REG_TMxD.
     /// Reading this register gives a timer's current elapsed intervals.
     /// Writing to this register does NOT set the current timer value.
     /// It sets the INITIAL timer value for the next timer run.
     counter: u16 = 0,
-    
+
     /// Corresponds to tonc REG_TMxCNT.
     ctrl: Timer.Control = .{},
-    
+
     /// Unused high bits of REG_TMxCNT.
     _: u8 = 0,
 };

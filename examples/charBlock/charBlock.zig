@@ -15,8 +15,8 @@ const screen_block_8 = 4;
 export var header linksection(".gbaheader") = gba.initHeader("CHARBLOCK", "ASBE", "00", 0);
 
 fn loadTiles() void {
-    const tl4: [*]align(4) const Tile(.color_16) = @ptrCast(&cbb_ids.ids_4_tiles);
-    const tl8: [*]align(4) const Tile(.color_256) = @ptrCast(&cbb_ids.ids_8_tiles);
+    const tl4: [*]align(4) const Tile(.bpp_4) = @ptrCast(&cbb_ids.ids_4_tiles);
+    const tl8: [*]align(4) const Tile(.bpp_8) = @ptrCast(&cbb_ids.ids_8_tiles);
 
     // Loading tiles. 4-bit tiles to blocks 0 and 1
     bg.tile_ram[0][1] = tl4[1];
@@ -71,7 +71,7 @@ fn initMaps() void {
     screen_entry_8[0x61].tile_index = 0x0301;
 }
 
-pub fn main() void {
+pub export fn main() void {
     loadTiles();
 
     initMaps();
@@ -90,6 +90,6 @@ pub fn main() void {
     bg.ctrl[1] = .{
         .tile_base_block = character_block_8,
         .screen_base_block = screen_block_8,
-        .palette_mode = .color_256,
+        .palette_mode = .bpp_8,
     };
 }
